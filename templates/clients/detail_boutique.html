@@ -2,7 +2,7 @@
 {% load static %}
 {% load custom_filters %}
 
-{% block title %}{{ boutique.nom_boutique }} - Marketplace{% endblock %}
+{% block title %}{{ boutique.nom_boutique }} - Local-links{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gray-50">
@@ -324,7 +324,7 @@ function toggleProductFilter() {
 function applyProductFilters() {
     // Apply product filters
     toggleProductFilter();
-    marketplace.showNotification('Filtres appliqués', 'success');
+    Local-links.showNotification('Filtres appliqués', 'success');
 }
 
 function resetProductFilters() {
@@ -338,17 +338,17 @@ function callBoutique() {
 }
 
 function sendMessage() {
-    marketplace.showNotification('Fonction de messagerie bientôt disponible', 'info');
+    Local-links.showNotification('Fonction de messagerie bientôt disponible', 'info');
 }
 
 function shareBoutique() {
     const shareData = {
         title: '{{ boutique.nom_boutique }}',
-        text: 'Découvrez cette boutique sur Marketplace',
+        text: 'Découvrez cette boutique sur Local-links',
         url: window.location.href
     };
     
-    marketplace.shareContent(shareData.title, shareData.text, shareData.url);
+    Local-links.shareContent(shareData.title, shareData.text, shareData.url);
 }
 
 function toggleBoutiqueFavorite() {
@@ -358,11 +358,11 @@ function toggleBoutiqueFavorite() {
     if (isFavorited) {
         heartIcon.classList.remove('fas', 'text-red-500');
         heartIcon.classList.add('far', 'text-white');
-        marketplace.showNotification('Boutique retirée des favoris', 'success');
+        Local-links.showNotification('Boutique retirée des favoris', 'success');
     } else {
         heartIcon.classList.remove('far', 'text-white');
         heartIcon.classList.add('fas', 'text-red-500');
-        marketplace.showNotification('Boutique ajoutée aux favoris', 'success');
+        Local-links.showNotification('Boutique ajoutée aux favoris', 'success');
     }
 }
 

@@ -333,7 +333,7 @@ function shareShop() {
     if (navigator.share) {
         navigator.share({
             title: '{{ commercant.nom_boutique }}',
-            text: 'Découvrez ma boutique sur Marketplace',
+            text: 'Découvrez ma boutique sur Local-links',
             url: shopUrl
         }).then(() => {
             showToast('Boutique partagée avec succès', 'success');

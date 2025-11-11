@@ -20,7 +20,7 @@
     }
     
     .carte-section {
-        height: 40vh;
+        height: 60vh; /* Augmenté à 60% de la hauteur de l'écran */
         position: relative;
         z-index: 10;
     }
@@ -451,7 +451,11 @@
                     <i class="fas fa-map-marker-alt"></i>
                 </div>
                 <div id="delivery-address">
-                    <strong>Sélectionnez une adresse sur la carte</strong>
+                    {% if user.adresse %}
+                        <strong>{{ user.adresse }}</strong>
+                    {% else %}
+                        <strong>Sélectionnez une adresse sur la carte</strong>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -560,8 +564,30 @@
     // Initialiser la carte
     function initializeMap() {
         try {
-            // Créer la carte avec des coordonnées par défaut valides
-            map = L.map('map').setView([DEFAULT_LATITUDE, DEFAULT_LONGITUDE], 13);
+            // Déterminer les coordonnées initiales
+            let initialLatitude = DEFAULT_LATITUDE;
+            let initialLongitude = DEFAULT_LONGITUDE;
+            let initialZoom = 13; // Zoom raisonnable pour voir un quartier
+            
+            // Utiliser les coordonnées de l'utilisateur si disponibles
+            {% if user.latitude and user.longitude %}
+            try {
+                const userLat = parseFloat('{{ user.latitude }}');
+                const userLng = parseFloat('{{ user.longitude }}');
+                
+                if (!isNaN(userLat) && !isNaN(userLng) && userLat !== 0 && userLng !== 0) {
+                    initialLatitude = userLat;
+                    initialLongitude = userLng;
+                    initialZoom = 16; // Zoom plus rapproché pour la position actuelle
+                    console.log('Utilisation des coordonnées utilisateur:', initialLatitude, initialLongitude);
+                }
+            } catch (e) {
+                console.error('Erreur lors de la définition des coordonnées utilisateur:', e);
+            }
+            {% endif %}
+            
+            // Créer la carte avec les coordonnées déterminées
+            map = L.map('map').setView([initialLatitude, initialLongitude], initialZoom);
             
             // Ajouter la couche de tuiles
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -569,7 +595,7 @@
             }).addTo(map);
             
             // Initialiser le marqueur
-            marker = L.marker([DEFAULT_LATITUDE, DEFAULT_LONGITUDE], {
+            marker = L.marker([initialLatitude, initialLongitude], {
                 draggable: true
             }).addTo(map);
             
@@ -585,21 +611,8 @@
                 updateSelectedPosition(e.latlng.lat, e.latlng.lng);
             });
             
-            // Si l'utilisateur a déjà des coordonnées, les utiliser
-            {% if user.latitude and user.longitude %}
-            try {
-                const userLat = parseFloat('{{ user.latitude }}');
-                const userLng = parseFloat('{{ user.longitude }}');
-                
-                if (!isNaN(userLat) && !isNaN(userLng)) {
-                    map.setView([userLat, userLng], 15);
-                    marker.setLatLng([userLat, userLng]);
-                    updateSelectedPosition(userLat, userLng);
-                }
-            } catch (e) {
-                console.error('Erreur lors de la définition des coordonnées utilisateur:', e);
-            }
-            {% endif %}
+            // Mettre à jour la position sélectionnée avec les coordonnées initiales
+            updateSelectedPosition(initialLatitude, initialLongitude);
             
             // Marquer la carte comme initialisée
             mapInitialized = true;
@@ -662,7 +675,7 @@
                     const lat = parseFloat(result.lat);
                     const lng = parseFloat(result.lon);
                     
-                    // Centrer la carte sur le résultat
+                    // Centrer la carte sur le résultat avec un bon niveau de zoom
                     map.setView([lat, lng], 16);
                     marker.setLatLng([lat, lng]);
                     updateSelectedPosition(lat, lng);

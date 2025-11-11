@@ -4,15 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Marketplace local pour les commerçants et clients">
+    <meta name="description" content="Local-Links pour les commerçants et clients">
     <meta name="theme-color" content="#10b981">
-    <title>{% block title %}Marketplace Local{% endblock %}</title>
+    <title>{% block title %}Local-Links{% endblock %}</title>
     
     <!-- PWA Meta Tags -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Marketplace">
+    <meta name="apple-mobile-web-app-title" content="Local-links">
     <link rel="manifest" href="/static/manifest.json">
     <link rel="apple-touch-icon" href="/static/icons/icon-192x192.png">
     
@@ -84,11 +84,9 @@
     {% endif %}
 
     <!-- Main Content -->
-    <main class="h-full pb-16">
+    <main class="min-h-screen pb-20">
         {% block content %}{% endblock %}
     </main>
-    <div class="mb-16"></div>
-    
 
     <!-- Bottom Navigation (Mobile) -->
     {% if user.is_authenticated %}
@@ -420,11 +418,11 @@
                         
                         if (data.success) {
                             showToast(data.message, 'success');
-                        return data;
                         } else {
                             showToast(data.message, 'error');
-                            return data;
                         }
+                        
+                        return data;
                     } catch (error) {
                         console.error('Erreur:', error);
                         showToast('Erreur lors de la modification', 'error');
@@ -449,11 +447,11 @@
                         
                         if (data.success) {
                             showToast(data.message, 'success');
-                        return data;
                         } else {
                             showToast(data.message, 'error');
-                            return data;
                         }
+                        
+                        return data;
                     } catch (error) {
                         console.error('Erreur:', error);
                         showToast('Erreur lors de la suppression', 'error');
@@ -473,10 +471,8 @@
             
             API.Promotions.toggle(produitId).then(data => {
                 if (data.success) {
-                    // Recharger la page après 1 seconde
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
+                    // La page ne sera plus rechargée automatiquement
+                    // L'utilisateur peut rafraîchir manuellement si nécessaire
                 }
             });
         }
@@ -489,10 +485,8 @@
             
             API.Promotions.delete(produitId).then(data => {
                 if (data.success) {
-                    // Recharger la page après 1 seconde
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
+                    // La page ne sera plus rechargée automatiquement
+                    // L'utilisateur peut rafraîchir manuellement si nécessaire
                 }
             });
         }

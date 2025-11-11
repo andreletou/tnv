@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Hors ligne - Marketplace{% endblock %}
+{% block title %}Hors ligne - Local-links{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gray-50 flex items-center justify-center px-4">
@@ -50,7 +50,7 @@
 {% block extra_js %}
 <script>
 function retryConnection() {
-    marketplace.showLoading();
+    Local-links.showLoading();
     
     // Try to fetch a small resource to check connectivity
     fetch('/static/manifest.json', { 
@@ -59,8 +59,8 @@ function retryConnection() {
     })
     .then(response => {
         if (response.ok) {
-            marketplace.hideLoading();
-            marketplace.showNotification('Connexion rétablie', 'success');
+            Local-links.hideLoading();
+            Local-links.showNotification('Connexion rétablie', 'success');
             setTimeout(() => {
                 window.location.href = '/';
             }, 1000);
@@ -69,14 +69,14 @@ function retryConnection() {
         }
     })
     .catch(error => {
-        marketplace.hideLoading();
-        marketplace.showNotification('Toujours hors ligne', 'error');
+        Local-links.hideLoading();
+        Local-links.showNotification('Toujours hors ligne', 'error');
     });
 }
 
 // Auto-retry when back online
 window.addEventListener('online', function() {
-    marketplace.showNotification('Connexion rétablie', 'success');
+    Local-links.showNotification('Connexion rétablie', 'success');
     setTimeout(() => {
         window.location.href = '/';
     }, 1000);
@@ -84,7 +84,7 @@ window.addEventListener('online', function() {
 
 // Show offline status
 window.addEventListener('offline', function() {
-    marketplace.showNotification('Vous êtes hors ligne', 'warning');
+    Local-links.showNotification('Vous êtes hors ligne', 'warning');
 });
 </script>
 {% endblock %}

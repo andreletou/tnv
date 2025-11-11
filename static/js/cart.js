@@ -1,4 +1,4 @@
-// Cart functionality for Marketplace Togo
+// Cart functionality for Local-Links
 
 class Cart {
     constructor() {
@@ -15,7 +15,7 @@ class Cart {
     }
 
     loadCartFromStorage() {
-        const savedCart = localStorage.getItem('marketplace_cart');
+        const savedCart = localStorage.getItem('Local-links_cart');
         if (savedCart) {
             try {
                 const cartData = JSON.parse(savedCart);
@@ -36,13 +36,13 @@ class Cart {
             itemCount: this.itemCount,
             timestamp: Date.now()
         };
-        localStorage.setItem('marketplace_cart', JSON.stringify(cartData));
+        localStorage.setItem('Local-links_cart', JSON.stringify(cartData));
     }
 
     setupEventListeners() {
         // Listen for cart updates from other tabs
         window.addEventListener('storage', (e) => {
-            if (e.key === 'marketplace_cart') {
+            if (e.key === 'Local-links_cart') {
                 this.loadCartFromStorage();
                 this.updateCartUI();
             }
@@ -223,7 +223,7 @@ class Cart {
         // Update cart total if on cart page
         const totalElements = document.querySelectorAll('#cart-total, #total-cost');
         totalElements.forEach(element => {
-            element.textContent = window.Marketplace.formatPrice(this.total);
+            element.textContent = window.Local-links.formatPrice(this.total);
         });
 
         // Update cart items if on cart page
@@ -250,7 +250,7 @@ class Cart {
                     <img src="${item.image || '/static/images/placeholder.jpg'}" alt="${item.name}" class="w-20 h-20 object-cover rounded">
                     <div class="flex-1">
                         <h4 class="font-semibold">${item.name}</h4>
-                        <p class="text-gray-600">${window.Marketplace.formatPrice(item.price)}</p>
+                        <p class="text-gray-600">${window.Local-links.formatPrice(item.price)}</p>
                         <div class="flex items-center gap-2 mt-2">
                             <button onclick="cart.updateQuantity(${item.productId}, ${item.quantity - 1})" class="w-8 h-8 border rounded hover:bg-gray-100">
                                 <i class="fas fa-minus text-xs"></i>
@@ -265,7 +265,7 @@ class Cart {
                         </div>
                     </div>
                     <div class="text-right">
-                        <p class="font-semibold">${window.Marketplace.formatPrice(item.subtotal)}</p>
+                        <p class="font-semibold">${window.Local-links.formatPrice(item.subtotal)}</p>
                     </div>
                 </div>
             </div>

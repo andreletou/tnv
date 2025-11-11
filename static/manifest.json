@@ -1,7 +1,7 @@
 {
-  "name": "Marketplace Local",
-  "short_name": "Marketplace",
-  "description": "Marketplace local pour les commerçants et clients",
+  "name": "Local-Links",
+  "short_name": "Local-links",
+  "description": "Local-Links pour les commerçants et clients",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

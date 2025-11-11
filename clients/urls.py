@@ -5,6 +5,7 @@ from . import views
 app_name = 'clients'
 
 urlpatterns = [
+    path('redirection/', views.redirection_apres_connexion, name='redirection_apres_connexion'),
     # Page d'accueil
     path('', views.accueil, name='accueil'),
     

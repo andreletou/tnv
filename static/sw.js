@@ -1,8 +1,8 @@
-// Service Worker for Marketplace PWA
+// Service Worker for Local-links PWA
 
-const CACHE_NAME = 'marketplace-v1';
-const STATIC_CACHE = 'marketplace-static-v1';
-const DYNAMIC_CACHE = 'marketplace-dynamic-v1';
+const CACHE_NAME = 'Local-links-v1';
+const STATIC_CACHE = 'Local-links-static-v1';
+const DYNAMIC_CACHE = 'Local-links-dynamic-v1';
 
 const STATIC_ASSETS = [
     '/',
@@ -164,7 +164,7 @@ self.addEventListener('push', event => {
     };
     
     event.waitUntil(
-        self.registration.showNotification('Marketplace', options)
+        self.registration.showNotification('Local-links', options)
     );
 });
 

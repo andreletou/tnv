@@ -1,4 +1,4 @@
-// API JavaScript file for Marketplace App
+// API JavaScript file for Local-links App
 
 // API base configuration
 const API_BASE = '';
@@ -23,16 +23,16 @@ class CartAPI {
             const data = await response.json();
             
             if (data.success) {
-                marketplace.updateCartCount();
-                marketplace.showNotification(data.message, 'success');
+                Local-links.updateCartCount();
+                Local-links.showNotification(data.message, 'success');
                 return data;
             } else {
-                marketplace.showNotification(data.message, 'error');
+                Local-links.showNotification(data.message, 'error');
                 return null;
             }
         } catch (error) {
             console.error('Error adding to cart:', error);
-            marketplace.showNotification('Erreur lors de l\'ajout au panier', 'error');
+            Local-links.showNotification('Erreur lors de l\'ajout au panier', 'error');
             return null;
         }
     }
@@ -51,16 +51,16 @@ class CartAPI {
             const data = await response.json();
             
             if (data.success) {
-                marketplace.updateCartCount();
-                marketplace.showNotification(data.message, 'success');
+                Local-links.updateCartCount();
+                Local-links.showNotification(data.message, 'success');
                 return data;
             } else {
-                marketplace.showNotification(data.message, 'error');
+                Local-links.showNotification(data.message, 'error');
                 return null;
             }
         } catch (error) {
             console.error('Error updating cart:', error);
-            marketplace.showNotification('Erreur lors de la mise à jour du panier', 'error');
+            Local-links.showNotification('Erreur lors de la mise à jour du panier', 'error');
             return null;
         }
     }
@@ -78,16 +78,16 @@ class CartAPI {
             const data = await response.json();
             
             if (data.success) {
-                marketplace.updateCartCount();
-                marketplace.showNotification(data.message, 'success');
+                Local-links.updateCartCount();
+                Local-links.showNotification(data.message, 'success');
                 return data;
             } else {
-                marketplace.showNotification(data.message, 'error');
+                Local-links.showNotification(data.message, 'error');
                 return null;
             }
         } catch (error) {
             console.error('Error removing from cart:', error);
-            marketplace.showNotification('Erreur lors de la suppression du panier', 'error');
+            Local-links.showNotification('Erreur lors de la suppression du panier', 'error');
             return null;
         }
     }
@@ -123,15 +123,15 @@ class FavoritesAPI {
             const data = await response.json();
             
             if (data.success) {
-                marketplace.showNotification(data.message, 'success');
+                Local-links.showNotification(data.message, 'success');
                 return data;
             } else {
-                marketplace.showNotification(data.message, 'error');
+                Local-links.showNotification(data.message, 'error');
                 return null;
             }
         } catch (error) {
             console.error('Error adding to favorites:', error);
-            marketplace.showNotification('Erreur lors de l\'ajout aux favoris', 'error');
+            Local-links.showNotification('Erreur lors de l\'ajout aux favoris', 'error');
             return null;
         }
     }
@@ -149,15 +149,15 @@ class FavoritesAPI {
             const data = await response.json();
             
             if (data.success) {
-                marketplace.showNotification(data.message, 'success');
+                Local-links.showNotification(data.message, 'success');
                 return data;
             } else {
-                marketplace.showNotification(data.message, 'error');
+                Local-links.showNotification(data.message, 'error');
                 return null;
             }
         } catch (error) {
             console.error('Error removing from favorites:', error);
-            marketplace.showNotification('Erreur lors de la suppression des favoris', 'error');
+            Local-links.showNotification('Erreur lors de la suppression des favoris', 'error');
             return null;
         }
     }
@@ -180,15 +180,15 @@ class ReviewsAPI {
             const data = await response.json();
             
             if (data.success) {
-                marketplace.showNotification(data.message, 'success');
+                Local-links.showNotification(data.message, 'success');
                 return data;
             } else {
-                marketplace.showNotification(data.message, 'error');
+                Local-links.showNotification(data.message, 'error');
                 return null;
             }
         } catch (error) {
             console.error('Error adding review:', error);
-            marketplace.showNotification('Erreur lors de l\'ajout de l\'avis', 'error');
+            Local-links.showNotification('Erreur lors de l\'ajout de l\'avis', 'error');
             return null;
         }
     }
@@ -232,15 +232,15 @@ class OrdersAPI {
             const data = await response.json();
             
             if (data.success) {
-                marketplace.showNotification(data.message, 'success');
+                Local-links.showNotification(data.message, 'success');
                 return data;
             } else {
-                marketplace.showNotification(data.message, 'error');
+                Local-links.showNotification(data.message, 'error');
                 return null;
             }
         } catch (error) {
             console.error('Error updating order status:', error);
-            marketplace.showNotification('Erreur lors de la mise à jour du statut', 'error');
+            Local-links.showNotification('Erreur lors de la mise à jour du statut', 'error');
             return null;
         }
     }
@@ -310,15 +310,15 @@ class MerchantAPI {
             const data = await response.json();
             
             if (data.success) {
-                marketplace.showNotification(data.message, 'success');
+                Local-links.showNotification(data.message, 'success');
                 return data;
             } else {
-                marketplace.showNotification(data.message, 'error');
+                Local-links.showNotification(data.message, 'error');
                 return null;
             }
         } catch (error) {
             console.error('Error updating order status:', error);
-            marketplace.showNotification('Erreur lors de la mise à jour du statut', 'error');
+            Local-links.showNotification('Erreur lors de la mise à jour du statut', 'error');
             return null;
         }
     }
@@ -371,7 +371,7 @@ class FormHandler {
             }
         }
         
-        marketplace.showLoading();
+        Local-links.showLoading();
         
         try {
             const response = await fetch(url, {
@@ -385,19 +385,19 @@ class FormHandler {
             const result = await response.json();
             
             if (result.success) {
-                marketplace.showNotification(result.message || 'Opération réussie', 'success');
+                Local-links.showNotification(result.message || 'Opération réussie', 'success');
                 return result;
             } else {
                 const errorMessage = result.errors ? Object.values(result.errors).flat().join(', ') : result.message;
-                marketplace.showNotification(errorMessage || 'Erreur lors de l\'opération', 'error');
+                Local-links.showNotification(errorMessage || 'Erreur lors de l\'opération', 'error');
                 return null;
             }
         } catch (error) {
             console.error('Error submitting form:', error);
-            marketplace.showNotification('Erreur lors de la soumission du formulaire', 'error');
+            Local-links.showNotification('Erreur lors de la soumission du formulaire', 'error');
             return null;
         } finally {
-            marketplace.hideLoading();
+            Local-links.hideLoading();
         }
     }
 }
@@ -413,7 +413,7 @@ class RealTimeUpdates {
     
     static async checkForUpdates() {
         // Update cart count
-        marketplace.updateCartCount();
+        Local-links.updateCartCount();
         
         // Check for new notifications if merchant
         if (window.location.pathname.includes('/commercants/')) {

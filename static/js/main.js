@@ -1,4 +1,4 @@
-// Main JavaScript file for Marketplace App
+// Main JavaScript file for Local-links App
 
 // Global variables
 let cartCount = 0;
@@ -12,9 +12,6 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeApp() {
     // Initialize cart count
     updateCartCount();
-    
-    // Initialize pull to refresh
-    initializePullToRefresh();
     
     // Initialize search functionality
     initializeSearch();
@@ -58,58 +55,6 @@ function updateCartCount() {
     .catch(error => console.error('Error updating cart count:', error));
 }
 
-// Pull to refresh
-function initializePullToRefresh() {
-    let startY = 0;
-    let isPulling = false;
-    const pullThreshold = 80;
-    
-    const body = document.body;
-    const pullIndicator = document.createElement('div');
-    pullIndicator.className = 'fixed top-0 left-0 right-0 h-20 bg-primary-500 flex items-center justify-center text-white z-50 transform -translate-y-full transition-transform duration-300';
-    pullIndicator.innerHTML = '<i class="fas fa-arrow-down mr-2"></i>Tirer pour rafraîchir';
-    body.appendChild(pullIndicator);
-    
-    body.addEventListener('touchstart', (e) => {
-        if (window.scrollY === 0) {
-            startY = e.touches[0].clientY;
-            isPulling = true;
-        }
-    });
-    
-    body.addEventListener('touchmove', (e) => {
-        if (!isPulling) return;
-        
-        const currentY = e.touches[0].clientY;
-        const pullDistance = currentY - startY;
-        
-        if (pullDistance > 0 && pullDistance < pullThreshold * 2) {
-            pullIndicator.style.transform = `translateY(${Math.min(pullDistance - pullThreshold, 0)}px)`;
-            
-            if (pullDistance > pullThreshold) {
-                pullIndicator.innerHTML = '<i class="fas fa-arrow-up mr-2"></i>Relâcher pour rafraîchir';
-                pullIndicator.classList.add('bg-primary-600');
-            } else {
-                pullIndicator.innerHTML = '<i class="fas fa-arrow-down mr-2"></i>Tirer pour rafraîchir';
-                pullIndicator.classList.remove('bg-primary-600');
-            }
-        }
-    });
-    
-    body.addEventListener('touchend', () => {
-        if (!isPulling) return;
-        isPulling = false;
-        
-        const pullDistance = parseInt(pullIndicator.style.transform.match(/-?\d+/)?.[0] || 0);
-        
-        if (pullDistance >= 0) {
-            // Refresh the page
-            location.reload();
-        } else {
-            pullIndicator.style.transform = 'translateY(-100%)';
-        }
-    });
-}
 
 // Search functionality
 function initializeSearch() {
@@ -425,7 +370,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // Export functions for global use
-window.marketplace = {
+window.Local-links = {
     showLoading,
     hideLoading,
     showNotification,

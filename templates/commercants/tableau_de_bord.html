@@ -399,8 +399,8 @@ const API = {
     }
 };
 
-// Marketplace utilities
-const marketplace = {
+// Local-links utilities
+const Local-links = {
     showLoading() {
         // Implement loading indicator
         console.log('Loading...');
@@ -454,12 +454,12 @@ function updateNotificationBadge(count) {
 
 // Refresh data
 function refreshData() {
-    marketplace.showLoading();
+    Local-links.showLoading();
     
     setTimeout(() => {
         loadDashboardData();
-        marketplace.hideLoading();
-        marketplace.showNotification('Données actualisées', 'success');
+        Local-links.hideLoading();
+        Local-links.showNotification('Données actualisées', 'success');
     }, 1000);
 }
 
@@ -542,12 +542,12 @@ function editProduct(productId) {
 }
 
 function viewProductStats(productId) {
-    marketplace.showNotification('Statistiques du produit bientôt disponibles', 'info');
+    Local-links.showNotification('Statistiques du produit bientôt disponibles', 'info');
 }
 
 // Chart placeholder
 function updateChart(period) {
-    marketplace.showNotification(`Graphique des ${period} derniers jours`, 'info');
+    Local-links.showNotification(`Graphique des ${period} derniers jours`, 'info');
 }
 
 // Initialize

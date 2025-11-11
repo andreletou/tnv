@@ -1,608 +1,655 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GGZEM - Votre marché local</title>
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Local-Links - Votre marché local{% endblock %}
+
+{% block extra_css %}
+<!-- Swiper CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css">
+
+<style>
+    :root {
+        --primary-color: #038f2dff;
+        --secondary-color: #04c0a1ff;
+        --dark-color: #2D3436;
+        --light-bg: #F8F9FA;
+        --card-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        --promo-gradient: linear-gradient(135deg, #FF6B6B, #FF8E53);
+        --discount-color: #E74C3C;
+    }
     
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Swiper CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css">
+    .app-header {
+        background: #069631ff;
+        color: white;
+        padding: 15px 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
     
-    <style>
-        :root {
-            --primary-color: #038f2dff;
-            --secondary-color: #04c0a1ff;
-            --dark-color: #2D3436;
-            --light-bg: #F8F9FA;
-            --card-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            --promo-gradient: linear-gradient(135deg, #FF6B6B, #FF8E53);
-            --discount-color: #E74C3C;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--light-bg);
-            color: var(--dark-color);
-            padding-bottom: 70px;
-            overflow-x: hidden;
-        }
-        
-        .app-header {
-            background: #069631ff;
-            color: white;
-            padding: 15px 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        
-        .app-header .logo {
-            font-size: 24px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-        }
-        
-        .app-header .logo i {
-            margin-right: 10px;
-            font-size: 28px;
-        }
-        
-        .user-info {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--primary-color);
-            font-weight: bold;
-        }
-        
-        .main-content {
-            padding: 20px;
-        }
-        
-        .welcome-section {
-            margin-bottom: 25px;
-        }
-        
-        .welcome-section h2 {
-            font-size: 22px;
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-        
-        .welcome-section p {
-            color: #636e72;
-            font-size: 16px;
-        }
-        
+    .app-header .logo {
+        font-size: 24px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+    }
+    
+    .app-header .logo i {
+        margin-right: 10px;
+        font-size: 28px;
+    }
+    
+    .user-info {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary-color);
+        font-weight: bold;
+    }
+    
+    .main-content {
+        padding: 20px;
+        padding-bottom: 80px;
+        min-height: calc(100vh - 140px);
+    }
+    
+    .welcome-section {
+        margin-bottom: 25px;
+    }
+    
+    .welcome-section h2 {
+        font-size: 22px;
+        font-weight: 600;
+        margin-bottom: 5px;
+        color: var(--dark-color);
+    }
+    
+    .welcome-section p {
+        color: #636e72;
+        font-size: 16px;
+    }
+    
+    .feature-cards {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+    
+    .feature-card {
+        background-color: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: var(--card-shadow);
+        text-align: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 140px;
+        border: none;
+        text-decoration: none;
+        color: inherit;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .feature-card i {
+        font-size: 32px;
+        margin-bottom: 10px;
+        color: var(--primary-color);
+    }
+    
+    .feature-card h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 0;
+        color: var(--dark-color);
+    }
+    
+    .feature-card.primary {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+    }
+    
+    .feature-card.primary i {
+        color: white;
+    }
+    
+    /* Section Promotions améliorée */
+    .section-container {
+        margin-bottom: 30px;
+    }
+    
+    .section-title {
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: var(--dark-color);
+    }
+    
+    .section-title i {
+        margin-right: 10px;
+        color: var(--primary-color);
+    }
+    
+    .section-title a {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: normal;
+    }
+    
+    .promotionSwiper {
+        width: 100%;
+        height: 220px;
+        border-radius: 15px;
+        overflow: hidden;
+        margin-bottom: 0;
+    }
+    
+    .swiper-slide {
+        background-position: center;
+        background-size: cover;
+        position: relative;
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    
+    .promotion-card {
+        width: 100%;
+        height: 100%;
+        background-size: cover;
+        background-position: center;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        padding: 15px;
+        color: white;
+    }
+    
+    .promotion-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0.2));
+        z-index: 1;
+    }
+    
+    .promotion-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: var(--discount-color);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: bold;
+        z-index: 2;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    
+    .promotion-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .promotion-title {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 5px;
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+    }
+    
+    .promotion-price {
+        font-size: 20px;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .promotion-original-price {
+        font-size: 14px;
+        text-decoration: line-through;
+        opacity: 0.8;
+        margin-right: 8px;
+    }
+    
+    .promotion-shop {
+        font-size: 12px;
+        opacity: 0.9;
+        margin-top: 5px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .promotion-shop i {
+        margin-right: 5px;
+    }
+    
+    .swiper-pagination {
+        bottom: 10px !important;
+    }
+    
+    .swiper-pagination-bullet {
+        background: white;
+        opacity: 0.5;
+        width: 8px;
+        height: 8px;
+    }
+    
+    .swiper-pagination-bullet-active {
+        background: var(--primary-color);
+        opacity: 1;
+    }
+    
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .product-card {
+        background-color: white;
+        border-radius: 15px;
+        padding: 15px;
+        box-shadow: var(--card-shadow);
+        text-align: center;
+        transition: transform 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-3px);
+    }
+    
+    .product-image {
+        width: 100%;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .product-name {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 5px;
+        color: var(--dark-color);
+        line-height: 1.3;
+        height: 36px;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+    
+    .product-shop {
+        font-size: 12px;
+        color: #636e72;
+        margin-bottom: 8px;
+    }
+    
+    .product-price {
+        font-size: 16px;
+        font-weight: bold;
+        color: var(--primary-color);
+        margin-bottom: 5px;
+    }
+    
+    .product-rating {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        color: #636e72;
+    }
+    
+    .product-rating i {
+        color: gold;
+        margin-right: 3px;
+    }
+    
+    .shops-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .shop-card {
+        background-color: white;
+        border-radius: 15px;
+        padding: 15px;
+        box-shadow: var(--card-shadow);
+        text-align: center;
+        transition: transform 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .shop-card:hover {
+        transform: translateY(-3px);
+    }
+    
+    .shop-image {
+        width: 100%;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .shop-name {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 5px;
+        color: var(--dark-color);
+    }
+    
+    .shop-category {
+        font-size: 12px;
+        color: #636e72;
+        margin-bottom: 8px;
+    }
+    
+    .shop-rating {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+    }
+    
+    .shop-rating i {
+        color: gold;
+        margin-right: 5px;
+    }
+    
+    .no-promotions {
+        text-align: center;
+        padding: 40px 20px;
+        background-color: white;
+        border-radius: 15px;
+        box-shadow: var(--card-shadow);
+    }
+    
+    .no-promotions i {
+        font-size: 48px;
+        color: #ddd;
+        margin-bottom: 15px;
+    }
+    
+    .no-promotions p {
+        color: #636e72;
+        margin-bottom: 20px;
+    }
+    
+    .btn-explore {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 25px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+        transition: transform 0.2s ease;
+    }
+    
+    .btn-explore:hover {
+        transform: translateY(-2px);
+        color: white;
+    }
+    
+    .auth-section {
+        background: white;
+        border-radius: 15px;
+        padding: 30px 20px;
+        box-shadow: var(--card-shadow);
+        text-align: center;
+        margin-top: 20px;
+    }
+    
+    .auth-buttons {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 20px;
+    }
+    
+    @media (max-width: 480px) {
         .feature-cards {
-            display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 30px;
+            gap: 10px;
         }
         
         .feature-card {
-            background-color: white;
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: var(--card-shadow);
-            text-align: center;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 140px;
-        }
-        
-        .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            height: 120px;
+            padding: 15px;
         }
         
         .feature-card i {
-            font-size: 32px;
-            margin-bottom: 10px;
-            color: var(--primary-color);
+            font-size: 28px;
         }
         
         .feature-card h3 {
-            font-size: 16px;
-            font-weight: 600;
-            margin: 0;
-        }
-        
-        .feature-card.primary {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-        }
-        
-        .feature-card.primary i {
-            color: white;
-        }
-        
-        /* Section Promotions améliorée */
-        .promotion-section {
-            margin-bottom: 30px;
-        }
-        
-        .section-title {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        .section-title i {
-            margin-right: 10px;
-            color: var(--primary-color);
-        }
-        
-        .section-title a {
-            color: var(--primary-color);
-            text-decoration: none;
             font-size: 14px;
-            font-weight: normal;
         }
         
         .promotionSwiper {
-            width: 100%;
-            height: 220px;
-            border-radius: 15px;
-            overflow: hidden;
-        }
-        
-        .swiper-slide {
-            background-position: center;
-            background-size: cover;
-            position: relative;
-            border-radius: 15px;
-            overflow: hidden;
-        }
-        
-        .promotion-card {
-            width: 100%;
-            height: 100%;
-            background-size: cover;
-            background-position: center;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            padding: 15px;
-            color: white;
-        }
-        
-        .promotion-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0.2));
-            z-index: 1;
-        }
-        
-        .promotion-badge {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: var(--discount-color);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: bold;
-            z-index: 2;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        }
-        
-        .promotion-content {
-            position: relative;
-            z-index: 2;
+            height: 200px;
         }
         
         .promotion-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 5px;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+            font-size: 16px;
         }
         
         .promotion-price {
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 5px;
+            font-size: 18px;
         }
         
-        .promotion-original-price {
-            font-size: 14px;
-            text-decoration: line-through;
-            opacity: 0.8;
-            margin-right: 8px;
+        .products-grid,
+        .shops-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
         }
         
-        .promotion-shop {
-            font-size: 12px;
-            opacity: 0.9;
-            margin-top: 5px;
-            display: flex;
-            align-items: center;
+        .product-image,
+        .shop-image {
+            height: 100px;
         }
-        
-        .promotion-shop i {
-            margin-right: 5px;
-        }
-        
-        .swiper-pagination-bullet {
-            background: white;
-            opacity: 0.5;
-        }
-        
-        .swiper-pagination-bullet-active {
-            background: var(--primary-color);
-            opacity: 1;
-        }
-        
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: white;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-            z-index: 100;
-            padding: 8px 0;
-        }
-        
-        .nav-items {
-            display: flex;
-            justify-content: space-around;
-        }
-        
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: #636e72;
-            text-decoration: none;
-            transition: color 0.3s ease;
-            padding: 5px;
-        }
-        
-        .nav-item.active {
-            color: var(--primary-color);
-        }
-        
-        .nav-item i {
-            font-size: 20px;
-            margin-bottom: 5px;
-        }
-        
-        .nav-item span {
-            font-size: 12px;
-        }
-        
-        .quick-actions {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-        
-        .quick-action-btn {
-            background-color: white;
-            border: none;
-            border-radius: 10px;
-            padding: 12px;
-            box-shadow: var(--card-shadow);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex: 1;
-            margin: 0 5px;
-            cursor: pointer;
-            transition: transform 0.2s ease;
-        }
-        
-        .quick-action-btn:active {
-            transform: scale(0.95);
-        }
-        
-        .quick-action-btn i {
-            font-size: 20px;
-            color: var(--primary-color);
-        }
-        
-        .quick-action-btn span {
-            margin-left: 8px;
-            font-size: 14px;
-            font-weight: 500;
-        }
-        
-        .stats-container {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-        
-        .stat-card {
-            background-color: white;
-            border-radius: 10px;
-            padding: 15px;
-            box-shadow: var(--card-shadow);
-            text-align: center;
-            flex: 1;
-            margin: 0 5px;
-        }
-        
-        .stat-card .number {
-            font-size: 24px;
-            font-weight: bold;
-            color: var(--primary-color);
-        }
-        
-        .stat-card .label {
-            font-size: 12px;
-            color: #636e72;
-            margin-top: 5px;
-        }
-        
-        .no-promotions {
-            text-align: center;
-            padding: 40px 20px;
-            background-color: white;
-            border-radius: 15px;
-            box-shadow: var(--card-shadow);
-        }
-        
-        .no-promotions i {
-            font-size: 48px;
-            color: #ddd;
-            margin-bottom: 15px;
-        }
-        
-        .no-promotions p {
-            color: #636e72;
-            margin-bottom: 20px;
-        }
-        
-        .btn-explore {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 25px;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-block;
-        }
-        
-        @media (max-width: 480px) {
-            .feature-cards {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 10px;
-            }
-            
-            .feature-card {
-                height: 120px;
-                padding: 15px;
-            }
-            
-            .feature-card i {
-                font-size: 28px;
-            }
-            
-            .feature-card h3 {
-                font-size: 14px;
-            }
-            
-            .promotionSwiper {
-                height: 200px;
-            }
-            
-            .promotion-title {
-                font-size: 16px;
-            }
-            
-            .promotion-price {
-                font-size: 18px;
-            }
-        }
-    </style>
-</head>
-<body>
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
     <header class="app-header d-flex justify-content-between align-items-center">
         <h1 class="logo">
             <i class="fas fa-shopping-basket"></i> Local - Link
         </h1>
-        <p>Votre marché de proximité</p>
+        <p class="mb-0 d-none d-md-block">Votre marché de proximité</p>
         <div class="user-info d-flex align-items-center">
+            {% if user.is_authenticated %}
+            <div class="user-avatar">
+                {{ user.first_name|first|default:user.username|first }}
+            </div>
+            {% else %}
+            <a href="{% url 'clients:connexion' %}" class="text-white text-decoration-none">
+                <i class="fas fa-sign-in-alt"></i> Connexion
+            </a>
+            {% endif %}
+        </div>
     </header>
 
     <!-- Contenu principal -->
     <main class="main-content">
         <!-- Section de bienvenue -->
         <div class="welcome-section">
-            <h2>Bonjour !</h2>
+            <h2>Bonjour {% if user.is_authenticated %}{{ user.first_name|default:user.username }}{% endif %} !</h2>
             <p>Découvrez les meilleures offres près de chez vous</p>
         </div>
         
         <!-- Cartes de fonctionnalités -->
         <div class="feature-cards">
-            <div class="feature-card primary" onclick="window.location.href='{% url 'commercants:tableau_de_bord' %}'">
+            {% if user.is_authenticated and user.type_utilisateur == 'commercant' %}
+            <a href="{% url 'commercants:tableau_de_bord' %}" class="feature-card primary">
                 <i class="fas fa-store"></i>
                 <h3>Gérer ma boutique</h3>
-            </div>
-            <div class="feature-card" onclick="window.location.href='{% url 'clients:liste_boutiques' %}'">
+            </a>
+            {% else %}
+            <a href="{% url 'commercants:inscription' %}" class="feature-card primary">
+                <i class="fas fa-store"></i>
+                <h3>Ouvrir ma boutique</h3>
+            </a>
+            {% endif %}
+            
+            <a href="{% url 'clients:liste_boutiques' %}" class="feature-card">
                 <i class="fas fa-shopping-cart"></i>
                 <h3>Visiter le marché</h3>
-            </div>
-            <div class="feature-card" onclick="window.location.href='{% url 'commercants:inscription' %}'">
-                <i class="fas fa-plus-circle"></i>
-                <h3>Créer ma boutique</h3>
-            </div>
-            <div class="feature-card" onclick="window.location.href='{% url 'livraisons:carte' %}'">
-                <i class="fas fa-truck"></i>
-                <h3>Livraison</h3>
-            </div>
-            <div class="feature-card" onclick="window.location.href='{% url 'clients:mes_commandes' %}'">
+            </a>
+            
+            <a href="{% url 'clients:panier' %}" class="feature-card">
+                <i class="fas fa-shopping-basket"></i>
+                <h3>Mon panier</h3>
+            </a>
+            
+            <a href="{% url 'clients:mes_commandes' %}" class="feature-card">
                 <i class="fas fa-receipt"></i>
                 <h3>Mes commandes</h3>
-            </div>
-            <div class="feature-card" onclick="window.location.href='{% url 'clients:mes_favoris' %}'">
+            </a>
+            
+            <a href="{% url 'clients:mes_favoris' %}" class="feature-card">
                 <i class="fas fa-heart"></i>
                 <h3>Favoris</h3>
-            </div>
+            </a>
+            
+            <a href="{% url 'clients:profil' %}" class="feature-card">
+                <i class="fas fa-user"></i>
+                <h3>Mon profil</h3>
+            </a>
         </div>
 
-        <!-- Section Promotions améliorée -->
-        <section class="promotion-section">
-            <div class="container-fluid">
-                <h2 class="section-title">
-                    <i class="fas fa-tags"></i>
-                    Promotions du jour
-                    <a href="{% url 'clients:liste_boutiques' %}?promotions=true">Voir tout</a>
-                </h2>
-                
-                <div id="promotions-container">
-                    <!-- Contenu chargé dynamiquement par JavaScript -->
-                    <div class="swiper promotionSwiper">
-                        <div class="swiper-wrapper" id="promotions-wrapper">
-                            <!-- Les promotions seront chargées ici dynamiquement -->
-                        </div>
-                        <div class="swiper-pagination"></div>
+        <!-- Section Promotions -->
+        <section class="section-container">
+            <h2 class="section-title">
+                <i class="fas fa-tags"></i>
+                Promotions du jour
+                <a href="{% url 'clients:recherche' %}?tri=promotion">Voir tout</a>
+            </h2>
+            
+            <div id="promotions-container">
+                <div class="swiper promotionSwiper">
+                    <div class="swiper-wrapper" id="promotions-wrapper">
+                        <!-- Les promotions seront chargées ici dynamiquement -->
                     </div>
+                    <div class="swiper-pagination"></div>
                 </div>
             </div>
         </section>
 
+        <!-- Section Produits Tendance -->
+        <section class="section-container">
+            <h2 class="section-title">
+                <i class="fas fa-fire"></i>
+                Produits tendance
+                <a href="{% url 'clients:recherche' %}?tri=populaire">Voir tout</a>
+            </h2>
+            
+            <div class="products-grid" id="trending-products">
+                <!-- Produits tendance chargés dynamiquement -->
+            </div>
+        </section>
+
         <!-- Section Boutiques populaires -->
-        <section class="popular-shops-section">
+        <section class="section-container">
             <h2 class="section-title">
                 <i class="fas fa-store"></i>
                 Boutiques populaires
+                <a href="{% url 'clients:liste_boutiques' %}">Voir tout</a>
             </h2>
             
-            <div class="row g-3" id="popular-shops">
+            <div class="shops-grid" id="popular-shops">
                 <!-- Boutiques chargées dynamiquement -->
             </div>
         </section>
+
+        <!-- Section pour utilisateurs non connectés -->
+        {% if not user.is_authenticated %}
+        <section class="section-container">
+            <div class="auth-section">
+                <i class="fas fa-user-plus text-primary" style="font-size: 48px; margin-bottom: 15px;"></i>
+                <h4>Rejoignez notre communauté</h4>
+                <p class="text-muted">Connectez-vous pour profiter de toutes les fonctionnalités</p>
+                <div class="auth-buttons">
+                    <a href="{% url 'clients:inscription' %}" class="btn-explore">
+                        <i class="fas fa-user-plus me-2"></i>S'inscrire
+                    </a>
+                    <a href="{% url 'clients:connexion' %}" class="btn-explore" style="background: var(--dark-color);">
+                        <i class="fas fa-sign-in-alt me-2"></i>Se connecter
+                    </a>
+                </div>
+            </div>
+        </section>
+        {% endif %}
     </main>
+</div>
+{% endblock %}
 
-    <!-- Navigation inférieure -->
-    <nav class="bottom-nav">
-        <div class="nav-items">
-            <a href="{% url 'clients:accueil' %}" class="nav-item active">
-                <i class="fas fa-home"></i>
-                <span>Accueil</span>
-            </a>
-            <a href="{% url 'clients:liste_boutiques' %}" class="nav-item">
-                <i class="fas fa-store"></i>
-                <span>Boutiques</span>
-            </a>
-            <a href="{% url 'clients:panier' %}" class="nav-item">
-                <i class="fas fa-shopping-cart"></i>
-                <span>Panier</span>
-            </a>
-            <a href="{% url 'clients:profil' %}" class="nav-item">
-                <i class="fas fa-user"></i>
-                <span>Profil</span>
-            </a>
-        </div>
-    </nav>
+{% block extra_js %}
+<!-- Swiper JS -->
+<script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
 
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
-    
-    <script>
-        // Initialisation du Swiper
-        document.addEventListener('DOMContentLoaded', function() {
-            // Charger les promotions depuis l'API
-            loadPromotions();
+<script>
+    // Initialisation du Swiper
+    document.addEventListener('DOMContentLoaded', function() {
+        // Charger les promotions depuis l'API
+        loadPromotions();
+        
+        // Charger les produits tendance
+        loadTrendingProducts();
+        
+        // Charger les boutiques populaires
+        loadPopularShops();
+        
+        // Initialiser Swiper après le chargement des promotions
+        setTimeout(initSwiper, 500);
+    });
+
+    // Fonction pour charger les promotions
+    async function loadPromotions() {
+        try {
+            const response = await fetch('/clients/api/produits/suggestions/?limit=6');
+            const data = await response.json();
             
-            // Charger les boutiques populaires
-            loadPopularShops();
-            
-            // Initialiser Swiper après le chargement des promotions
-            setTimeout(initSwiper, 500);
-        });
-
-        // Fonction pour charger les promotions
-        function loadPromotions() {
-            // Simulation de données de promotions (remplacer par un appel API réel)
-            const promotions = [
-                {
-                    id: 1,
-                    title: "Fruits Frais Bio",
-                    shop: "Marché Bio Local",
-                    originalPrice: 15000,
-                    discountPrice: 12000,
-                    discount: 20,
-                    image: "https://picsum.photos/seed/fruits/400/200.jpg",
-                    shopId: 1
-                },
-                {
-                    id: 2,
-                    title: "Légumes de Saison",
-                    shop: "Primeur du Coin",
-                    originalPrice: 8000,
-                    discountPrice: 6500,
-                    discount: 19,
-                    image: "https://picsum.photos/seed/legumes/400/200.jpg",
-                    shopId: 2
-                },
-                {
-                    id: 3,
-                    title: "Pain Artisanal",
-                    shop: "Boulangerie Tradition",
-                    originalPrice: 2500,
-                    discountPrice: 2000,
-                    discount: 20,
-                    image: "https://picsum.photos/seed/pain/400/200.jpg",
-                    shopId: 3
-                },
-                {
-                    id: 4,
-                    title: "Fromages Locaux",
-                    shop: "Crémerie du Village",
-                    originalPrice: 12000,
-                    discountPrice: 9500,
-                    discount: 21,
-                    image: "https://picsum.photos/seed/fromage/400/200.jpg",
-                    shopId: 4
-                }
-            ];
-
             const promotionsWrapper = document.getElementById('promotions-wrapper');
             
-            if (promotions.length === 0) {
+            if (!data.success || !data.suggestions || data.suggestions.length === 0) {
                 document.getElementById('promotions-container').innerHTML = `
                     <div class="no-promotions">
                         <i class="fas fa-tags"></i>
@@ -617,23 +664,38 @@
 
             promotionsWrapper.innerHTML = '';
             
-            promotions.forEach(promo => {
+            data.suggestions.forEach((promo, index) => {
                 const slide = document.createElement('div');
                 slide.className = 'swiper-slide';
-                slide.onclick = () => viewShop(promo.shopId);
+                slide.onclick = () => viewProduct(promo.id);
+                
+                // Calculer la réduction si en promotion
+                let discountHtml = '';
+                let currentPrice = promo.prix;
+                let originalPrice = '';
+                
+                if (promo.est_en_promotion && promo.prix_promotionnel) {
+                    currentPrice = promo.prix_promotionnel;
+                    originalPrice = promo.prix;
+                    const discount = Math.round((1 - promo.prix_promotionnel / promo.prix) * 100);
+                    discountHtml = `<div class="promotion-badge">-${discount}%</div>`;
+                }
+                
+                // Image de fallback si aucune image
+                const imageUrl = promo.image || `https://picsum.photos/seed/product${index+1}/400/200.jpg`;
                 
                 slide.innerHTML = `
-                    <div class="promotion-card" style="background-image: url('${promo.image}')">
-                        <div class="promotion-badge">-${promo.discount}%</div>
+                    <div class="promotion-card" style="background-image: url('${imageUrl}')">
+                        ${discountHtml}
                         <div class="promotion-content">
-                            <div class="promotion-title">${promo.title}</div>
+                            <div class="promotion-title">${promo.nom}</div>
                             <div class="promotion-price">
-                                <span class="promotion-original-price">${formatPrice(promo.originalPrice)}</span>
-                                ${formatPrice(promo.discountPrice)}
+                                ${originalPrice ? `<span class="promotion-original-price">${formatPrice(originalPrice)}</span>` : ''}
+                                ${formatPrice(currentPrice)}
                             </div>
                             <div class="promotion-shop">
                                 <i class="fas fa-store"></i>
-                                ${promo.shop}
+                                ${promo.boutique_nom || 'Boutique'}
                             </div>
                         </div>
                     </div>
@@ -641,67 +703,194 @@
                 
                 promotionsWrapper.appendChild(slide);
             });
+        } catch (error) {
+            console.error('Erreur lors du chargement des promotions:', error);
+            showFallbackPromotions();
         }
+    }
 
-        // Fonction pour charger les boutiques populaires
-        function loadPopularShops() {
-            // Simulation de données de boutiques (remplacer par un appel API réel)
-            const shops = [
-                {
-                    id: 1,
-                    name: "Marché Bio Local",
-                    category: "Alimentation",
-                    rating: 4.8,
-                    image: "https://picsum.photos/seed/bio/300/200.jpg"
-                },
-                {
-                    id: 2,
-                    name: "Primeur du Coin",
-                    category: "Fruits & Légumes",
-                    rating: 4.6,
-                    image: "https://picsum.photos/seed/primeur/300/200.jpg"
-                },
-                {
-                    id: 3,
-                    name: "Boulangerie Tradition",
-                    category: "Boulangerie",
-                    rating: 4.9,
-                    image: "https://picsum.photos/seed/boulangerie/300/200.jpg"
-                },
-                {
-                    id: 4,
-                    name: "Crémerie du Village",
-                    category: "Fromagerie",
-                    rating: 4.7,
-                    image: "https://picsum.photos/seed/cremerie/300/200.jpg"
-                }
-            ];
-
-            const shopsContainer = document.getElementById('popular-shops');
+    // Fonction pour charger les produits tendance
+    async function loadTrendingProducts() {
+        try {
+            const response = await fetch('/clients/api/produits/suggestions/?limit=4');
+            const data = await response.json();
             
-            shops.forEach(shop => {
-                const col = document.createElement('div');
-                col.className = 'col-6';
-                col.onclick = () => viewShop(shop.id);
+            const trendingContainer = document.getElementById('trending-products');
+            
+            if (!data.success || !data.suggestions) {
+                showFallbackTrendingProducts();
+                return;
+            }
+
+            trendingContainer.innerHTML = '';
+            
+            data.suggestions.forEach((product, index) => {
+                const productCard = document.createElement('div');
+                productCard.className = 'product-card';
+                productCard.onclick = () => viewProduct(product.id);
                 
-                col.innerHTML = `
-                    <div class="feature-card">
-                        <img src="${shop.image}" style="width: 100%; height: 80px; object-fit: cover; border-radius: 10px; margin-bottom: 10px;">
-                        <h3 style="font-size: 14px;">${shop.name}</h3>
-                        <small style="color: #666;">${shop.category}</small>
-                        <div style="margin-top: 5px;">
-                            <i class="fas fa-star" style="color: gold; font-size: 12px;"></i>
-                            <small>${shop.rating}</small>
-                        </div>
+                const imageUrl = product.image || `https://picsum.photos/seed/trending${index+1}/300/200.jpg`;
+                const price = product.est_en_promotion && product.prix_promotionnel ? product.prix_promotionnel : product.prix;
+                
+                productCard.innerHTML = `
+                    <img src="${imageUrl}" class="product-image" alt="${product.nom}">
+                    <div class="product-name">${product.nom}</div>
+                    <div class="product-shop">${product.boutique_nom || 'Boutique'}</div>
+                    <div class="product-price">${formatPrice(price)}</div>
+                    <div class="product-rating">
+                        <i class="fas fa-star"></i>
+                        <span>4.5</span>
                     </div>
                 `;
                 
-                shopsContainer.appendChild(col);
+                trendingContainer.appendChild(productCard);
             });
+        } catch (error) {
+            console.error('Erreur lors du chargement des produits tendance:', error);
+            showFallbackTrendingProducts();
         }
+    }
 
-        // Initialiser Swiper
-        function initSwiper() {
+    // Fonction pour charger les boutiques populaires
+    async function loadPopularShops() {
+        try {
+            // Simuler le chargement des boutiques
+            const shops = [
+                { id: 1, name: "Marché Bio Local", category: "Alimentation", rating: 4.8 },
+                { id: 2, name: "Primeur du Coin", category: "Fruits & Légumes", rating: 4.6 },
+                { id: 3, name: "Boulangerie Tradition", category: "Boulangerie", rating: 4.9 },
+                { id: 4, name: "Crémerie du Village", category: "Fromagerie", rating: 4.7 }
+            ];
+            
+            const shopsContainer = document.getElementById('popular-shops');
+            
+            shopsContainer.innerHTML = '';
+            
+            shops.forEach((shop, index) => {
+                const shopCard = document.createElement('div');
+                shopCard.className = 'shop-card';
+                shopCard.onclick = () => viewShop(shop.id);
+                
+                const imageUrl = `https://picsum.photos/seed/shop${index+1}/300/200.jpg`;
+                
+                shopCard.innerHTML = `
+                    <img src="${imageUrl}" class="shop-image" alt="${shop.name}">
+                    <div class="shop-name">${shop.name}</div>
+                    <div class="shop-category">${shop.category}</div>
+                    <div class="shop-rating">
+                        <i class="fas fa-star"></i>
+                        <span>${shop.rating}</span>
+                    </div>
+                `;
+                
+                shopsContainer.appendChild(shopCard);
+            });
+        } catch (error) {
+            console.error('Erreur lors du chargement des boutiques:', error);
+            showFallbackShops();
+        }
+    }
+
+    // Fallback pour les promotions
+    function showFallbackPromotions() {
+        const promotionsWrapper = document.getElementById('promotions-wrapper');
+        const fallbackPromotions = [
+            { title: "Fruits Frais Bio", shop: "Marché Bio Local", original: 15000, current: 12000, discount: 20 },
+            { title: "Légumes de Saison", shop: "Primeur du Coin", original: 8000, current: 6500, discount: 19 },
+            { title: "Pain Artisanal", shop: "Boulangerie Tradition", original: 2500, current: 2000, discount: 20 }
+        ];
+        
+        promotionsWrapper.innerHTML = '';
+        
+        fallbackPromotions.forEach((promo, index) => {
+            const slide = document.createElement('div');
+            slide.className = 'swiper-slide';
+            
+            slide.innerHTML = `
+                <div class="promotion-card" style="background-image: url('https://picsum.photos/seed/promo${index+1}/400/200.jpg')">
+                    <div class="promotion-badge">-${promo.discount}%</div>
+                    <div class="promotion-content">
+                        <div class="promotion-title">${promo.title}</div>
+                        <div class="promotion-price">
+                            <span class="promotion-original-price">${formatPrice(promo.original)}</span>
+                            ${formatPrice(promo.current)}
+                        </div>
+                        <div class="promotion-shop">
+                            <i class="fas fa-store"></i>
+                            ${promo.shop}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            promotionsWrapper.appendChild(slide);
+        });
+    }
+
+    // Fallback pour les produits tendance
+    function showFallbackTrendingProducts() {
+        const trendingContainer = document.getElementById('trending-products');
+        const fallbackProducts = [
+            { name: "Produit Populaire 1", shop: "Boutique Test", price: 8500 },
+            { name: "Produit Tendance 2", shop: "Boutique Test", price: 12000 },
+            { name: "Article en Vogue", shop: "Boutique Test", price: 7500 },
+            { name: "Produit Phare", shop: "Boutique Test", price: 9500 }
+        ];
+        
+        trendingContainer.innerHTML = '';
+        
+        fallbackProducts.forEach((product, index) => {
+            const productCard = document.createElement('div');
+            productCard.className = 'product-card';
+            
+            productCard.innerHTML = `
+                <img src="https://picsum.photos/seed/product${index+1}/300/200.jpg" class="product-image" alt="${product.name}">
+                <div class="product-name">${product.name}</div>
+                <div class="product-shop">${product.shop}</div>
+                <div class="product-price">${formatPrice(product.price)}</div>
+                <div class="product-rating">
+                    <i class="fas fa-star"></i>
+                    <span>4.5</span>
+                </div>
+            `;
+            
+            trendingContainer.appendChild(productCard);
+        });
+    }
+
+    // Fallback pour les boutiques
+    function showFallbackShops() {
+        const shopsContainer = document.getElementById('popular-shops');
+        const fallbackShops = [
+            { name: "Boutique Test 1", category: "Alimentation", rating: 4.5 },
+            { name: "Boutique Test 2", category: "Mode", rating: 4.3 },
+            { name: "Boutique Test 3", category: "Électronique", rating: 4.7 },
+            { name: "Boutique Test 4", category: "Maison", rating: 4.6 }
+        ];
+        
+        shopsContainer.innerHTML = '';
+        
+        fallbackShops.forEach((shop, index) => {
+            const shopCard = document.createElement('div');
+            shopCard.className = 'shop-card';
+            
+            shopCard.innerHTML = `
+                <img src="https://picsum.photos/seed/shop${index+1}/300/200.jpg" class="shop-image" alt="${shop.name}">
+                <div class="shop-name">${shop.name}</div>
+                <div class="shop-category">${shop.category}</div>
+                <div class="shop-rating">
+                    <i class="fas fa-star"></i>
+                    <span>${shop.rating}</span>
+                </div>
+            `;
+            
+            shopsContainer.appendChild(shopCard);
+        });
+    }
+
+    // Initialiser Swiper
+    function initSwiper() {
+        if (document.querySelector('.promotionSwiper')) {
             new Swiper('.promotionSwiper', {
                 slidesPerView: 1,
                 spaceBetween: 10,
@@ -716,19 +905,22 @@
                 },
             });
         }
+    }
 
-        // Fonction utilitaire pour formater les prix
-        function formatPrice(price) {
-            return new Intl.NumberFormat('fr-FR', {
-                style: 'currency',
-                currency: 'XOF'
-            }).format(price);
-        }
+    // Fonction utilitaire pour formater les prix
+    function formatPrice(price) {
+        if (!price) return '0 FCFA';
+        return new Intl.NumberFormat('fr-FR').format(price) + ' FCFA';
+    }
 
-        // Fonction pour voir une boutique
-        function viewShop(shopId) {
-            window.location.href = `/boutique/${shopId}/`;
-        }
-    </script>
-</body>
-</html>
+    // Fonction pour voir un produit
+    function viewProduct(productId) {
+        window.location.href = `/clients/produit/${productId}/`;
+    }
+
+    // Fonction pour voir une boutique
+    function viewShop(shopId) {
+        window.location.href = `/clients/boutique/${shopId}/`;
+    }
+</script>
+{% endblock %}

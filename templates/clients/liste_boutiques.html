@@ -2,7 +2,7 @@
 {% load static %}
 {% load custom_filters %}
 
-{% block title %}Boutiques - Marketplace{% endblock %}
+{% block title %}Boutiques - Local-links{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gray-50">
@@ -293,7 +293,7 @@ function filterByCategory(category) {
 function sortBoutiques(sort) {
     currentSort = sort;
     // In a real implementation, this would trigger an API call or page reload
-    marketplace.showNotification('Tri appliqué', 'success');
+    Local-links.showNotification('Tri appliqué', 'success');
 }
 
 function toggleFilterModal() {
@@ -327,7 +327,7 @@ function clearSearch() {
 }
 
 function toggleMapView() {
-    marketplace.showNotification('Vue carte bientôt disponible', 'info');
+    Local-links.showNotification('Vue carte bientôt disponible', 'info');
 }
 
 function toggleFavorite(boutiqueId) {
@@ -337,53 +337,24 @@ function toggleFavorite(boutiqueId) {
     if (isFavorited) {
         heartIcon.classList.remove('fas', 'text-red-500');
         heartIcon.classList.add('far', 'text-gray-400');
-        marketplace.showNotification('Boutique retirée des favoris', 'success');
+        Local-links.showNotification('Boutique retirée des favoris', 'success');
     } else {
         heartIcon.classList.remove('far', 'text-gray-400');
         heartIcon.classList.add('fas', 'text-red-500');
-        marketplace.showNotification('Boutique ajoutée aux favoris', 'success');
+        Local-links.showNotification('Boutique ajoutée aux favoris', 'success');
     }
 }
 
 function loadMoreBoutiques() {
-    marketplace.showLoading();
+    Local-links.showLoading();
     // Simulate loading more content
     setTimeout(() => {
-        marketplace.hideLoading();
-        marketplace.showNotification('Plus de boutiques bientôt disponibles', 'info');
+        Local-links.hideLoading();
+        Local-links.showNotification('Plus de boutiques bientôt disponibles', 'info');
     }, 1000);
 }
 
-// Pull to refresh for boutique list
-let startY = 0;
-let isPulling = false;
-
-document.addEventListener('touchstart', (e) => {
-    if (window.scrollY === 0) {
-        startY = e.touches[0].clientY;
-        isPulling = true;
-    }
-});
-
-document.addEventListener('touchmove', (e) => {
-    if (!isPulling) return;
-    
-    const currentY = e.touches[0].clientY;
-    const pullDistance = currentY - startY;
-    
-    if (pullDistance > 80) {
-        document.body.classList.add('pulling');
-    }
-});
-
-document.addEventListener('touchend', () => {
-    if (isPulling && document.body.classList.contains('pulling')) {
-        document.body.classList.remove('pulling');
-        location.reload();
-    }
-    isPulling = false;
-});
-
+ 
 // Search suggestions
 const searchInput = document.querySelector('input[name="search"]');
 if (searchInput) {

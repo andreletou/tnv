@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Inscription - Marketplace{% endblock %}
+{% block title %}Inscription - Local-links{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100">
@@ -47,7 +47,7 @@
                 <div class="w-16 h-16 bg-primary-600 rounded-2xl mx-auto mb-3 flex items-center justify-center">
                     <i class="fas fa-store text-white text-2xl"></i>
                 </div>
-                <h2 class="text-xl font-bold text-gray-900">Rejoignez Marketplace</h2>
+                <h2 class="text-xl font-bold text-gray-900">Rejoignez Local-links</h2>
                 <p class="text-gray-500 text-sm mt-1">Créez votre compte en 2 minutes</p>
             </div>
 
@@ -428,12 +428,12 @@ document.getElementById('registration-form').addEventListener('submit', async fu
     const password2 = document.getElementById('password2').value;
     
     if (password1 !== password2) {
-        marketplace.showNotification('Les mots de passe ne correspondent pas', 'error');
+        Local-links.showNotification('Les mots de passe ne correspondent pas', 'error');
         return;
     }
     
     if (!validatePassword(password1)) {
-        marketplace.showNotification('Le mot de passe ne respecte pas les exigences de sécurité', 'error');
+        Local-links.showNotification('Le mot de passe ne respecte pas les exigences de sécurité', 'error');
         return;
     }
     
@@ -469,7 +469,7 @@ document.getElementById('registration-form').addEventListener('submit', async fu
         }
     } catch (error) {
         console.error('Form submission error:', error);
-        marketplace.showNotification('Une erreur est survenue', 'error');
+        Local-links.showNotification('Une erreur est survenue', 'error');
         resetFormState();
     }
 });
@@ -485,7 +485,7 @@ function submitForm(formData) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            marketplace.showNotification(data.message, 'success');
+            Local-links.showNotification(data.message, 'success');
             setTimeout(() => {
                 window.location.href = data.redirect_url;
             }, 1500);
@@ -494,17 +494,17 @@ function submitForm(formData) {
             if (data.errors) {
                 Object.keys(data.errors).forEach(field => {
                     const error = data.errors[field][0];
-                    marketplace.showNotification(error, 'error');
+                    Local-links.showNotification(error, 'error');
                 });
             } else {
-                marketplace.showNotification(data.message || 'Une erreur est survenue', 'error');
+                Local-links.showNotification(data.message || 'Une erreur est survenue', 'error');
             }
             resetFormState();
         }
     })
     .catch(error => {
         console.error('Submission error:', error);
-        marketplace.showNotification('Erreur de connexion', 'error');
+        Local-links.showNotification('Erreur de connexion', 'error');
         resetFormState();
     });
 }
@@ -520,11 +520,11 @@ function resetFormState() {
 
 // Social login functions
 function loginWithGoogle() {
-    marketplace.showNotification('Connexion Google bientôt disponible', 'info');
+    Local-links.showNotification('Connexion Google bientôt disponible', 'info');
 }
 
 function loginWithFacebook() {
-    marketplace.showNotification('Connexion Facebook bientôt disponible', 'info');
+    Local-links.showNotification('Connexion Facebook bientôt disponible', 'info');
 }
 
 // Date input max (18 years ago)

@@ -97,9 +97,12 @@
                 <!-- Actions -->
                 <div class="p-4 bg-gray-50 border-t border-gray-100">
                     <div class="flex space-x-2">
-                        <button onclick="viewCommande({{ commande.id }})" class="flex-1 bg-primary text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
-                            Voir détails
-                        </button>
+                        <form method="post" action="{% url 'clients:detail_commande' commande.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="flex-1 bg-secondary text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
+                                Détail
+                            </button>
+                        </form>
                         {% if commande.statut == 'en_attente' or commande.statut == 'confirmee' %}
                         <button onclick="cancelCommande({{ commande.id }})" class="px-4 py-2 border border-red-300 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors">
                             Annuler

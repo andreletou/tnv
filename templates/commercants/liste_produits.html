@@ -428,12 +428,12 @@ function toggleProductStatus(productId) {
     const message = action === 'deactivate' ? 'désactiver' : 'activer';
     
     if (confirm(`Êtes-vous sûr de vouloir ${message} ce produit ?`)) {
-        marketplace.showLoading();
+        Local-links.showLoading();
         
         // Simulate API call
         setTimeout(() => {
-            marketplace.hideLoading();
-            marketplace.showNotification(`Produit ${message}d avec succès`, 'success');
+            Local-links.hideLoading();
+            Local-links.showNotification(`Produit ${message}d avec succès`, 'success');
             location.reload();
         }, 1000);
     }
@@ -444,17 +444,17 @@ function editProduct(productId) {
 }
 
 function viewProductStats(productId) {
-    marketplace.showNotification('Statistiques du produit bientôt disponibles', 'info');
+    Local-links.showNotification('Statistiques du produit bientôt disponibles', 'info');
 }
 
 function deleteProduct(productId) {
     if (confirm('Êtes-vous sûr de vouloir supprimer ce produit ? Cette action est irréversible.')) {
-        marketplace.showLoading();
+        Local-links.showLoading();
         
         // Simulate API call
         setTimeout(() => {
-            marketplace.hideLoading();
-            marketplace.showNotification('Produit supprimé avec succès', 'success');
+            Local-links.hideLoading();
+            Local-links.showNotification('Produit supprimé avec succès', 'success');
             location.reload();
         }, 1000);
     }
@@ -474,12 +474,12 @@ function closeAddProductModal() {
 
 // Load more products
 function loadMoreProducts() {
-    marketplace.showLoading();
+    Local-links.showLoading();
     
     // Simulate loading more products
     setTimeout(() => {
-        marketplace.hideLoading();
-        marketplace.showNotification('Plus de produits bientôt disponibles', 'info');
+        Local-links.hideLoading();
+        Local-links.showNotification('Plus de produits bientôt disponibles', 'info');
     }, 1000);
 }
 

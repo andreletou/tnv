@@ -1,4 +1,4 @@
-// Favorites functionality for Marketplace Togo
+// Favorites functionality for Local-Links
 
 class Favorites {
     constructor() {
@@ -13,7 +13,7 @@ class Favorites {
     }
 
     loadFavoritesFromStorage() {
-        const savedFavorites = localStorage.getItem('marketplace_favorites');
+        const savedFavorites = localStorage.getItem('Local-links_favorites');
         if (savedFavorites) {
             try {
                 this.favorites = JSON.parse(savedFavorites);
@@ -25,13 +25,13 @@ class Favorites {
     }
 
     saveFavoritesToStorage() {
-        localStorage.setItem('marketplace_favorites', JSON.stringify(this.favorites));
+        localStorage.setItem('Local-links_favorites', JSON.stringify(this.favorites));
     }
 
     setupEventListeners() {
         // Listen for favorites updates from other tabs
         window.addEventListener('storage', (e) => {
-            if (e.key === 'marketplace_favorites') {
+            if (e.key === 'Local-links_favorites') {
                 this.loadFavoritesFromStorage();
                 this.updateFavoritesUI();
             }

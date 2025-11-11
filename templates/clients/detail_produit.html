@@ -435,7 +435,7 @@ async function toggleFavorite() {
 // Cart management
 async function addToCart() {
     if (!{{ produit.est_en_stock|yesno:"true,false" }}) {
-        marketplace.showNotification('Ce produit n\'est pas en stock', 'error');
+        Local-links.showNotification('Ce produit n\'est pas en stock', 'error');
         return;
     }
     
@@ -450,7 +450,7 @@ async function addToCart() {
 
 function buyNow() {
     if (!{{ produit.est_en_stock|yesno:"true,false" }}) {
-        marketplace.showNotification('Ce produit n\'est pas en stock', 'error');
+        Local-links.showNotification('Ce produit n\'est pas en stock', 'error');
         return;
     }
     
@@ -521,7 +521,7 @@ document.getElementById('review-form')?.addEventListener('submit', async functio
     e.preventDefault();
     
     if (selectedRating === 0) {
-        marketplace.showNotification('Veuillez sélectionner une note', 'error');
+        Local-links.showNotification('Veuillez sélectionner une note', 'error');
         return;
     }
     
@@ -540,16 +540,16 @@ document.getElementById('review-form')?.addEventListener('submit', async functio
 function shareProduct() {
     const shareData = {
         title: '{{ produit.nom }}',
-        text: 'Découvrez ce produit sur Marketplace',
+        text: 'Découvrez ce produit sur Local-links',
         url: window.location.href
     };
     
-    marketplace.shareContent(shareData.title, shareData.text, shareData.url);
+    Local-links.shareContent(shareData.title, shareData.text, shareData.url);
 }
 
 function viewAllReviews() {
     // Scroll to reviews section or load more
-    marketplace.showNotification('Affichage de tous les avis', 'info');
+    Local-links.showNotification('Affichage de tous les avis', 'info');
 }
 
 // Image swipe gestures

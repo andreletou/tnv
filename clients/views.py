@@ -9,10 +9,22 @@ from .forms import ClientInscriptionForm, ProfilForm, AvisForm
 from .models import Client, Panier, ArticlePanier, Commande, ArticleCommande, Favori, Avis
 from commercants.models import Commercant, Produit
 from livraisons.models import Livraison
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
+
 from django.utils import timezone
 import json
 
+
+def redirection_apres_connexion(request):
+    user = request.user
+    if user.type_utilisateur == 'livreur':
+        return redirect('livraisons:tableau_de_bord')
+    elif user.type_utilisateur == 'commercant':
+        return redirect('commercants:tableau_de_bord')
+    elif user.type_utilisateur == 'admin':
+        return redirect('/admin/')
+    else:
+        return redirect('clients:accueil')
 
 @login_required
 @require_http_methods(["POST"])

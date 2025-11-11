@@ -11,7 +11,7 @@ urlpatterns = [
     path('deconnexion/', auth_views.LogoutView.as_view(), name='deconnexion'),
     
     # Tableau de bord et profil
-    path('tableau-de-bord/', views.tableau_de_bord, name='tableau_de_bord'),
+    path('', views.tableau_de_bord, name='tableau_de_bord'),
     path('profil/', views.profil, name='profil'),
     path('profil/modifier/', views.modifier_profil, name='modifier_profil'),
     

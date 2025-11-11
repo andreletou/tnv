@@ -1,8 +1,8 @@
-// Service Worker for Marketplace Togo PWA
+// Service Worker for Local-Links PWA
 
-const CACHE_NAME = 'marketplace-togo-v1';
-const STATIC_CACHE_NAME = 'marketplace-static-v1';
-const DYNAMIC_CACHE_NAME = 'marketplace-dynamic-v1';
+const CACHE_NAME = 'Local-links-togo-v1';
+const STATIC_CACHE_NAME = 'Local-links-static-v1';
+const DYNAMIC_CACHE_NAME = 'Local-links-dynamic-v1';
 
 const STATIC_ASSETS = [
     '/',
@@ -186,7 +186,7 @@ self.addEventListener('push', event => {
     };
     
     event.waitUntil(
-        self.registration.showNotification('Marketplace Togo', options)
+        self.registration.showNotification('Local-Links', options)
     );
 });
 
@@ -225,7 +225,7 @@ self.addEventListener('periodicsync', event => {
 async function syncCart() {
     try {
         // Sync cart items with server
-        const cart = await getStoredData('marketplace_cart');
+        const cart = await getStoredData('Local-links_cart');
         if (cart && cart.items.length > 0) {
             // Send cart data to server
             await fetch('/clients/api/panier/sync/', {
@@ -244,7 +244,7 @@ async function syncCart() {
 async function syncFavorites() {
     try {
         // Sync favorites with server
-        const favorites = await getStoredData('marketplace_favorites');
+        const favorites = await getStoredData('Local-links_favorites');
         if (favorites && favorites.length > 0) {
             // Send favorites data to server
             await fetch('/clients/api/favoris/sync/', {
