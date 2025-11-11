@@ -16,3 +16,7 @@ services:
         value: "False"
       - key: ALLOWED_HOSTS
         value: ".onrender.com"
+      - key: GDAL_LIBRARY_PATH
+        value: "/usr/lib/libgdal.so"
+      - key: GEOS_LIBRARY_PATH
+        value: "/usr/lib/libgeos_c.so"

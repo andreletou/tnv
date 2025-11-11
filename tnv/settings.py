@@ -68,11 +68,14 @@ WSGI_APPLICATION = 'tnv.wsgi.application'
 # Configuration de la base de données pour la production
 if os.environ.get('DATABASE_URL'):
     DATABASES = {
-        'default': dj_database_url.config(
-            default=os.environ.get('DATABASE_URL'),
-            conn_max_age=600,
-            conn_health_checks=True,
-        )
+        'default': {
+            'ENGINE': 'django.contrib.gis.db.backends.postgis',
+            'NAME': 'tnv_db',
+            'USER': os.environ.get('DB_USER', ''),
+            'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+            'HOST': os.environ.get('DB_HOST', ''),
+            'PORT': os.environ.get('DB_PORT', '5432'),
+        }
     }
 else:
     # Configuration pour le développement local avec Spatialite
@@ -82,6 +85,11 @@ else:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+
+# Configuration GDAL pour Render
+if not DEBUG:
+    GDAL_LIBRARY_PATH = os.environ.get('GDAL_LIBRARY_PATH')
+    GEOS_LIBRARY_PATH = os.environ.get('GEOS_LIBRARY_PATH')
 
 # Note importante: Spatialite n'est pas supporté sur Render
 # Vous devrez utiliser PostgreSQL avec PostGIS en production
