@@ -1,0 +1,147 @@
+<!-- Footer -->
+<footer class="bg-gray-900 text-gray-50 mt-auto">
+    <div class="container mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <!-- About -->
+            <div>
+                <div class="flex items-center space-x-2 mb-4">
+                    <div class="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-store text-gray-50 text-sm"></i>
+                    </div>
+                    <span class="text-xl font-bold">Marketplace Togo</span>
+                </div>
+                <p class="text-gray-400 text-sm">
+                    La marketplace n°1 au Togo pour acheter et vendre en toute sécurité.
+                </p>
+                <div class="flex space-x-4 mt-4">
+                    <a href="#" class="text-gray-400 hover:text-gray-50 transition">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-gray-50 transition">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-gray-50 transition">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-gray-50 transition">
+                        <i class="fab fa-whatsapp"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Quick Links -->
+            <div>
+                <h3 class="text-lg font-semibold mb-4">Liens rapides</h3>
+                <ul class="space-y-2">
+                    <li>
+                        <a href="{% url 'clients:accueil' %}" class="text-gray-400 hover:text-gray-50 transition text-sm">
+                            Accueil
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'clients:liste_boutiques' %}" class="text-gray-400 hover:text-gray-50 transition text-sm">
+                            Boutiques
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="text-gray-400 hover:text-gray-50 transition text-sm">
+                            Comment ça marche
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="text-gray-400 hover:text-gray-50 transition text-sm">
+                            Devenir vendeur
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Support -->
+            <div>
+                <h3 class="text-lg font-semibold mb-4">Support</h3>
+                <ul class="space-y-2">
+                    <li>
+                        <a href="#" class="text-gray-400 hover:text-gray-50 transition text-sm">
+                            Centre d'aide
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="text-gray-400 hover:text-gray-50 transition text-sm">
+                            Contactez-nous
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="text-gray-400 hover:text-gray-50 transition text-sm">
+                            FAQ
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="text-gray-400 hover:text-gray-50 transition text-sm">
+                            Signaler un problème
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Legal -->
+            <div>
+                <h3 class="text-lg font-semibold mb-4">Légal</h3>
+                <ul class="space-y-2">
+                    <li>
+                        <a href="#" class="text-gray-400 hover:text-gray-50 transition text-sm">
+                            Conditions d'utilisation
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="text-gray-400 hover:text-gray-50 transition text-sm">
+                            Politique de confidentialité
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="text-gray-400 hover:text-gray-50 transition text-sm">
+                            Politique de retour
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="text-gray-400 hover:text-gray-50 transition text-sm">
+                            Mentions légales
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Newsletter -->
+        <div class="border-t border-gray-800 mt-8 pt-8">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <h3 class="text-lg font-semibold mb-2">Restez informé</h3>
+                    <p class="text-gray-400 text-sm">
+                        Recevez nos dernières offres et nouveautés
+                    </p>
+                </div>
+                <form class="flex flex-col sm:flex-row gap-2">
+                    <input 
+                        type="email" 
+                        placeholder="Votre email"
+                        class="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-primary-500 text-gray"
+                        required
+                    >
+                    <button type="submit" class="px-6 py-2 bg-primary-500 text-gray-50 rounded-lg hover:bg-primary-600 transition">
+                        S'abonner
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Bottom -->
+        <div class="border-t border-gray-800 mt-8 pt-8 text-center">
+            <p class="text-gray-400 text-sm">
+                © 2024 Marketplace Togo. Tous droits réservés.
+            </p>
+            <p class="text-gray-500 text-xs mt-2">
+                Made with <i class="fas fa-heart text-red-500"></i> in Togo
+            </p>
+        </div>
+    </div>
+</footer>

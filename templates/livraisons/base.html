@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Plateforme de Livraison{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #f72585;
+            --light-bg: #f8f9fa;
+            --dark-text: #212529;
+            --success-color: #06ffa5;
+            --warning-color: #ffbe0b;
+            --danger-color: #fb5607;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-bottom: 70px; /* Espace pour la navbar en bas */
+            background-color: var(--light-bg);
+            color: var(--dark-text);
+            min-height: 100vh;
+        }
+        
+        .navbar-bottom {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background-color: white;
+            border-top: 1px solid #e9ecef;
+            z-index: 1000;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-bottom .nav-link {
+            color: #6c757d;
+            text-align: center;
+            padding: 8px 0;
+            font-size: 0.7rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            transition: all 0.3s ease;
+        }
+        
+        .navbar-bottom .nav-link.active {
+            color: var(--primary-color);
+        }
+        
+        .navbar-bottom .nav-link i {
+            font-size: 1.5rem;
+            margin-bottom: 4px;
+        }
+        
+        .top-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+        
+        .content-container {
+            padding: 20px 15px;
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: none;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid #e9ecef;
+            font-weight: 600;
+            padding: 15px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 500;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        
+        .badge {
+            padding: 6px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: var(--danger-color);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .stat-card .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+        
+        .stat-card .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .list-group-item {
+            border: none;
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .floating-button {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background-color: var(--accent-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 998;
+            border: none;
+        }
+        
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 12px;
+        }
+        
+        .tab-content {
+            padding-top: 15px;
+        }
+        
+        .nav-tabs .nav-link {
+            border: none;
+            color: #6c757d;
+            font-weight: 500;
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: var(--primary-color);
+            background-color: transparent;
+            border-bottom: 3px solid var(--primary-color);
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Contenu principal -->
+    <main class="content-container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show fade-in" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Navbar en bas -->
+    {% if user.is_authenticated %}
+        <nav class="navbar-bottom">
+            <div class="container-fluid h-100">
+                <ul class="nav nav-fill h-100">
+                    {% if user.type_utilisateur == 'client' %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'accueil' %}active{% endif %}" href="{% url 'clients:accueil' %}">
+                                <i class="bi bi-house-door"></i>
+                                <span>Accueil</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'boutique' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'clients:liste_boutiques' %}">
+                                <i class="bi bi-shop"></i>
+                                <span>Boutiques</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'panier' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'clients:panier' %}">
+                                <i class="bi bi-cart3"></i>
+                                <span>Panier</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'commande' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'clients:mes_commandes' %}">
+                                <i class="bi bi-receipt"></i>
+                                <span>Commandes</span>
+                            </a>
+                        </li>
+                    {% elif user.type_utilisateur == 'livreur' %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'tableau_de_bord' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'livraisons:tableau_de_bord' %}">
+                                <i class="bi bi-speedometer2"></i>
+                                <span>Tableau</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'livraison' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'livraisons:livraisons_disponibles' %}">
+                                <i class="bi bi-box-seam"></i>
+                                <span>Livraisons</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'carte' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'livraisons:carte' %}">
+                                <i class="bi bi-map"></i>
+                                <span>Carte</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'historique' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'livraisons:historique' %}">
+                                <i class="bi bi-clock-history"></i>
+                                <span>Historique</span>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <div class="col-auto">
+                            {% if user.is_authenticated %}
+                                <div class="dropdown">
+                                    <a class="text-white text-decoration-none d-flex align-items-center" href="#" role="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                        {% if user.photo_profil %}
+                                            <img src="{{ user.photo_profil.url }}" class="avatar me-2" alt="Photo de profil">
+                                        {% else %}
+                                            <i class="bi bi-person-circle fs-4 me-2"></i>
+                                        {% endif %}
+                                        <span class="d-none d-sm-inline">{{ user.first_name }}</span>
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                        {% if user.type_utilisateur == 'client' %}
+                                            <li><a class="dropdown-item" href="{% url 'clients:profil' %}">Mon profil</a></li>
+                                            <li><a class="dropdown-item" href="{% url 'clients:mes_commandes' %}">Mes commandes</a></li>
+                                        {% elif user.type_utilisateur == 'livreur' %}
+                                            <li><a class="dropdown-item" href="{% url 'livraisons:profil' %}">Mon profil</a></li>
+                                            <li><a class="dropdown-item" href="{% url 'livraisons:historique' %}">Historique</a></li>
+                                        {% elif user.type_utilisateur == 'commercant' %}
+                                            <li><a class="dropdown-item" href="{% url 'commercants:profil' %}">Mon profil</a></li>
+                                            <li><a class="dropdown-item" href="{% url 'commercants:gestion_commandes' %}">Gestion des commandes</a></li>
+                                        {% endif %}
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="{% url 'clients:deconnexion' %}">Déconnexion</a></li>
+                                    </ul>
+                                </div>
+                            {% else %}
+                                <a href="{% url 'clients:connexion' %}" class="btn btn-outline-light btn-sm">Connexion</a>
+                            {% endif %}
+                        </div>
+                        </li>
+                    {% elif user.type_utilisateur == 'commercant' %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'tableau_de_bord' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'commercants:tableau_de_bord' %}">
+                                <i class="bi bi-speedometer2"></i>
+                                <span>Tableau</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'produit' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'commercants:liste_produits' %}">
+                                <i class="bi bi-box-seam"></i>
+                                <span>Produits</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'commande' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'commercants:gestion_commandes' %}">
+                                <i class="bi bi-receipt"></i>
+                                <span>Commandes</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'promotion' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'commercants:liste_promotions' %}">
+                                <i class="bi bi-tags"></i>
+                                <span>Promos</span>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </nav>
+    {% endif %}
+
+    <!-- Floating Action Button (optionnel) -->
+    {% if user.is_authenticated and user.type_utilisateur == 'livreur' %}
+        <button class="floating-button" id="floatingBtn">
+            <i class="bi bi-geo-alt-fill"></i>
+        </button>
+    {% endif %}
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- JavaScript personnalisé -->
+    <script>
+        // Initialisation des tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+        
+        // Gestion du bouton flottant pour les livreurs
+        document.addEventListener('DOMContentLoaded', function() {
+            const floatingBtn = document.getElementById('floatingBtn');
+            if (floatingBtn) {
+                floatingBtn.addEventListener('click', function() {
+                    // Mettre à jour la position du livreur
+                    navigator.geolocation.getCurrentPosition(
+                        function(position) {
+                            const latitude = position.coords.latitude;
+                            const longitude = position.coords.longitude;
+                            
+                            // Envoyer les coordonnées au serveur
+                            fetch('/livraisons/api/position/mettre-a-jour/', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': getCookie('csrftoken')
+                                },
+                                body: JSON.stringify({
+                                    latitude: latitude,
+                                    longitude: longitude
+                                })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    // Afficher une notification de succès
+                                    showNotification('Position mise à jour avec succès', 'success');
+                                } else {
+                                    showNotification(data.message || 'Erreur lors de la mise à jour', 'danger');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                showNotification('Erreur de connexion', 'danger');
+                            });
+                        },
+                        function(error) {
+                            console.error('Erreur de géolocalisation:', error);
+                            showNotification('Impossible d\'obtenir votre position', 'warning');
+                        }
+                    );
+                });
+            }
+        });
+        
+        // Fonction pour obtenir le cookie CSRF
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // Fonction pour afficher des notifications
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            notification.style.top = '80px';
+            notification.style.right = '15px';
+            notification.style.zIndex = '1050';
+            notification.style.minWidth = '250px';
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto-dismiss après 5 secondes
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 5000);
+        }
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

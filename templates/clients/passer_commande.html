@@ -1,0 +1,802 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Finaliser ma commande{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Styles pour la page de commande mobile */
+    body {
+        padding-top: 0;
+        background-color: #f8f9fa;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .commande-container {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    
+    .carte-section {
+        height: 40vh;
+        position: relative;
+        z-index: 10;
+    }
+    
+    #map {
+        height: 100%;
+        width: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+    
+    .map-overlay {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        z-index: 1000;
+        background: white;
+        border-radius: 8px;
+        padding: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .search-address {
+        display: flex;
+        align-items: center;
+    }
+    
+    .search-address input {
+        border: none;
+        outline: none;
+        flex-grow: 1;
+        padding: 8px;
+    }
+    
+    .search-address button {
+        background: none;
+        border: none;
+        color: #007bff;
+        padding: 8px;
+    }
+    
+    .map-marker-hint {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 999;
+        pointer-events: none;
+    }
+    
+    .map-marker-hint i {
+        color: #dc3545;
+        font-size: 32px;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .adresse-confirm {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+        z-index: 1000;
+        background: white;
+        border-radius: 8px;
+        padding: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        display: none;
+    }
+    
+    .commande-section {
+        flex: 1;
+        overflow-y: auto;
+        padding: 15px;
+        padding-bottom: 80px;
+    }
+    
+    .panier-summary {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .panier-item {
+        display: flex;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .panier-item:last-child {
+        border-bottom: none;
+    }
+    
+    .panier-item-image {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-right: 10px;
+    }
+    
+    .panier-item-details {
+        flex: 1;
+    }
+    
+    .panier-item-name {
+        font-weight: 500;
+        margin-bottom: 3px;
+    }
+    
+    .panier-item-price {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .panier-item-quantity {
+        display: flex;
+        align-items: center;
+        background: #f8f9fa;
+        border-radius: 20px;
+        padding: 3px 10px;
+    }
+    
+    .panier-total {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 10px;
+        margin-top: 10px;
+        border-top: 1px solid #f0f0f0;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    .adresse-section {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .adresse-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    
+    .adresse-content {
+        display: flex;
+        align-items: center;
+    }
+    
+    .adresse-icon {
+        color: #007bff;
+        margin-right: 10px;
+    }
+    
+    .paiement-section {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .paiement-methods {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 10px;
+    }
+    
+    .paiement-method {
+        flex: 1;
+        text-align: center;
+        padding: 10px;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        margin: 0 5px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .paiement-method.active {
+        border-color: #007bff;
+        background-color: rgba(0, 123, 255, 0.1);
+    }
+    
+    .paiement-method i {
+        font-size: 24px;
+        margin-bottom: 5px;
+        display: block;
+    }
+    
+    .instructions-section {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .instructions-textarea {
+        width: 100%;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 10px;
+        resize: none;
+        margin-top: 10px;
+    }
+    
+    .commande-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        padding: 15px;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .commande-total {
+        font-weight: 600;
+        font-size: 1.2rem;
+    }
+    
+    .btn-commander {
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 30px;
+        padding: 12px 25px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+    
+    .btn-commander:disabled {
+        background: #6c757d;
+    }
+    
+    .btn-commander i {
+        margin-left: 8px;
+    }
+    
+    .loading-spinner {
+        display: none;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        border-top: 2px solid transparent;
+        animation: spin 1s linear infinite;
+        margin-left: 8px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 2000;
+    }
+    
+    .toast {
+        background: white;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        display: flex;
+        align-items: center;
+        min-width: 250px;
+        max-width: 350px;
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+    }
+    
+    .toast.show {
+        transform: translateX(0);
+    }
+    
+    .toast-success {
+        border-left: 4px solid #28a745;
+    }
+    
+    .toast-error {
+        border-left: 4px solid #dc3545;
+    }
+    
+    .toast-icon {
+        margin-right: 10px;
+        font-size: 20px;
+    }
+    
+    .toast-success .toast-icon {
+        color: #28a745;
+    }
+    
+    .toast-error .toast-icon {
+        color: #dc3545;
+    }
+    
+    .toast-content {
+        flex: 1;
+    }
+    
+    .toast-title {
+        font-weight: 600;
+        margin-bottom: 3px;
+    }
+    
+    .toast-message {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    .map-loading {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1001;
+    }
+    
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(0, 0, 0, 0.1);
+        border-radius: 50%;
+        border-top: 4px solid #007bff;
+        animation: spin 1s linear infinite;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="commande-container">
+    <!-- Section Carte -->
+    <div class="carte-section">
+        <div id="map"></div>
+        <div class="map-loading" id="map-loading">
+            <div class="spinner"></div>
+        </div>
+        
+        <!-- Indicateur de marqueur au centre -->
+        <div class="map-marker-hint">
+            <i class="fas fa-map-marker-alt"></i>
+        </div>
+        
+        <!-- Barre de recherche d'adresse -->
+        <div class="map-overlay">
+            <div class="search-address">
+                <input type="text" id="adresse-search" placeholder="Rechercher une adresse...">
+                <button type="button" id="search-btn">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Confirmation d'adresse -->
+        <div class="adresse-confirm" id="adresse-confirm">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>Adresse de livraison:</strong>
+                    <div id="selected-address" class="small text-muted"></div>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="confirm-address-btn">
+                    Confirmer
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Section Commande -->
+    <div class="commande-section">
+        <!-- Résumé du panier -->
+        <div class="panier-summary">
+            <h5 class="mb-3">Résumé de la commande</h5>
+            
+            {% for article in articles %}
+            <div class="panier-item">
+                <img src="{{ article.produit.photo.url }}" alt="{{ article.produit.nom }}" class="panier-item-image">
+                <div class="panier-item-details">
+                    <div class="panier-item-name">{{ article.produit.nom }}</div>
+                    <div class="panier-item-price">{{ article.produit.prix_effectif }} FCFA</div>
+                </div>
+                <div class="panier-item-quantity">
+                    <span>{{ article.quantite }}</span>
+                </div>
+            </div>
+            {% endfor %}
+            
+            <div class="panier-total">
+                <span>Total:</span>
+                <span>{{ panier.total }} FCFA</span>
+            </div>
+        </div>
+        
+        <!-- Section Adresse -->
+        <div class="adresse-section">
+            <div class="adresse-header">
+                <h5 class="mb-0">Adresse de livraison</h5>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="change-address-btn">
+                    <i class="fas fa-map-marker-alt"></i> Changer
+                </button>
+            </div>
+            <div class="adresse-content">
+                <div class="adresse-icon">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <div id="delivery-address">
+                    <strong>Sélectionnez une adresse sur la carte</strong>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section Paiement -->
+        <div class="paiement-section">
+            <h5 class="mb-3">Méthode de paiement</h5>
+            <div class="paiement-methods">
+                <div class="paiement-method active" data-method="espece">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <div>Espèce</div>
+                </div>
+                <div class="paiement-method" data-method="mobile_money">
+                    <i class="fas fa-mobile-alt"></i>
+                    <div>Mobile Money</div>
+                </div>
+                <div class="paiement-method" data-method="paygate">
+                    <i class="fas fa-credit-card"></i>
+                    <div>Carte</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section Instructions -->
+        <div class="instructions-section">
+            <h5 class="mb-3">Instructions de livraison (optionnel)</h5>
+            <textarea class="instructions-textarea" id="instructions-livraison" rows="3" placeholder="Ex: Sonner à l'interphone, laisser devant la porte, etc."></textarea>
+        </div>
+    </div>
+    
+    <!-- Footer Commande -->
+    <div class="commande-footer">
+        <div class="commande-total">
+            Total: {{ panier.total }} FCFA
+        </div>
+        <button type="button" class="btn-commander" id="commander-btn">
+            Commander
+            <i class="fas fa-arrow-right"></i>
+            <div class="loading-spinner"></div>
+        </button>
+    </div>
+</div>
+
+<!-- Container pour les notifications toast -->
+<div class="toast-container" id="toast-container"></div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Font Awesome pour les icônes -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+<!-- Leaflet CSS et JS pour la carte -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+<script>
+    // Variables globales
+    let map;
+    let marker;
+    let selectedLatitude = null;
+    let selectedLongitude = null;
+    let selectedAddress = null;
+    let paymentMethod = 'espece';
+    let mapInitialized = false;
+    
+    // Coordonnées par défaut (Lomé, Togo)
+    const DEFAULT_LATITUDE = 6.1319;
+    const DEFAULT_LONGITUDE = 1.2122;
+    
+    // Initialisation de la carte
+    document.addEventListener('DOMContentLoaded', function() {
+        // Attendre un peu pour s'assurer que le DOM est complètement chargé
+        setTimeout(initializeMap, 500);
+        
+        // Gérer les méthodes de paiement
+        document.querySelectorAll('.paiement-method').forEach(method => {
+            method.addEventListener('click', function() {
+                document.querySelectorAll('.paiement-method').forEach(m => m.classList.remove('active'));
+                this.classList.add('active');
+                paymentMethod = this.getAttribute('data-method');
+            });
+        });
+        
+        // Gérer le bouton de commande
+        document.getElementById('commander-btn').addEventListener('click', finaliserCommande);
+        
+        // Gérer la recherche d'adresse
+        document.getElementById('search-btn').addEventListener('click', searchAddress);
+        document.getElementById('adresse-search').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchAddress();
+            }
+        });
+        
+        // Gérer le bouton de confirmation d'adresse
+        document.getElementById('confirm-address-btn').addEventListener('click', confirmAddress);
+        
+        // Gérer le bouton de changement d'adresse
+        document.getElementById('change-address-btn').addEventListener('click', function() {
+            // Faire défiler vers la carte
+            document.querySelector('.carte-section').scrollIntoView({ behavior: 'smooth' });
+            showToast('Sélectionnez votre adresse sur la carte', 'info');
+        });
+    });
+    
+    // Initialiser la carte
+    function initializeMap() {
+        try {
+            // Créer la carte avec des coordonnées par défaut valides
+            map = L.map('map').setView([DEFAULT_LATITUDE, DEFAULT_LONGITUDE], 13);
+            
+            // Ajouter la couche de tuiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            
+            // Initialiser le marqueur
+            marker = L.marker([DEFAULT_LATITUDE, DEFAULT_LONGITUDE], {
+                draggable: true
+            }).addTo(map);
+            
+            // Événement de déplacement du marqueur
+            marker.on('dragend', function(e) {
+                const position = marker.getLatLng();
+                updateSelectedPosition(position.lat, position.lng);
+            });
+            
+            // Événement de clic sur la carte
+            map.on('click', function(e) {
+                marker.setLatLng(e.latlng);
+                updateSelectedPosition(e.latlng.lat, e.latlng.lng);
+            });
+            
+            // Si l'utilisateur a déjà des coordonnées, les utiliser
+            {% if user.latitude and user.longitude %}
+            try {
+                const userLat = parseFloat('{{ user.latitude }}');
+                const userLng = parseFloat('{{ user.longitude }}');
+                
+                if (!isNaN(userLat) && !isNaN(userLng)) {
+                    map.setView([userLat, userLng], 15);
+                    marker.setLatLng([userLat, userLng]);
+                    updateSelectedPosition(userLat, userLng);
+                }
+            } catch (e) {
+                console.error('Erreur lors de la définition des coordonnées utilisateur:', e);
+            }
+            {% endif %}
+            
+            // Marquer la carte comme initialisée
+            mapInitialized = true;
+            
+            // Masquer l'indicateur de chargement
+            document.getElementById('map-loading').style.display = 'none';
+            
+            // Forcer le rafraîchissement de la carte
+            setTimeout(() => {
+                map.invalidateSize();
+            }, 100);
+            
+        } catch (error) {
+            console.error('Erreur lors de l\'initialisation de la carte:', error);
+            document.getElementById('map-loading').innerHTML = '<div class="alert alert-danger">Erreur lors du chargement de la carte</div>';
+        }
+    }
+    
+    // Mettre à jour la position sélectionnée
+    function updateSelectedPosition(lat, lng) {
+        selectedLatitude = lat;
+        selectedLongitude = lng;
+        
+        // Géocodage inversé pour obtenir l'adresse
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.display_name) {
+                    selectedAddress = data.display_name;
+                    document.getElementById('selected-address').textContent = selectedAddress;
+                    document.getElementById('adresse-confirm').style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Erreur lors du géocodage inversé:', error);
+                document.getElementById('selected-address').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                document.getElementById('adresse-confirm').style.display = 'block';
+            });
+    }
+    
+    // Confirmer l'adresse sélectionnée
+    function confirmAddress() {
+        if (selectedAddress) {
+            document.getElementById('delivery-address').innerHTML = `<strong>${selectedAddress}</strong>`;
+            document.getElementById('adresse-confirm').style.display = 'none';
+            showToast('Adresse de livraison confirmée', 'success');
+        }
+    }
+    
+    // Rechercher une adresse
+    function searchAddress() {
+        const query = document.getElementById('adresse-search').value.trim();
+        if (!query) return;
+        
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.length > 0) {
+                    const result = data[0];
+                    const lat = parseFloat(result.lat);
+                    const lng = parseFloat(result.lon);
+                    
+                    // Centrer la carte sur le résultat
+                    map.setView([lat, lng], 16);
+                    marker.setLatLng([lat, lng]);
+                    updateSelectedPosition(lat, lng);
+                } else {
+                    showToast('Aucun résultat trouvé pour cette adresse', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Erreur lors de la recherche d\'adresse:', error);
+                showToast('Erreur lors de la recherche d\'adresse', 'error');
+            });
+    }
+    
+    // Finaliser la commande
+    function finaliserCommande() {
+        // Vérifier si une adresse a été sélectionnée
+        if (!selectedLatitude || !selectedLongitude) {
+            showToast('Veuillez sélectionner une adresse de livraison sur la carte', 'error');
+            document.querySelector('.carte-section').scrollIntoView({ behavior: 'smooth' });
+            return;
+        }
+        
+        // Afficher le spinner de chargement
+        document.querySelector('.loading-spinner').style.display = 'inline-block';
+        document.getElementById('commander-btn').disabled = true;
+        
+        // Préparer les données à envoyer
+        const instructions = document.getElementById('instructions-livraison').value.trim();
+        
+        // Envoyer la requête AJAX
+        fetch('{% url "clients:finaliser_commande" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: new URLSearchParams({
+                'adresse_livraison': selectedAddress,
+                'latitude': selectedLatitude,
+                'longitude': selectedLongitude,
+                'instructions_livraison': instructions,
+                'methode_paiement': paymentMethod
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                // Rediriger vers la page de confirmation
+                setTimeout(() => {
+                    window.location.href = data.redirect_url;
+                }, 1500);
+            } else {
+                showToast(data.message, 'error');
+                document.querySelector('.loading-spinner').style.display = 'none';
+                document.getElementById('commander-btn').disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Erreur lors de la finalisation de la commande:', error);
+            showToast('Une erreur est survenue lors de la finalisation de votre commande', 'error');
+            document.querySelector('.loading-spinner').style.display = 'none';
+            document.getElementById('commander-btn').disabled = false;
+        });
+    }
+    
+    // Fonction pour afficher une notification toast
+    function showToast(message, type = 'info') {
+        const toastContainer = document.getElementById('toast-container');
+        
+        // Créer l'élément toast
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        
+        // Définir l'icône en fonction du type
+        let icon = '';
+        if (type === 'success') {
+            icon = '<i class="fas fa-check-circle toast-icon"></i>';
+        } else if (type === 'error') {
+            icon = '<i class="fas fa-exclamation-circle toast-icon"></i>';
+        } else {
+            icon = '<i class="fas fa-info-circle toast-icon"></i>';
+        }
+        
+        // Définir le titre en fonction du type
+        let title = '';
+        if (type === 'success') {
+            title = 'Succès';
+        } else if (type === 'error') {
+            title = 'Erreur';
+        } else {
+            title = 'Information';
+        }
+        
+        // Remplir le contenu du toast
+        toast.innerHTML = `
+            ${icon}
+            <div class="toast-content">
+                <div class="toast-title">${title}</div>
+                <div class="toast-message">${message}</div>
+            </div>
+        `;
+        
+        // Ajouter le toast au conteneur
+        toastContainer.appendChild(toast);
+        
+        // Afficher le toast avec une animation
+        setTimeout(() => {
+            toast.classList.add('show');
+        }, 100);
+        
+        // Masquer et supprimer le toast après 3 secondes
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => {
+                toastContainer.removeChild(toast);
+            }, 300);
+        }, 3000);
+    }
+    
+    // Fonction pour obtenir le cookie CSRF
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %}

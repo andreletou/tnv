@@ -1,0 +1,405 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Boutiques - Marketplace{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-30">
+        <div class="px-4 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <button onclick="history.back()" class="p-2 rounded-lg hover:bg-gray-100">
+                        <i class="fas fa-arrow-left text-gray-600"></i>
+                    </button>
+                    <h1 class="text-lg font-semibold text-gray-900">Boutiques</h1>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                    <button onclick="toggleMapView()" class="p-2 rounded-lg hover:bg-gray-100">
+                        <i class="fas fa-map text-gray-600"></i>
+                    </button>
+                    <button onclick="toggleFilterModal()" class="p-2 rounded-lg hover:bg-gray-100 relative">
+                        <i class="fas fa-filter text-gray-600"></i>
+                        {% if categorie or search %}
+                            <span class="absolute top-1 right-1 w-2 h-2 bg-primary-600 rounded-full"></span>
+                        {% endif %}
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Search Bar -->
+        <div class="px-4 pb-3">
+            <div class="relative">
+                <form method="get" class="flex items-center">
+                    <input type="text" 
+                           name="search" 
+                           value="{{ search }}"
+                           placeholder="Rechercher une boutique..." 
+                           class="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    {% if search %}
+                        <button type="button" onclick="clearSearch()" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <!-- Categories Filter -->
+    <div class="px-4 py-3 bg-white border-b">
+        <div class="flex space-x-2 overflow-x-auto scrollbar-hide">
+            <button onclick="filterByCategory('')" 
+                    class="category-pill flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors
+                           {% if not categorie %}bg-primary-100 text-primary-700{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                Toutes
+            </button>
+            {% for cat_value, cat_label in categories %}
+                <button onclick="filterByCategory('{{ cat_value }}')" 
+                        class="category-pill flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors
+                               {% if categorie == cat_value %}bg-primary-100 text-primary-700{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                    {{ cat_label }}
+                </button>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Results Count -->
+    <div class="px-4 py-3 bg-white border-b">
+        <div class="flex items-center justify-between">
+            <p class="text-sm text-gray-600">
+                {% if boutiques_data %}
+                    <span class="font-medium text-gray-900">{{ boutiques_data|length }}</span> boutique{{ boutiques_data|length|pluralize }} trouvée{{ boutiques_data|length|pluralize }}
+                {% else %}
+                    Aucune boutique trouvée
+                {% endif %}
+            </p>
+            
+            {% if boutiques_data %}
+                <select onchange="sortBoutiques(this.value)" class="text-sm border border-gray-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <option value="recent">Plus récentes</option>
+                    <option value="name">Nom (A-Z)</option>
+                    <option value="products">Plus de produits</option>
+                    <option value="promos">En promotion</option>
+                </select>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Boutiques Grid -->
+    {% if boutiques_data %}
+    <div class="px-4 py-4">
+        <div class="grid grid-cols-1 gap-4">
+            {% for boutique_data in boutiques_data %}
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300">
+                <a href="{% url 'clients:detail_boutique' boutique_data.boutique.id %}" class="block">
+                    <div class="relative">
+                        {% if boutique_data.boutique.photo_boutique %}
+                            <img src="{{ boutique_data.boutique.photo_boutique.url }}" 
+                                 alt="{{ boutique_data.boutique.nom_boutique }}" 
+                                 class="w-full h-48 object-cover">
+                        {% else %}
+                            <div class="w-full h-48 bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center">
+                                <i class="fas fa-store text-primary-400 text-4xl"></i>
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Status Badge -->
+                        <div class="absolute top-3 left-3">
+                            <span class="px-2 py-1 bg-green-500 text-white text-xs rounded-full flex items-center">
+                                <span class="w-2 h-2 bg-white rounded-full mr-1 animate-pulse"></span>
+                                Ouvert
+                            </span>
+                        </div>
+                        
+                        <!-- Category Badge -->
+                        <div class="absolute top-3 right-3">
+                            <span class="px-2 py-1 bg-black bg-opacity-50 text-white text-xs rounded-full">
+                                {{ boutique_data.boutique.get_categorie_display }}
+                            </span>
+                        </div>
+                        
+                        <!-- Promotions Badge -->
+                        {% if boutique_data.promo_count > 0 %}
+                            <div class="absolute bottom-3 left-3">
+                                <span class="px-2 py-1 bg-red-500 text-white text-xs rounded-full">
+                                    <i class="fas fa-tag mr-1"></i>{{ boutique_data.promo_count }} promo{{ boutique_data.promo_count|pluralize }}
+                                </span>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="p-4">
+                        <div class="flex items-start justify-between mb-2">
+                            <div class="flex-1">
+                                <h3 class="text-lg font-semibold text-gray-900 line-clamp-1">{{ boutique_data.boutique.nom_boutique }}</h3>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    <i class="fas fa-map-marker-alt mr-1"></i>{{ boutique_data.boutique.adresse|truncatechars:30 }}
+                                </p>
+                            </div>
+                            
+                            <button onclick="event.preventDefault(); toggleFavorite({{ boutique_data.boutique.id }})" 
+                                    class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                                <i class="far fa-heart text-gray-400"></i>
+                            </button>
+                        </div>
+                        
+                        {% if boutique_data.boutique.description %}
+                            <p class="text-sm text-gray-600 line-clamp-2 mb-3">{{ boutique_data.boutique.description }}</p>
+                        {% endif %}
+                        
+                        <!-- Stats -->
+                        <div class="flex items-center justify-between text-sm">
+                            <div class="flex items-center space-x-4">
+                                <span class="text-gray-500">
+                                    <i class="fas fa-box mr-1"></i>{{ boutique_data.total_produits }} produit{{ boutique_data.total_produits|pluralize }}
+                                </span>
+                                {% if boutique_data.boutique.horaire_ouverture and boutique_data.boutique.horaire_fermeture %}
+                                    <span class="text-gray-500">
+                                        <i class="fas fa-clock mr-1"></i>{{ boutique_data.boutique.horaire_ouverture }} - {{ boutique_data.boutique.horaire_fermeture }}
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Rating -->
+                        <div class="flex items-center mt-3 pt-3 border-t">
+                            <div class="flex text-yellow-400">
+                                {% for i in "12345" %}
+                                    <i class="fas fa-star text-sm"></i>
+                                {% endfor %}
+                            </div>
+                            <span class="text-sm text-gray-500 ml-2">4.5 (128 avis)</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="px-4 py-12 text-center">
+        <i class="fas fa-store-slash text-6xl text-gray-300 mb-4"></i>
+        <h2 class="text-xl font-semibold text-gray-900 mb-2">Aucune boutique trouvée</h2>
+        <p class="text-gray-500 mb-6">
+            {% if search or categorie %}
+                Essayez de modifier votre recherche ou vos filtres
+            {% else %}
+                Les boutiques apparaîtront bientôt sur la plateforme
+            {% endif %}
+        </p>
+        
+        {% if search or categorie %}
+            <button onclick="clearAllFilters()" class="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+                <i class="fas fa-redo mr-2"></i>Réinitialiser les filtres
+            </button>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Load More -->
+    {% if boutiques_data and boutiques_data|length >= 20 %}
+    <div class="px-4 py-6 text-center">
+        <button onclick="loadMoreBoutiques()" class="px-6 py-3 bg-white border border-primary-600 text-primary-600 rounded-lg hover:bg-primary-50 transition-colors">
+            Charger plus de boutiques
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Filter Modal -->
+<div id="filter-modal" class="modal fixed inset-0 z-50 hidden">
+    <div class="modal-backdrop absolute inset-0 bg-black bg-opacity-50"></div>
+    <div class="modal-content relative bg-white rounded-t-2xl mt-8 max-h-[80vh] overflow-hidden">
+        <div class="p-4 border-b">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold">Filtres</h3>
+                <button onclick="toggleFilterModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+                    <i class="fas fa-times text-gray-500"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-4 overflow-y-auto max-h-[60vh]">
+            <!-- Categories -->
+            <div class="mb-6">
+                <h4 class="font-medium text-gray-900 mb-3">Catégories</h4>
+                <div class="space-y-2">
+                    {% for cat_value, cat_label in categories %}
+                        <label class="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <input type="radio" name="categorie" value="{{ cat_value }}" 
+                                   {% if categorie == cat_value %}checked{% endif %}
+                                   class="mr-3 text-primary-600">
+                            <span class="text-sm">{{ cat_label }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Additional filters can be added here -->
+            <div class="mb-6">
+                <h4 class="font-medium text-gray-900 mb-3">Disponibilité</h4>
+                <div class="space-y-2">
+                    <label class="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input type="checkbox" class="mr-3 text-primary-600">
+                        <span class="text-sm">Ouvert maintenant</span>
+                    </label>
+                    <label class="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input type="checkbox" class="mr-3 text-primary-600">
+                        <span class="text-sm">En promotion</span>
+                    </label>
+                    <label class="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input type="checkbox" class="mr-3 text-primary-600">
+                        <span class="text-sm">Livraison disponible</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="p-4 border-t">
+            <div class="flex space-x-3">
+                <button onclick="clearAllFilters()" class="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    Réinitialiser
+                </button>
+                <button onclick="applyFilters()" class="flex-1 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+                    Appliquer les filtres
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentSort = 'recent';
+
+function filterByCategory(category) {
+    const url = new URL(window.location);
+    if (category) {
+        url.searchParams.set('categorie', category);
+    } else {
+        url.searchParams.delete('categorie');
+    }
+    window.location.href = url.toString();
+}
+
+function sortBoutiques(sort) {
+    currentSort = sort;
+    // In a real implementation, this would trigger an API call or page reload
+    marketplace.showNotification('Tri appliqué', 'success');
+}
+
+function toggleFilterModal() {
+    document.getElementById('filter-modal').classList.toggle('hidden');
+}
+
+function applyFilters() {
+    const formData = new FormData(document.querySelector('#filter-modal form'));
+    const params = new URLSearchParams(window.location.search);
+    
+    // Apply filters
+    const selectedCategory = document.querySelector('input[name="categorie"]:checked');
+    if (selectedCategory) {
+        params.set('categorie', selectedCategory.value);
+    } else {
+        params.delete('categorie');
+    }
+    
+    // Reload page with new filters
+    window.location.href = `${window.location.pathname}?${params.toString()}`;
+}
+
+function clearAllFilters() {
+    window.location.href = window.location.pathname;
+}
+
+function clearSearch() {
+    const url = new URL(window.location);
+    url.searchParams.delete('search');
+    window.location.href = url.toString();
+}
+
+function toggleMapView() {
+    marketplace.showNotification('Vue carte bientôt disponible', 'info');
+}
+
+function toggleFavorite(boutiqueId) {
+    const heartIcon = event.currentTarget.querySelector('i');
+    const isFavorited = heartIcon.classList.contains('fas');
+    
+    if (isFavorited) {
+        heartIcon.classList.remove('fas', 'text-red-500');
+        heartIcon.classList.add('far', 'text-gray-400');
+        marketplace.showNotification('Boutique retirée des favoris', 'success');
+    } else {
+        heartIcon.classList.remove('far', 'text-gray-400');
+        heartIcon.classList.add('fas', 'text-red-500');
+        marketplace.showNotification('Boutique ajoutée aux favoris', 'success');
+    }
+}
+
+function loadMoreBoutiques() {
+    marketplace.showLoading();
+    // Simulate loading more content
+    setTimeout(() => {
+        marketplace.hideLoading();
+        marketplace.showNotification('Plus de boutiques bientôt disponibles', 'info');
+    }, 1000);
+}
+
+// Pull to refresh for boutique list
+let startY = 0;
+let isPulling = false;
+
+document.addEventListener('touchstart', (e) => {
+    if (window.scrollY === 0) {
+        startY = e.touches[0].clientY;
+        isPulling = true;
+    }
+});
+
+document.addEventListener('touchmove', (e) => {
+    if (!isPulling) return;
+    
+    const currentY = e.touches[0].clientY;
+    const pullDistance = currentY - startY;
+    
+    if (pullDistance > 80) {
+        document.body.classList.add('pulling');
+    }
+});
+
+document.addEventListener('touchend', () => {
+    if (isPulling && document.body.classList.contains('pulling')) {
+        document.body.classList.remove('pulling');
+        location.reload();
+    }
+    isPulling = false;
+});
+
+// Search suggestions
+const searchInput = document.querySelector('input[name="search"]');
+if (searchInput) {
+    let searchTimeout;
+    
+    searchInput.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        const query = e.target.value.trim();
+        
+        if (query.length >= 2) {
+            searchTimeout = setTimeout(() => {
+                // In a real implementation, this would show search suggestions
+                console.log('Searching for:', query);
+            }, 300);
+        }
+    });
+}
+</script>
+{% endblock %}

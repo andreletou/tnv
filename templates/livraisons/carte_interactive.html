@@ -1,0 +1,1633 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Livraison Express - Carte Interactive</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Leaflet Routing Machine CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        #map {
+            height: 100vh;
+            width: 100%;
+            z-index: 1;
+        }
+        
+        .control-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 15px;
+            width: 350px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .search-box {
+            position: relative;
+            margin-bottom: 15px;
+        }
+        
+        .search-box i {
+            position: absolute;
+            left: 10px;
+            top: 10px;
+            color: #757575;
+        }
+        
+        .search-box input {
+            padding-left: 35px;
+        }
+        
+        .filter-section {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .delivery-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 15px;
+            width: 350px;
+            max-height: 80vh;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .delivery-card {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid #eee;
+        }
+        
+        .delivery-card:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .delivery-card.active {
+            background: #e3f2fd;
+            border-color: #2196F3;
+        }
+        
+        .status-badge {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .status-disponible {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .status-attribuee {
+            background-color: #e3f2fd;
+            color: #1565c0;
+        }
+        
+        .status-en-cours {
+            background-color: #fff8e1;
+            color: #f57f17;
+        }
+        
+        .status-livree {
+            background-color: #e0f2f1;
+            color: #00695c;
+        }
+        
+        .route-info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 15px;
+            width: 300px;
+            display: none;
+        }
+        
+        .notification-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 2000;
+            min-width: 300px;
+        }
+        
+        .popup-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 1.1rem;
+        }
+        
+        .popup-info {
+            margin-bottom: 3px;
+            font-size: 0.9rem;
+        }
+        
+        .btn-nav {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 5px;
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-nav:hover {
+            background-color: #0b7dda;
+        }
+        
+        .btn-details {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .btn-details:hover {
+            background-color: #45a049;
+        }
+        
+        .btn-accept {
+            background-color: #2196F3;
+            color: white;
+        }
+        
+        .btn-accept:hover {
+            background-color: #0b7dda;
+        }
+        
+        .btn-route {
+            background-color: #FF9800;
+            color: white;
+        }
+        
+        .btn-route:hover {
+            background-color: #e68900;
+        }
+        
+        .custom-marker-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+        
+        .distance-info {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .loading-overlay {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .leaflet-routing-container {
+            display: none;
+        }
+        
+        .route-instructions {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+        }
+        
+        .route-instruction {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .route-instruction:last-child {
+            border-bottom: none;
+        }
+        
+        .route-instruction i {
+            margin-right: 8px;
+            color: #2196F3;
+        }
+        
+        .route-step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .step-number {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: #2196F3;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            margin-right: 10px;
+        }
+        
+        .step-content {
+            flex: 1;
+        }
+        
+        .step-title {
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+        
+        .step-details {
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        .route-progress {
+            height: 6px;
+            background-color: #e0e0e0;
+            border-radius: 3px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        
+        .route-progress-bar {
+            height: 100%;
+            background-color: #4CAF50;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .route-deviation-warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(33, 150, 243, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(33, 150, 243, 0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    
+    <!-- Panneau de contrôle principal -->
+    <div class="control-panel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Carte des Livraisons</h5>
+            <button class="btn btn-sm btn-outline-secondary" id="refreshMap">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+        
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" class="form-control" id="searchInput" placeholder="Rechercher une boutique...">
+        </div>
+        
+        <div class="filter-section">
+            <h6 class="mb-2">Filtres</h6>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="showBoutiques" checked>
+                <label class="form-check-label" for="showBoutiques">
+                    Boutiques
+                </label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="showLivreurs" checked>
+                <label class="form-check-label" for="showLivreurs">
+                    Livreurs
+                </label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="showLivraisons" checked>
+                <label class="form-check-label" for="showLivraisons">
+                    Livraisons
+                </label>
+            </div>
+        </div>
+        
+        <div class="mb-3">
+            <h6 class="mb-2">Rayon de recherche</h6>
+            <div class="input-group">
+                <input type="number" class="form-control" id="rayonRecherche" min="1" max="50" value="10">
+                <span class="input-group-text">km</span>
+            </div>
+        </div>
+        
+        <div class="mb-3">
+            <h6 class="mb-2">Type de véhicule</h6>
+            <select class="form-select" id="typeVehicule">
+                <option value="">Tous types</option>
+                <option value="moto">Moto</option>
+                <option value="voiture">Voiture</option>
+                <option value="velo">Vélo</option>
+                <option value="scooter">Scooter</option>
+            </select>
+        </div>
+        
+        <button class="btn btn-primary w-100" id="searchDeliveries">
+            <i class="fas fa-search"></i> Rechercher des livraisons
+        </button>
+    </div>
+    
+    <!-- Panneau des livraisons -->
+    <div class="delivery-panel" id="deliveryPanel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Livraisons Disponibles</h5>
+            <button class="btn btn-sm btn-outline-secondary" id="closeDeliveryPanel">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div id="loadingDeliveries" class="loading-overlay" style="display: none;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Chargement...</span>
+            </div>
+        </div>
+        
+        <div id="deliveriesList">
+            <!-- Les livraisons seront chargées ici via JavaScript -->
+        </div>
+    </div>
+    
+    <!-- Panneau d'informations sur l'itinéraire -->
+    <div class="route-info" id="routeInfo">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0">Itinéraire</h6>
+            <button class="btn btn-sm btn-outline-danger" id="closeRouteInfo">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="routeDetails">
+            <!-- Les détails de l'itinéraire seront affichés ici -->
+        </div>
+        <div id="routeSteps" class="route-steps">
+            <!-- Les étapes de l'itinéraire seront affichées ici -->
+        </div>
+        <div class="route-progress">
+            <div class="route-progress-bar" id="routeProgressBar"></div>
+        </div>
+        <div class="route-deviation-warning" id="routeDeviationWarning">
+            <i class="fas fa-exclamation-triangle"></i> Vous vous êtes éloigné de l'itinéraire. Recalcul en cours...
+        </div>
+        <div id="routeInstructions" class="route-instructions">
+            <!-- Les instructions de l'itinéraire seront affichées ici -->
+        </div>
+    </div>
+    
+    <!-- Notification toast -->
+    <div class="notification-toast" id="notificationToast" style="display: none;">
+        <div class="toast show" role="alert">
+            <div class="toast-header">
+                <strong class="me-auto">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="notificationMessage">
+                <!-- Message de notification -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    
+    <script>
+        // Variables globales
+        let map;
+        let livreurPosition;
+        let livreurMarker;
+        let boutiqueMarkers = [];
+        let livreurMarkers = [];
+        let livraisonMarkers = [];
+        let routingControl;
+        let selectedDelivery = null;
+        let routeSteps = [];
+        let currentStepIndex = 0;
+        let routePath = [];
+        let positionWatchId = null;
+        let routeUpdateInterval = null;
+        
+        // Initialisation de la carte
+        document.addEventListener('DOMContentLoaded', function() {
+            initMap();
+            loadLivreurPosition();
+            loadBoutiques();
+            loadLivraisons();
+            
+            // Écouteurs d'événements
+            document.getElementById('refreshMap').addEventListener('click', refreshMap);
+            document.getElementById('searchInput').addEventListener('input', filterBoutiques);
+            document.getElementById('showBoutiques').addEventListener('change', toggleLayer);
+            document.getElementById('showLivreurs').addEventListener('change', toggleLayer);
+            document.getElementById('showLivraisons').addEventListener('change', toggleLayer);
+            document.getElementById('searchDeliveries').addEventListener('click', searchDeliveries);
+            document.getElementById('closeDeliveryPanel').addEventListener('click', function() {
+                document.getElementById('deliveryPanel').style.display = 'none';
+            });
+            document.getElementById('closeRouteInfo').addEventListener('click', function() {
+                closeRouteInfo();
+            });
+            
+            // Rafraîchir les données toutes les 30 secondes
+            setInterval(refreshMap, 30000);
+        });
+        
+        // Initialisation de la carte Leaflet
+        function initMap() {
+            // Coordonnées par défaut (Lomé, Togo)
+            const defaultLat = 6.1319;
+            const defaultLng = 1.2225;
+            
+            // Création de la carte
+            map = L.map('map').setView([defaultLat, defaultLng], 13);
+            
+            // Ajout de la couche de tuiles (OpenStreetMap)
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19
+            }).addTo(map);
+            
+            // Création d'icônes personnalisées
+            window.boutiqueIcon = L.divIcon({
+                html: '<div class="custom-marker-icon" style="background-color: #2196F3;"><i class="fas fa-store"></i></div>',
+                iconSize: [30, 30],
+                className: ''
+            });
+            
+            window.livreurIcon = L.divIcon({
+                html: '<div class="custom-marker-icon pulse-animation" style="background-color: #4CAF50;"><i class="fas fa-motorcycle"></i></div>',
+                iconSize: [30, 30],
+                className: ''
+            });
+            
+            window.livraisonIcon = L.divIcon({
+                html: '<div class="custom-marker-icon" style="background-color: #FF9800;"><i class="fas fa-box"></i></div>',
+                iconSize: [30, 30],
+                className: ''
+            });
+            
+            window.destinationIcon = L.divIcon({
+                html: '<div class="custom-marker-icon" style="background-color: #F44336;"><i class="fas fa-map-marker-alt"></i></div>',
+                iconSize: [30, 30],
+                className: ''
+            });
+            
+            window.currentStepIcon = L.divIcon({
+                html: '<div class="custom-marker-icon" style="background-color: #9C27B0;"><i class="fas fa-flag"></i></div>',
+                iconSize: [30, 30],
+                className: ''
+            });
+        }
+        
+        // Charger la position du livreur
+        function loadLivreurPosition() {
+            // Obtenir la position actuelle du navigateur
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        
+                        // Mettre à jour la position sur la carte
+                        updateLivreurPosition(lat, lng);
+                        
+                        // Mettre à jour la position dans la base de données
+                        updateLivreurPositionInDB(lat, lng);
+                    },
+                    error => {
+                        console.error("Erreur de géolocalisation:", error);
+                        showNotification("Impossible d'obtenir votre position. Veuillez activer la géolocalisation.", "warning");
+                        
+                        // Utiliser une position par défaut
+                        updateLivreurPosition(6.1319, 1.2225);
+                    }
+                );
+                
+                // Suivre la position du livreur
+                positionWatchId = navigator.geolocation.watchPosition(
+                    position => {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        
+                        updateLivreurPosition(lat, lng);
+                        updateLivreurPositionInDB(lat, lng);
+                        
+                        // Si un itinéraire est actif, vérifier si le livreur est sur le bon chemin
+                        if (routingControl && routePath.length > 0) {
+                            checkRouteDeviation(lat, lng);
+                            updateRouteProgress(lat, lng);
+                        }
+                    },
+                    error => {
+                        console.error("Erreur de suivi de position:", error);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 5000,
+                        maximumAge: 0
+                    }
+                );
+            } else {
+                showNotification("La géolocalisation n'est pas supportée par votre navigateur.", "warning");
+                updateLivreurPosition(6.1319, 1.2225);
+            }
+        }
+        
+        // Mettre à jour la position du livreur sur la carte
+        function updateLivreurPosition(lat, lng) {
+            // Si le marqueur existe déjà, mettre à jour sa position
+            if (livreurMarker) {
+                livreurMarker.setLatLng([lat, lng]);
+            } else {
+                // Sinon, créer un nouveau marqueur
+                livreurMarker = L.marker([lat, lng], { icon: livreurIcon }).addTo(map);
+                
+                // Ajouter un popup
+                livreurMarker.bindPopup('<div class="popup-title">Votre position</div><div class="popup-info">Vous êtes ici</div>');
+            }
+            
+            // Centrer la carte sur la position du livreur
+            map.panTo([lat, lng]);
+            
+            // Stocker la position
+            livreurPosition = { lat, lng };
+        }
+        
+        // Mettre à jour la position du livreur dans la base de données
+        function updateLivreurPositionInDB(lat, lng) {
+            fetch('/livraisons/api/position/mettre-a-jour/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    latitude: lat,
+                    longitude: lng
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    console.error("Erreur lors de la mise à jour de la position:", data.message);
+                }
+            })
+            .catch(error => {
+                console.error("Erreur lors de la mise à jour de la position:", error);
+            });
+        }
+        
+        // Charger les boutiques
+        function loadBoutiques() {
+            fetch('/livraisons/carte/boutiques/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Supprimer les marqueurs existants
+                        boutiqueMarkers.forEach(marker => map.removeLayer(marker));
+                        boutiqueMarkers = [];
+                        
+                        // Ajouter les nouveaux marqueurs
+                        data.boutiques.forEach(boutique => {
+                            if (boutique.latitude && boutique.longitude) {
+                                const marker = L.marker([boutique.latitude, boutique.longitude], { icon: boutiqueIcon })
+                                    .addTo(map)
+                                    .bindPopup(`
+                                        <div class="popup-title">${boutique.nom}</div>
+                                        <div class="popup-info"><i class="fas fa-tag"></i> ${boutique.categorie}</div>
+                                        <div class="popup-info"><i class="fas fa-map-marker-alt"></i> ${boutique.adresse}</div>
+                                        <div class="popup-info"><i class="fas fa-phone"></i> ${boutique.telephone}</div>
+                                        <div class="popup-info"><i class="fas fa-clock"></i> ${boutique.horaires}</div>
+                                        <button class="btn-nav" onclick="showLivraisonsFromBoutique(${boutique.id})">Voir les livraisons</button>
+                                    `);
+                                
+                                marker.boutiqueId = boutique.id;
+                                boutiqueMarkers.push(marker);
+                            }
+                        });
+                    } else {
+                        console.error("Erreur lors du chargement des boutiques:", data.message);
+                        showNotification("Erreur lors du chargement des boutiques.", "error");
+                    }
+                })
+                .catch(error => {
+                    console.error("Erreur lors du chargement des boutiques:", error);
+                    showNotification("Erreur lors du chargement des boutiques.", "error");
+                });
+        }
+        
+        // Charger les livraisons
+        function loadLivraisons() {
+            fetch('/livraisons/carte/livraisons/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Supprimer les marqueurs existants
+                        livraisonMarkers.forEach(marker => map.removeLayer(marker));
+                        livraisonMarkers = [];
+                        
+                        // Ajouter les nouveaux marqueurs
+                        data.livraisons.forEach(livraison => {
+                            // Marqueur pour le point de livraison
+                            if (livraison.latitude_livraison && livraison.longitude_livraison) {
+                                const marker = L.marker([livraison.latitude_livraison, livraison.longitude_livraison], { icon: livraisonIcon })
+                                    .addTo(map)
+                                    .bindPopup(`
+                                        <div class="popup-title">Livraison #${livraison.id}</div>
+                                        <div class="popup-info"><i class="fas fa-receipt"></i> Commande: ${livraison.reference_commande}</div>
+                                        <div class="popup-info"><i class="fas fa-user"></i> ${livraison.client_nom}</div>
+                                        <div class="popup-info"><i class="fas fa-map-marker-alt"></i> ${livraison.adresse_livraison}</div>
+                                        <div class="popup-info"><i class="fas fa-money-bill"></i> ${livraison.cout_livraison} FCFA</div>
+                                        <div class="popup-info"><i class="fas fa-info-circle"></i> ${livraison.statut_display}</div>
+                                        <div class="d-flex justify-content-between mt-2">
+                                            <button class="btn-nav" onclick="showDeliveryDetails(${livraison.id})">Détails</button>
+                                            <button class="btn-nav" style="background-color: #FF9800;" onclick="showRouteToDelivery(${livraison.id})">Itinéraire</button>
+                                        </div>
+                                    `);
+                                
+                                marker.livraisonId = livraison.id;
+                                livraisonMarkers.push(marker);
+                            }
+                        });
+                    } else {
+                        console.error("Erreur lors du chargement des livraisons:", data.message);
+                        showNotification("Erreur lors du chargement des livraisons.", "error");
+                    }
+                })
+                .catch(error => {
+                    console.error("Erreur lors du chargement des livraisons:", error);
+                    showNotification("Erreur lors du chargement des livraisons.", "error");
+                });
+        }
+        
+        // Rechercher des livraisons disponibles
+        function searchDeliveries() {
+            const rayon = document.getElementById('rayonRecherche').value;
+            const typeVehicule = document.getElementById('typeVehicule').value;
+            
+            // Afficher le panneau des livraisons
+            document.getElementById('deliveryPanel').style.display = 'block';
+            
+            // Afficher l'indicateur de chargement
+            document.getElementById('loadingDeliveries').style.display = 'flex';
+            
+            // Construire l'URL de l'API
+            let apiUrl = `/livraisons/api/livraisons/disponibles/`;
+            
+            // Si un rayon est spécifié, utiliser l'API des livraisons proches
+            if (rayon && livreurPosition) {
+                apiUrl = `/livraisons/api/livraisons/proches/`;
+            }
+            
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    // Masquer l'indicateur de chargement
+                    document.getElementById('loadingDeliveries').style.display = 'none';
+                    
+                    if (data.success) {
+                        let livraisons = data.livraisons;
+                        
+                        // Filtrer par type de véhicule si nécessaire
+                        if (typeVehicule) {
+                            // Cette filtration devrait idéalement être faite côté serveur
+                            // mais pour l'exemple, nous la faisons côté client
+                            livraisons = livraisons.filter(livraison => {
+                                // Cette logique dépend de la structure de vos données
+                                return true; // Placeholder
+                            });
+                        }
+                        
+                        // Afficher les livraisons
+                        displayDeliveries(livraisons);
+                    } else {
+                        console.error("Erreur lors de la recherche des livraisons:", data.message);
+                        showNotification("Erreur lors de la recherche des livraisons.", "error");
+                        document.getElementById('deliveriesList').innerHTML = `
+                            <div class="alert alert-danger">
+                                Erreur: ${data.message}
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    // Masquer l'indicateur de chargement
+                    document.getElementById('loadingDeliveries').style.display = 'none';
+                    
+                    console.error("Erreur lors de la recherche des livraisons:", error);
+                    showNotification("Erreur lors de la recherche des livraisons.", "error");
+                    document.getElementById('deliveriesList').innerHTML = `
+                        <div class="alert alert-danger">
+                            Erreur lors de la recherche des livraisons.
+                        </div>
+                    `;
+                });
+        }
+        
+        // Afficher les livraisons dans le panneau
+        function displayDeliveries(livraisons) {
+            const deliveriesList = document.getElementById('deliveriesList');
+            
+            if (livraisons.length === 0) {
+                deliveriesList.innerHTML = `
+                    <div class="alert alert-info">
+                        Aucune livraison disponible pour le moment.
+                    </div>
+                `;
+                return;
+            }
+            
+            deliveriesList.innerHTML = '';
+            
+            livraisons.forEach(livraison => {
+                const distanceText = livraison.distance_metres ? 
+                    `${(livraison.distance_metres / 1000).toFixed(1)} km` : 
+                    'Distance inconnue';
+                
+                const deliveryCard = document.createElement('div');
+                deliveryCard.className = 'delivery-card';
+                deliveryCard.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h6 class="mb-0">Livraison #${livraison.id}</h6>
+                            <div class="text-muted small">Commande: ${livraison.reference_commande}</div>
+                        </div>
+                        <span class="status-badge status-disponible">Disponible</span>
+                    </div>
+                    <div class="mb-2">
+                        <div class="d-flex align-items-center mb-1">
+                            <i class="fas fa-user me-2 text-muted"></i>
+                            <span>${livraison.client_nom}</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-1">
+                            <i class="fas fa-map-marker-alt me-2 text-muted"></i>
+                            <span class="text-truncate">${livraison.adresse_livraison}</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-1">
+                            <i class="fas fa-store me-2 text-muted"></i>
+                            <span>${livraison.boutique_nom || 'Boutique inconnue'}</span>
+                        </div>
+                        <div class="distance-info">
+                            <i class="fas fa-route me-1"></i>
+                            Distance: ${distanceText}
+                        </div>
+                        <div class="mt-2">
+                            <i class="fas fa-money-bill me-1"></i>
+                            <strong>${livraison.cout_livraison} FCFA</strong>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <button class="btn btn-sm btn-details" onclick="showDeliveryDetails(${livraison.id})">
+                            <i class="fas fa-info-circle"></i> Détails
+                        </button>
+                        <button class="btn btn-sm btn-route" onclick="showRouteToDelivery(${livraison.id})">
+                            <i class="fas fa-route"></i> Itinéraire
+                        </button>
+                        <button class="btn btn-sm btn-accept" onclick="acceptDelivery(${livraison.id})">
+                            <i class="fas fa-check"></i> Accepter
+                        </button>
+                    </div>
+                `;
+                
+                deliveryCard.addEventListener('click', function() {
+                    // Mettre en évidence la livraison sélectionnée
+                    document.querySelectorAll('.delivery-card').forEach(card => {
+                        card.classList.remove('active');
+                    });
+                    deliveryCard.classList.add('active');
+                    
+                    // Centrer la carte sur la livraison
+                    if (livraison.latitude_livraison && livraison.longitude_livraison) {
+                        map.setView([livraison.latitude_livraison, livraison.longitude_livraison], 15);
+                        
+                        // Ouvrir le popup du marqueur de livraison
+                        livraisonMarkers.forEach(marker => {
+                            if (marker.livraisonId === livraison.id) {
+                                marker.openPopup();
+                            }
+                        });
+                    }
+                });
+                
+                deliveriesList.appendChild(deliveryCard);
+            });
+        }
+        
+        // Afficher les détails d'une livraison
+        function showDeliveryDetails(livraisonId) {
+            fetch(`/livraisons/api/itineraire/${livraisonId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const livraison = data.itineraire;
+                        
+                        // Créer un popup avec les détails
+                        const popupContent = `
+                            <div class="popup-title">Livraison #${livraison.id}</div>
+                            <div class="popup-info"><i class="fas fa-receipt"></i> Commande: ${livraison.reference_commande}</div>
+                            <div class="popup-info"><i class="fas fa-user"></i> ${livraison.client_nom}</div>
+                            <div class="popup-info"><i class="fas fa-map-marker-alt"></i> ${livraison.adresse_livraison}</div>
+                            <div class="popup-info"><i class="fas fa-money-bill"></i> ${livraison.cout_livraison} FCFA</div>
+                            <div class="popup-info"><i class="fas fa-info-circle"></i> ${livraison.statut}</div>
+                            ${livraison.instructions_livraison ? `<div class="popup-info"><i class="fas fa-comment"></i> ${livraison.instructions_livraison}</div>` : ''}
+                            <div class="d-flex justify-content-between mt-2">
+                                <button class="btn-nav" onclick="showDeliveryDetails(${livraison.id})">Détails</button>
+                                <button class="btn-nav" style="background-color: #FF9800;" onclick="showRouteToDelivery(${livraison.id})">Itinéraire</button>
+                            </div>
+                        `;
+                        
+                        // Trouver et ouvrir le popup du marqueur de livraison
+                        livraisonMarkers.forEach(marker => {
+                            if (marker.livraisonId === livraisonId) {
+                                marker.setPopupContent(popupContent);
+                                marker.openPopup();
+                            }
+                        });
+                    } else {
+                        console.error("Erreur lors du chargement des détails de la livraison:", data.message);
+                        showNotification("Erreur lors du chargement des détails de la livraison.", "error");
+                    }
+                })
+                .catch(error => {
+                    console.error("Erreur lors du chargement des détails de la livraison:", error);
+                    showNotification("Erreur lors du chargement des détails de la livraison.", "error");
+                });
+        }
+        
+        // Accepter une livraison
+        function acceptDelivery(livraisonId) {
+            if (confirm("Êtes-vous sûr de vouloir accepter cette livraison ?")) {
+                fetch(`/livraisons/livraisons/${livraisonId}/accepter/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification("Livraison acceptée avec succès!", "success");
+                        
+                        // Rediriger vers la page de détails de la livraison
+                        window.location.href = data.redirect_url;
+                    } else {
+                        console.error("Erreur lors de l'acceptation de la livraison:", data.message);
+                        showNotification(`Erreur: ${data.message}`, "error");
+                    }
+                })
+                .catch(error => {
+                    console.error("Erreur lors de l'acceptation de la livraison:", error);
+                    showNotification("Erreur lors de l'acceptation de la livraison.", "error");
+                });
+            }
+        }
+        
+        // Afficher l'itinéraire vers une livraison - AMÉLIORÉ
+        function showRouteToDelivery(livraisonId) {
+            fetch(`/livraisons/api/itineraire/${livraisonId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const livraison = data.itineraire;
+                        
+                        // Supprimer l'itinéraire précédent s'il existe
+                        if (routingControl) {
+                            map.removeControl(routingControl);
+                        }
+                        
+                        // Réinitialiser les étapes de l'itinéraire
+                        routeSteps = [];
+                        currentStepIndex = 0;
+                        routePath = [];
+                        
+                        // Points de l'itinéraire
+                        const waypoints = [];
+                        
+                        // Point de départ (position actuelle du livreur)
+                        if (livreurPosition) {
+                            waypoints.push(L.latLng(livreurPosition.lat, livreurPosition.lng));
+                            routeSteps.push({
+                                name: "Votre position",
+                                lat: livreurPosition.lat,
+                                lng: livreurPosition.lng,
+                                type: "start"
+                            });
+                        }
+                        
+                        // Point de la boutique
+                        if (livraison.point_boutique && livraison.point_boutique.latitude && livraison.point_boutique.longitude) {
+                            waypoints.push(L.latLng(livraison.point_boutique.latitude, livraison.point_boutique.longitude));
+                            routeSteps.push({
+                                name: livraison.point_boutique.nom || "Boutique",
+                                lat: livraison.point_boutique.latitude,
+                                lng: livraison.point_boutique.longitude,
+                                type: "boutique",
+                                address: livraison.point_boutique.adresse
+                            });
+                        }
+                        
+                        // Point de livraison
+                        if (livraison.point_livraison && livraison.point_livraison.latitude && livraison.point_livraison.longitude) {
+                            waypoints.push(L.latLng(livraison.point_livraison.latitude, livraison.point_livraison.longitude));
+                            routeSteps.push({
+                                name: "Destination",
+                                lat: livraison.point_livraison.latitude,
+                                lng: livraison.point_livraison.longitude,
+                                type: "destination",
+                                address: livraison.adresse_livraison,
+                                client: livraison.client_nom
+                            });
+                        }
+                        
+                        // Créer l'itinéraire
+                        if (waypoints.length >= 2) {
+                            routingControl = L.Routing.control({
+                                waypoints: waypoints,
+                                routeWhileDragging: false,
+                                addWaypoints: false,
+                                createMarker: function(i, waypoint, n) {
+                                    const step = routeSteps[i];
+                                    let icon;
+                                    
+                                    if (i === 0) {
+                                        icon = livreurIcon;
+                                    } else if (i === n-1) {
+                                        icon = destinationIcon;
+                                    } else {
+                                        icon = boutiqueIcon;
+                                    }
+                                    
+                                    const marker = L.marker(waypoint.latLng, { icon: icon });
+                                    
+                                    // Ajouter des popups aux marqueurs
+                                    if (i === 0) {
+                                        marker.bindPopup("Votre position");
+                                    } else if (i === n-1) {
+                                        marker.bindPopup(`
+                                            <div class="popup-title">Destination finale</div>
+                                            <div class="popup-info"><i class="fas fa-user"></i> ${step.client || 'Client'}</div>
+                                            <div class="popup-info"><i class="fas fa-map-marker-alt"></i> ${step.address || 'Adresse'}</div>
+                                        `);
+                                    } else {
+                                        marker.bindPopup(`
+                                            <div class="popup-title">${step.name}</div>
+                                            <div class="popup-info"><i class="fas fa-map-marker-alt"></i> ${step.address || 'Adresse'}</div>
+                                        `);
+                                    }
+                                    
+                                    return marker;
+                                },
+                                formatter: function(waypoints, options) {
+                                    // Formatter personnalisé pour afficher les informations sur l'itinéraire
+                                    const distance = this._route.totalDistance;
+                                    const time = this._route.totalTime;
+                                    
+                                    // Stocker le chemin de l'itinéraire pour le suivi
+                                    if (this._route && this._route.coordinates) {
+                                        routePath = this._route.coordinates;
+                                    }
+                                    
+                                    // Mettre à jour le panneau d'informations sur l'itinéraire
+                                    document.getElementById('routeDetails').innerHTML = `
+                                        <div class="mb-2">
+                                            <strong>Distance:</strong> ${(distance / 1000).toFixed(2)} km
+                                        </div>
+                                        <div class="mb-2">
+                                            <strong>Durée estimée:</strong> ${Math.round(time / 60)} min
+                                        </div>
+                                        <div class="mb-2">
+                                            <strong>Coût:</strong> ${livraison.cout_livraison} FCFA
+                                        </div>
+                                        <button class="btn btn-sm btn-primary w-100" onclick="startDelivery(${livraison.id})">
+                                            <i class="fas fa-play"></i> Commencer la livraison
+                                        </button>
+                                    `;
+                                    
+                                    // Afficher les étapes de l'itinéraire
+                                    displayRouteSteps();
+                                    
+                                    document.getElementById('routeInfo').style.display = 'block';
+                                    
+                                    // Extraire et afficher les instructions de l'itinéraire
+                                    if (this._route && this._route.instructions) {
+                                        let instructionsHtml = '<h6>Instructions</h6>';
+                                        this._route.instructions.forEach(instruction => {
+                                            instructionsHtml += `
+                                                <div class="route-instruction">
+                                                    <i class="fas fa-${getDirectionIcon(instruction.type)}"></i>
+                                                    ${instruction.text}
+                                                </div>
+                                            `;
+                                        });
+                                        document.getElementById('routeInstructions').innerHTML = instructionsHtml;
+                                    }
+                                    
+                                    return null; // Ne pas afficher les instructions par défaut
+                                }
+                            }).addTo(map);
+                            
+                            // Stocker la livraison sélectionnée
+                            selectedDelivery = livraison;
+                            
+                            // Ajuster la vue pour afficher tout l'itinéraire
+                            if (routingControl) {
+                                map.on('routesfound', function(e) {
+                                    const routes = e.routes;
+                                    const bounds = L.latLngBounds();
+                                    routes[0].coordinates.forEach(coord => {
+                                        bounds.extend(coord);
+                                    });
+                                    map.fitBounds(bounds, { padding: [50, 50] });
+                                });
+                            }
+                        } else {
+                            showNotification("Impossible de calculer l'itinéraire: points manquants.", "warning");
+                        }
+                    } else {
+                        console.error("Erreur lors du chargement de l'itinéraire:", data.message);
+                        showNotification("Erreur lors du chargement de l'itinéraire.", "error");
+                    }
+                })
+                .catch(error => {
+                    console.error("Erreur lors du chargement de l'itinéraire:", error);
+                    showNotification("Erreur lors du chargement de l'itinéraire.", "error");
+                });
+        }
+        
+        // Afficher les étapes de l'itinéraire
+        function displayRouteSteps() {
+            const routeStepsElement = document.getElementById('routeSteps');
+            routeStepsElement.innerHTML = '<h6>Étapes de l'itinéraire</h6>';
+            
+            routeSteps.forEach((step, index) => {
+                const stepElement = document.createElement('div');
+                stepElement.className = 'route-step';
+                
+                let iconClass = 'fa-map-marker-alt';
+                if (step.type === 'start') {
+                    iconClass = 'fa-motorcycle';
+                } else if (step.type === 'boutique') {
+                    iconClass = 'fa-store';
+                } else if (step.type === 'destination') {
+                    iconClass = 'fa-home';
+                }
+                
+                stepElement.innerHTML = `
+                    <div class="step-number">${index + 1}</div>
+                    <div class="step-content">
+                        <div class="step-title">${step.name}</div>
+                        <div class="step-details">${step.address || ''}</div>
+                    </div>
+                    <div class="step-icon">
+                        <i class="fas ${iconClass}"></i>
+                    </div>
+                `;
+                
+                routeStepsElement.appendChild(stepElement);
+            });
+        }
+        
+        // Vérifier si le livreur dévie de l'itinéraire
+        function checkRouteDeviation(lat, lng) {
+            if (routePath.length === 0) return;
+            
+            // Calculer la distance minimale entre la position actuelle et le chemin de l'itinéraire
+            let minDistance = Infinity;
+            for (let i = 0; i < routePath.length - 1; i++) {
+                const distance = pointToSegmentDistance(
+                    L.latLng(lat, lng),
+                    routePath[i],
+                    routePath[i + 1]
+                );
+                minDistance = Math.min(minDistance, distance);
+            }
+            
+            // Si la distance est supérieure à un seuil (par exemple 50 mètres), afficher un avertissement
+            if (minDistance > 50) {
+                document.getElementById('routeDeviationWarning').style.display = 'block';
+                
+                // Recalculer l'itinéraire après un certain délai
+                if (!routeUpdateInterval) {
+                    routeUpdateInterval = setTimeout(() => {
+                        recalculateRoute();
+                        routeUpdateInterval = null;
+                    }, 5000);
+                }
+            } else {
+                document.getElementById('routeDeviationWarning').style.display = 'none';
+                
+                // Annuler le recalcul si l'utilisateur est revenu sur l'itinéraire
+                if (routeUpdateInterval) {
+                    clearTimeout(routeUpdateInterval);
+                    routeUpdateInterval = null;
+                }
+            }
+        }
+        
+        // Calculer la distance d'un point à un segment de ligne
+        function pointToSegmentDistance(point, segmentStart, segmentEnd) {
+            const A = point.lat - segmentStart.lat;
+            const B = point.lng - segmentStart.lng;
+            const C = segmentEnd.lat - segmentStart.lat;
+            const D = segmentEnd.lng - segmentStart.lng;
+            
+            const dot = A * C + B * D;
+            const lenSq = C * C + D * D;
+            let param = -1;
+            
+            if (lenSq !== 0) {
+                param = dot / lenSq;
+            }
+            
+            let xx, yy;
+            
+            if (param < 0) {
+                xx = segmentStart.lat;
+                yy = segmentStart.lng;
+            } else if (param > 1) {
+                xx = segmentEnd.lat;
+                yy = segmentEnd.lng;
+            } else {
+                xx = segmentStart.lat + param * C;
+                yy = segmentStart.lng + param * D;
+            }
+            
+            const dx = point.lat - xx;
+            const dy = point.lng - yy;
+            
+            // Convertir en mètres (approximation)
+            return Math.sqrt(dx * dx + dy * dy) * 111320; // 1 degré de latitude ≈ 111.32 km
+        }
+        
+        // Mettre à jour la progression de l'itinéraire
+        function updateRouteProgress(lat, lng) {
+            if (routePath.length === 0) return;
+            
+            // Calculer la distance totale de l'itinéraire
+            let totalDistance = 0;
+            for (let i = 0; i < routePath.length - 1; i++) {
+                totalDistance += calculateDistance(
+                    routePath[i].lat,
+                    routePath[i].lng,
+                    routePath[i + 1].lat,
+                    routePath[i + 1].lng
+                );
+            }
+            
+            // Calculer la distance parcourue
+            let traveledDistance = 0;
+            let foundCurrentPosition = false;
+            
+            for (let i = 0; i < routePath.length - 1; i++) {
+                const segmentStart = routePath[i];
+                const segmentEnd = routePath[i + 1];
+                
+                // Vérifier si la position actuelle est sur ce segment
+                const projection = projectPointOnSegment(
+                    L.latLng(lat, lng),
+                    segmentStart,
+                    segmentEnd
+                );
+                
+                if (projection.t >= 0 && projection.t <= 1) {
+                    // La position est sur ce segment
+                    traveledDistance += projection.distance;
+                    foundCurrentPosition = true;
+                    
+                    // Mettre à jour l'étape actuelle
+                    updateCurrentStep(i);
+                    break;
+                } else {
+                    // Ajouter la longueur de ce segment à la distance parcourue
+                    traveledDistance += calculateDistance(
+                        segmentStart.lat,
+                        segmentStart.lng,
+                        segmentEnd.lat,
+                        segmentEnd.lng
+                    );
+                }
+            }
+            
+            // Si la position n'a pas été trouvée sur l'itinéraire, considérer que 100% est parcouru
+            if (!foundCurrentPosition) {
+                traveledDistance = totalDistance;
+            }
+            
+            // Mettre à jour la barre de progression
+            const progressPercentage = Math.min(100, (traveledDistance / totalDistance) * 100);
+            document.getElementById('routeProgressBar').style.width = `${progressPercentage}%`;
+        }
+        
+        // Projeter un point sur un segment de ligne
+        function projectPointOnSegment(point, segmentStart, segmentEnd) {
+            const A = point.lat - segmentStart.lat;
+            const B = point.lng - segmentStart.lng;
+            const C = segmentEnd.lat - segmentStart.lat;
+            const D = segmentEnd.lng - segmentStart.lng;
+            
+            const dot = A * C + B * D;
+            const lenSq = C * C + D * D;
+            let t = -1;
+            
+            if (lenSq !== 0) {
+                t = dot / lenSq;
+            }
+            
+            let projectionPoint;
+            
+            if (t < 0) {
+                projectionPoint = segmentStart;
+            } else if (t > 1) {
+                projectionPoint = segmentEnd;
+            } else {
+                projectionPoint = L.latLng(
+                    segmentStart.lat + t * C,
+                    segmentStart.lng + t * D
+                );
+            }
+            
+            const distance = calculateDistance(
+                segmentStart.lat,
+                segmentStart.lng,
+                projectionPoint.lat,
+                projectionPoint.lng
+            );
+            
+            return { t, point: projectionPoint, distance };
+        }
+        
+        // Calculer la distance entre deux points (en mètres)
+        function calculateDistance(lat1, lng1, lat2, lng2) {
+            // Formule de Haversine
+            const R = 6371e3; // Rayon de la Terre en mètres
+            const φ1 = lat1 * Math.PI / 180;
+            const φ2 = lat2 * Math.PI / 180;
+            const Δφ = (lat2 - lat1) * Math.PI / 180;
+            const Δλ = (lng2 - lng1) * Math.PI / 180;
+            
+            const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                      Math.cos(φ1) * Math.cos(φ2) *
+                      Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            
+            return R * c;
+        }
+        
+        // Mettre à jour l'étape actuelle de l'itinéraire
+        function updateCurrentStep(segmentIndex) {
+            // Déterminer quelle étape de l'itinéraire correspond à ce segment
+            // C'est une approximation simple, une implémentation plus robuste nécessiterait
+            // une correspondance plus précise entre les segments et les étapes
+            
+            let newStepIndex = 0;
+            
+            if (routeSteps.length === 3) {
+                // Itinéraire avec point de départ, boutique et destination
+                if (segmentIndex < routePath.length / 2) {
+                    newStepIndex = 1; // En route vers la boutique
+                } else {
+                    newStepIndex = 2; // En route vers la destination
+                }
+            } else if (routeSteps.length > 3) {
+                // Itinéraire avec plusieurs étapes
+                const stepsPerSegment = (routePath.length - 1) / (routeSteps.length - 1);
+                newStepIndex = Math.min(routeSteps.length - 1, Math.floor(segmentIndex / stepsPerSegment) + 1);
+            }
+            
+            if (newStepIndex !== currentStepIndex) {
+                currentStepIndex = newStepIndex;
+                
+                // Mettre à jour l'affichage des étapes
+                const stepElements = document.querySelectorAll('.route-step');
+                stepElements.forEach((element, index) => {
+                    if (index === currentStepIndex) {
+                        element.classList.add('active-step');
+                        // Mettre en évidence l'étape actuelle
+                        element.querySelector('.step-number').style.backgroundColor = '#9C27B0';
+                    } else if (index < currentStepIndex) {
+                        element.classList.add('completed-step');
+                        // Marquer les étapes précédentes comme complétées
+                        element.querySelector('.step-number').style.backgroundColor = '#4CAF50';
+                    } else {
+                        element.classList.remove('active-step', 'completed-step');
+                        // Réinitialiser les étapes futures
+                        element.querySelector('.step-number').style.backgroundColor = '#2196F3';
+                    }
+                });
+            }
+        }
+        
+        // Recalculer l'itinéraire
+        function recalculateRoute() {
+            if (!selectedDelivery) return;
+            
+            showNotification("Recalcul de l'itinéraire en cours...", "info");
+            
+            // Supprimer l'itinéraire actuel
+            if (routingControl) {
+                map.removeControl(routingControl);
+            }
+            
+            // Recréer l'itinéraire avec la position actuelle
+            showRouteToDelivery(selectedDelivery.id);
+        }
+        
+        // Fermer le panneau d'informations sur l'itinéraire
+        function closeRouteInfo() {
+            document.getElementById('routeInfo').style.display = 'none';
+            
+            if (routingControl) {
+                map.removeControl(routingControl);
+                routingControl = null;
+            }
+            
+            // Réinitialiser les variables de suivi d'itinéraire
+            routeSteps = [];
+            currentStepIndex = 0;
+            routePath = [];
+            
+            // Masquer l'avertissement de déviation
+            document.getElementById('routeDeviationWarning').style.display = 'none';
+            
+            // Annuler tout recalcul en cours
+            if (routeUpdateInterval) {
+                clearTimeout(routeUpdateInterval);
+                routeUpdateInterval = null;
+            }
+        }
+        
+        // Obtenir l'icône appropriée pour le type d'instruction
+        function getDirectionIcon(type) {
+            switch(type) {
+                case 'Straight': return 'arrow-up';
+                case 'SlightRight': return 'arrow-right';
+                case 'Right': return 'arrow-right';
+                case 'SharpRight': return 'arrow-right';
+                case 'TurnAround': return 'undo';
+                case 'SharpLeft': return 'arrow-left';
+                case 'Left': return 'arrow-left';
+                case 'SlightLeft': return 'arrow-left';
+                case 'Waypoint': return 'map-marker-alt';
+                case 'Roundabout': return 'circle-notch';
+                case 'DestinationReached': return 'flag-checkered';
+                default: return 'question';
+            }
+        }
+        
+        // Commencer une livraison
+        function startDelivery(livraisonId) {
+            fetch(`/livraisons/livraisons/${livraisonId}/commencer/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification("Livraison commencée!", "success");
+                    
+                    // Rediriger vers la page de suivi de la livraison
+                    window.location.href = data.redirect_url;
+                } else {
+                    console.error("Erreur lors du début de la livraison:", data.message);
+                    showNotification(`Erreur: ${data.message}`, "error");
+                }
+            })
+            .catch(error => {
+                console.error("Erreur lors du début de la livraison:", error);
+                showNotification("Erreur lors du début de la livraison.", "error");
+            });
+        }
+        
+        // Filtrer les boutiques par recherche
+        function filterBoutiques() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            boutiqueMarkers.forEach(marker => {
+                const popup = marker.getPopup();
+                if (popup) {
+                    const content = popup.getContent();
+                    if (content.toLowerCase().includes(searchTerm)) {
+                        marker.addTo(map);
+                    } else {
+                        map.removeLayer(marker);
+                    }
+                }
+            });
+        }
+        
+        // Basculer l'affichage des couches
+        function toggleLayer(event) {
+            const checkbox = event.target;
+            const layerType = checkbox.id.replace('show', '').toLowerCase();
+            
+            if (layerType === 'boutiques') {
+                boutiqueMarkers.forEach(marker => {
+                    if (checkbox.checked) {
+                        marker.addTo(map);
+                    } else {
+                        map.removeLayer(marker);
+                    }
+                });
+            } else if (layerType === 'livreurs') {
+                livreurMarkers.forEach(marker => {
+                    if (checkbox.checked) {
+                        marker.addTo(map);
+                    } else {
+                        map.removeLayer(marker);
+                    }
+                });
+            } else if (layerType === 'livraisons') {
+                livraisonMarkers.forEach(marker => {
+                    if (checkbox.checked) {
+                        marker.addTo(map);
+                    } else {
+                        map.removeLayer(marker);
+                    }
+                });
+            }
+        }
+        
+        // Rafraîchir la carte
+        function refreshMap() {
+            loadBoutiques();
+            loadLivraisons();
+            showNotification("Carte actualisée", "info");
+        }
+        
+        // Afficher les livraisons depuis une boutique spécifique
+        function showLivraisonsFromBoutique(boutiqueId) {
+            // Fermer tous les popups
+            map.closePopup();
+            
+            // Centrer la carte sur la boutique
+            boutiqueMarkers.forEach(marker => {
+                if (marker.boutiqueId === boutiqueId) {
+                    map.setView(marker.getLatLng(), 15);
+                }
+            });
+            
+            // Afficher le panneau des livraisons
+            document.getElementById('deliveryPanel').style.display = 'block';
+            
+            // Charger les livraisons disponibles
+            searchDeliveries();
+        }
+        
+        // Afficher une notification
+        function showNotification(message, type = 'info') {
+            const toast = document.getElementById('notificationToast');
+            const messageElement = document.getElementById('notificationMessage');
+            
+            messageElement.textContent = message;
+            
+            // Définir la classe en fonction du type
+            toast.className = 'notification-toast';
+            
+            if (type === 'success') {
+                toast.innerHTML = `
+                    <div class="toast show" role="alert">
+                        <div class="toast-header bg-success text-white">
+                            <strong class="me-auto">Succès</strong>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                        </div>
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'error') {
+                toast.innerHTML = `
+                    <div class="toast show" role="alert">
+                        <div class="toast-header bg-danger text-white">
+                            <strong class="me-auto">Erreur</strong>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                        </div>
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'warning') {
+                toast.innerHTML = `
+                    <div class="toast show" role="alert">
+                        <div class="toast-header bg-warning text-dark">
+                            <strong class="me-auto">Attention</strong>
+                            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+                        </div>
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                    </div>
+                `;
+            } else {
+                toast.innerHTML = `
+                    <div class="toast show" role="alert">
+                        <div class="toast-header bg-info text-white">
+                            <strong class="me-auto">Information</strong>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                        </div>
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            toast.style.display = 'block';
+            
+            // Masquer la notification après 5 secondes
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Obtenir un cookie
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>

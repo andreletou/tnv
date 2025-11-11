@@ -1,0 +1,31 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion Livreur</title>
+    <link rel="stylesheet" href="{% static 'livraisons/css/connexion.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <h1>Connexion Livreur</h1>
+        <p>Connectez-vous pour gérer vos livraisons</p>
+    </header>
+    <main class="login-container">
+        <form method="post" action="{% url 'livraisons:login' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="username">Nom d'utilisateur</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Mot de passe</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit">Se connecter</button>
+        </form>
+    </main>
+</body>
+</html>

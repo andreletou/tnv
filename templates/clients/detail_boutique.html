@@ -1,0 +1,413 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}{{ boutique.nom_boutique }} - Marketplace{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header with Cover Image -->
+    <div class="relative">
+        {% if boutique.photo_boutique %}
+            <div class="h-48 bg-cover bg-center relative" style="background-image: url('{{ boutique.photo_boutique.url }}')">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+        {% else %}
+            <div class="h-48 bg-gradient-to-br from-primary-400 to-primary-600 relative">
+        {% endif %}
+        
+            <!-- Back Button -->
+            <button onclick="history.back()" class="absolute top-4 left-4 p-2 bg-white/20 backdrop-blur-sm rounded-lg hover:bg-white/30 transition-colors">
+                <i class="fas fa-arrow-left text-white"></i>
+            </button>
+            
+            <!-- Action Buttons -->
+            <div class="absolute top-4 right-4 flex space-x-2">
+                <button onclick="shareBoutique()" class="p-2 bg-white/20 backdrop-blur-sm rounded-lg hover:bg-white/30 transition-colors">
+                    <i class="fas fa-share-alt text-white"></i>
+                </button>
+                <button onclick="toggleBoutiqueFavorite()" class="p-2 bg-white/20 backdrop-blur-sm rounded-lg hover:bg-white/30 transition-colors">
+                    <i class="fas fa-heart text-white"></i>
+                </button>
+            </div>
+            
+            <!-- Boutique Info -->
+            <div class="absolute bottom-4 left-4 right-4 text-white">
+                <h1 class="text-2xl font-bold mb-1">{{ boutique.nom_boutique }}</h1>
+                <div class="flex items-center space-x-4 text-sm">
+                    <span class="flex items-center">
+                        <i class="fas fa-star text-yellow-400 mr-1"></i>
+                        4.5 (128 avis)
+                    </span>
+                    <span class="flex items-center">
+                        <i class="fas fa-tag mr-1"></i>{{ boutique.get_categorie_display }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="px-4 py-4 bg-white border-b">
+        <div class="grid grid-cols-3 gap-4 text-center">
+            <div>
+                <div class="text-2xl font-bold text-primary-600">{{ total_produits }}</div>
+                <div class="text-xs text-gray-500">Produits</div>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-green-600">{{ produits_actifs }}</div>
+                <div class="text-xs text-gray-500">Disponibles</div>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-red-600">{{ produits_en_promotion }}</div>
+                <div class="text-xs text-gray-500">En promo</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact and Actions -->
+    <div class="px-4 py-4 bg-white border-b">
+        <div class="space-y-3">
+            <div class="flex items-center text-sm text-gray-600">
+                <i class="fas fa-map-marker-alt w-5 text-primary-600"></i>
+                <span class="ml-3">{{ boutique.adresse }}</span>
+            </div>
+            
+            <div class="flex items-center text-sm text-gray-600">
+                <i class="fas fa-phone w-5 text-primary-600"></i>
+                <span class="ml-3">{{ boutique.telephone }}</span>
+                <button onclick="callBoutique()" class="ml-auto p-2 bg-primary-100 text-primary-600 rounded-lg hover:bg-primary-200 transition-colors">
+                    <i class="fas fa-phone"></i>
+                </button>
+            </div>
+            
+            <div class="flex items-center text-sm text-gray-600">
+                <i class="fas fa-clock w-5 text-primary-600"></i>
+                <span class="ml-3">
+                    {% if boutique.horaire_ouverture and boutique.horaire_fermeture %}
+                        Ouvert de {{ boutique.horaire_ouverture }} à {{ boutique.horaire_fermeture }}
+                    {% else %}
+                        Horaires non spécifiés
+                    {% endif %}
+                </span>
+                <span class="ml-auto px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
+                    Ouvert maintenant
+                </span>
+            </div>
+        </div>
+        
+        <div class="flex space-x-3 mt-4">
+            <button onclick="callBoutique()" class="flex-1 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+                <i class="fas fa-phone mr-2"></i>Appeler
+            </button>
+            <button onclick="sendMessage()" class="flex-1 py-2 border border-primary-600 text-primary-600 rounded-lg hover:bg-primary-50 transition-colors">
+                <i class="fas fa-comment mr-2"></i>Message
+            </button>
+        </div>
+    </div>
+
+    <!-- Description -->
+    {% if boutique.description %}
+    <div class="px-4 py-4 bg-white border-b">
+        <h2 class="text-lg font-semibold text-gray-900 mb-2">À propos</h2>
+        <p class="text-gray-600 text-sm leading-relaxed">{{ boutique.description }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Search and Filter -->
+    <div class="px-4 py-4 bg-white border-b sticky top-0 z-20">
+        <div class="flex space-x-2">
+            <div class="flex-1 relative">
+                <input type="text" 
+                       id="product-search"
+                       placeholder="Rechercher un produit..." 
+                       class="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500">
+                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            </div>
+            <button onclick="toggleProductFilter()" class="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                <i class="fas fa-filter text-gray-600"></i>
+            </button>
+        </div>
+        
+        <!-- Product Categories -->
+        <div class="flex space-x-2 mt-3 overflow-x-auto scrollbar-hide">
+            <button onclick="filterProducts('')" 
+                    class="category-pill flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-colors
+                           {% if not categorie_produit %}bg-primary-100 text-primary-700{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                Tous
+            </button>
+            {% for cat_value, cat_label in categories_produit %}
+                <button onclick="filterProducts('{{ cat_value }}')" 
+                        class="category-pill flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-colors
+                               {% if categorie_produit == cat_value %}bg-primary-100 text-primary-700{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                    {{ cat_label }}
+                </button>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Products Grid -->
+    <div class="px-4 py-4">
+        {% if produits %}
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-semibold text-gray-900">Produits ({{ produits|length }})</h2>
+                <select onchange="sortProducts(this.value)" class="text-sm border border-gray-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <option value="recent" {% if tri == 'recent' %}selected{% endif %}>Plus récents</option>
+                    <option value="prix_croissant" {% if tri == 'prix_croissant' %}selected{% endif %}>Prix croissant</option>
+                    <option value="prix_decroissant" {% if tri == 'prix_decroissant' %}selected{% endif %}>Prix décroissant</option>
+                    <option value="promotion" {% if tri == 'promotion' %}selected{% endif %}>En promotion</option>
+                </select>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3">
+                {% for produit in produits %}
+                <div class="product-card bg-white rounded-lg shadow-sm overflow-hidden">
+                    <a href="{% url 'clients:detail_produit' produit.id %}" class="block">
+                        <div class="relative">
+                            {% if produit.photo %}
+                                <img src="{{ produit.photo.url }}" 
+                                     alt="{{ produit.nom }}" 
+                                     class="w-full h-32 object-cover"
+                                     loading="lazy">
+                            {% else %}
+                                <div class="w-full h-32 bg-gray-200 flex items-center justify-center">
+                                    <i class="fas fa-box text-gray-400 text-2xl"></i>
+                                </div>
+                            {% endif %}
+                            
+                            {% if produit.est_en_promotion %}
+                                <span class="absolute top-2 left-2 px-2 py-1 bg-red-500 text-white text-xs rounded-full">
+                                    -{{ produit.prix|calculate_discount:produit.prix_promotionnel }}%
+                                </span>
+                            {% endif %}
+                            
+                            {% if not produit.est_en_stock %}
+                                <div class="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                    <span class="px-3 py-1 bg-gray-800 text-white text-xs rounded-full">Rupture</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="p-3">
+                            <h3 class="text-sm font-semibold text-gray-900 line-clamp-2">{{ produit.nom }}</h3>
+                            
+                            <div class="mt-2">
+                                {% if produit.est_en_promotion %}
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-lg font-bold text-primary-600">{{ produit.prix_promotionnel|format_currency }}</span>
+                                        <span class="text-xs text-gray-400 line-through">{{ produit.prix|format_currency }}</span>
+                                    </div>
+                                {% else %}
+                                    <span class="text-lg font-bold text-primary-600">{{ produit.prix|format_currency }}</span>
+                                {% endif %}
+                            </div>
+                            
+                            <button class="mt-2 w-full py-2 {% if produit.est_en_stock %}bg-primary-600 text-white hover:bg-primary-700{% else %}bg-gray-300 text-gray-500 cursor-not-allowed{% endif %} text-sm rounded-lg transition-colors"
+                                    {% if produit.est_en_stock %}onclick="event.preventDefault(); API.Cart.addItem({{ produit.id }})"{% else %}disabled{% endif %}>
+                                {% if produit.est_en_stock %}
+                                    <i class="fas fa-cart-plus mr-1"></i>
+                                    Ajouter
+                                {% else %}
+                                    Indisponible
+                                {% endif %}
+                            </button>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-12">
+                <i class="fas fa-box-open text-6xl text-gray-300 mb-4"></i>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Aucun produit trouvé</h3>
+                <p class="text-gray-500">Cette boutique n'a pas de produits pour le moment</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Product Filter Modal -->
+<div id="product-filter-modal" class="modal fixed inset-0 z-50 hidden">
+    <div class="modal-backdrop absolute inset-0 bg-black bg-opacity-50"></div>
+    <div class="modal-content relative bg-white rounded-t-2xl mt-8 max-h-[80vh] overflow-hidden">
+        <div class="p-4 border-b">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold">Filtrer les produits</h3>
+                <button onclick="toggleProductFilter()" class="p-2 hover:bg-gray-100 rounded-lg">
+                    <i class="fas fa-times text-gray-500"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-4 overflow-y-auto max-h-[60vh]">
+            <!-- Price Range -->
+            <div class="mb-6">
+                <h4 class="font-medium text-gray-900 mb-3">Prix</h4>
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-sm text-gray-600">Prix minimum</label>
+                        <input type="number" placeholder="0" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    </div>
+                    <div>
+                        <label class="text-sm text-gray-600">Prix maximum</label>
+                        <input type="number" placeholder="10000" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Availability -->
+            <div class="mb-6">
+                <h4 class="font-medium text-gray-900 mb-3">Disponibilité</h4>
+                <div class="space-y-2">
+                    <label class="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input type="checkbox" class="mr-3 text-primary-600" checked>
+                        <span class="text-sm">En stock</span>
+                    </label>
+                    <label class="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input type="checkbox" class="mr-3 text-primary-600">
+                        <span class="text-sm">En promotion</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="p-4 border-t">
+            <div class="flex space-x-3">
+                <button onclick="resetProductFilters()" class="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    Réinitialiser
+                </button>
+                <button onclick="applyProductFilters()" class="flex-1 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+                    Appliquer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Product search
+document.getElementById('product-search')?.addEventListener('input', function(e) {
+    const query = e.target.value.toLowerCase();
+    const products = document.querySelectorAll('.product-card');
+    
+    products.forEach(product => {
+        const productName = product.querySelector('h3').textContent.toLowerCase();
+        if (productName.includes(query)) {
+            product.style.display = 'block';
+        } else {
+            product.style.display = 'none';
+        }
+    });
+});
+
+function filterProducts(category) {
+    const url = new URL(window.location);
+    if (category) {
+        url.searchParams.set('categorie_produit', category);
+    } else {
+        url.searchParams.delete('categorie_produit');
+    }
+    window.location.href = url.toString();
+}
+
+function sortProducts(sort) {
+    const url = new URL(window.location);
+    url.searchParams.set('tri', sort);
+    window.location.href = url.toString();
+}
+
+function toggleProductFilter() {
+    document.getElementById('product-filter-modal').classList.toggle('hidden');
+}
+
+function applyProductFilters() {
+    // Apply product filters
+    toggleProductFilter();
+    marketplace.showNotification('Filtres appliqués', 'success');
+}
+
+function resetProductFilters() {
+    // Reset product filters
+    document.querySelectorAll('#product-filter-modal input[type="checkbox"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('#product-filter-modal input[type="number"]').forEach(input => input.value = '');
+}
+
+function callBoutique() {
+    window.location.href = `tel:{{ boutique.telephone }}`;
+}
+
+function sendMessage() {
+    marketplace.showNotification('Fonction de messagerie bientôt disponible', 'info');
+}
+
+function shareBoutique() {
+    const shareData = {
+        title: '{{ boutique.nom_boutique }}',
+        text: 'Découvrez cette boutique sur Marketplace',
+        url: window.location.href
+    };
+    
+    marketplace.shareContent(shareData.title, shareData.text, shareData.url);
+}
+
+function toggleBoutiqueFavorite() {
+    const heartIcon = event.currentTarget.querySelector('i');
+    const isFavorited = heartIcon.classList.contains('fas');
+    
+    if (isFavorited) {
+        heartIcon.classList.remove('fas', 'text-red-500');
+        heartIcon.classList.add('far', 'text-white');
+        marketplace.showNotification('Boutique retirée des favoris', 'success');
+    } else {
+        heartIcon.classList.remove('far', 'text-white');
+        heartIcon.classList.add('fas', 'text-red-500');
+        marketplace.showNotification('Boutique ajoutée aux favoris', 'success');
+    }
+}
+
+// Infinite scroll for products
+let isLoadingMore = false;
+window.addEventListener('scroll', () => {
+    if (isLoadingMore) return;
+    
+    if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 1000) {
+        isLoadingMore = true;
+        // Load more products here
+        setTimeout(() => {
+            isLoadingMore = false;
+        }, 1000);
+    }
+});
+
+// Pull to refresh
+let startY = 0;
+let isPulling = false;
+
+document.addEventListener('touchstart', (e) => {
+    if (window.scrollY === 0) {
+        startY = e.touches[0].clientY;
+        isPulling = true;
+    }
+});
+
+document.addEventListener('touchmove', (e) => {
+    if (!isPulling) return;
+    
+    const currentY = e.touches[0].clientY;
+    const pullDistance = currentY - startY;
+    
+    if (pullDistance > 80) {
+        document.body.classList.add('pulling');
+    }
+});
+
+document.addEventListener('touchend', () => {
+    if (isPulling && document.body.classList.contains('pulling')) {
+        document.body.classList.remove('pulling');
+        location.reload();
+    }
+    isPulling = false;
+});
+</script>
+{% endblock %}

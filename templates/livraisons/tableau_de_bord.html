@@ -1,0 +1,496 @@
+{% extends "livraisons/base.html" %}
+
+{% block title %}Tableau de bord - Livreur{% endblock %}
+
+{% block page_title %}Tableau de bord{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- Section d'accueil avec informations utilisateur -->
+    <div class="card border-0 shadow-sm mb-4 fade-in">
+        <div class="card-body p-4">
+            <div class="row align-items-center">
+                <div class="col-auto">
+                    {% if livreur.user.photo_profil %}
+                        <img src="{{ livreur.user.photo_profil.url }}" class="avatar" alt="Photo de profil">
+                    {% else %}
+                        <div class="avatar bg-primary text-white d-flex align-items-center justify-content-center">
+                            <i class="bi bi-person-fill fs-4"></i>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col">
+                    <h5 class="mb-1">{{ livreur.user.first_name }} {{ livreur.user.last_name }}</h5>
+                    <p class="text-muted mb-0">{{ livreur.get_type_vehicule_display }} • {{ livreur.immatriculation }}</p>
+                </div>
+                <div class="col-auto">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="disponibiliteSwitch" 
+                               {% if livreur.est_disponible %}checked{% endif %}>
+                        <label class="form-check-label" for="disponibiliteSwitch">
+                            Disponible
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cartes de statistiques -->
+    <div class="row g-3 mb-4">
+        <div class="col-6">
+            <div class="stat-card fade-in">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-value">{{ livraisons_terminees }}</div>
+                        <div class="stat-label">Livraisons terminées</div>
+                    </div>
+                    <i class="bi bi-check-circle fs-2 opacity-75"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="stat-card fade-in" style="background: linear-gradient(135deg, #f72585, #b5179e);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-value">{{ livraisons_en_cours }}</div>
+                        <div class="stat-label">En cours</div>
+                    </div>
+                    <i class="bi bi-truck fs-2 opacity-75"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="stat-card fade-in" style="background: linear-gradient(135deg, #06ffa5, #00b4d8);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-value">{{ revenus_mois|floatformat:0 }} FCFA</div>
+                        <div class="stat-label">Revenus ce mois</div>
+                    </div>
+                    <i class="bi bi-cash-stack fs-2 opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Onglets pour différentes sections -->
+    <ul class="nav nav-tabs mb-3" id="dashboardTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="livraisons-tab" data-bs-toggle="tab" data-bs-target="#livraisons" type="button" role="tab" aria-controls="livraisons" aria-selected="true">
+                Livraisons récentes
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="disponibles-tab" data-bs-toggle="tab" data-bs-target="#disponibles" type="button" role="tab" aria-controls="disponibles" aria-selected="false">
+                Disponibles
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="notifications-tab" data-bs-toggle="tab" data-bs-target="#notifications" type="button" role="tab" aria-controls="notifications" aria-selected="false">
+                Notifications
+                {% if notifications_non_lues > 0 %}
+                    <span class="badge bg-danger ms-1">{{ notifications_non_lues }}</span>
+                {% endif %}
+            </button>
+        </li>
+    </ul>
+    
+    <div class="tab-content" id="dashboardTabsContent">
+        <!-- Onglet Livraisons récentes -->
+        <div class="tab-pane fade show active" id="livraisons" role="tabpanel" aria-labelledby="livraisons-tab">
+            {% if livraisons_recentes %}
+                <div class="list-group list-group-flush">
+                    {% for livraison in livraisons_recentes %}
+                        <div class="list-group-item px-0">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">Commande #{{ livraison.commande.reference }}</h6>
+                                    <p class="mb-1 text-muted">
+                                        <i class="bi bi-geo-alt me-1"></i>
+                                        {{ livraison.commande.adresse_livraison|truncatechars:50 }}
+                                    </p>
+                                    <div>
+                                        <span class="status-badge badge 
+                                            {% if livraison.statut == 'terminee' %}bg-success
+                                            {% elif livraison.statut == 'en_cours' %}bg-primary
+                                            {% elif livraison.statut == 'acceptee' %}bg-info
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ livraison.get_statut_display }}
+                                        </span>
+                                        <span class="text-muted ms-2">
+                                            <i class="bi bi-clock me-1"></i>
+                                            {{ livraison.date_attribution|timesince }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold">{{ livraison.cout_livraison }} FCFA</div>
+                                    <a href="{% url 'livraisons:detail_livraison' livraison.id %}" class="btn btn-sm btn-outline-primary mt-2">
+                                        Détails
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{% url 'livraisons:liste_livraisons' %}" class="btn btn-outline-primary">Voir toutes les livraisons</a>
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-box-seam fs-1 text-muted"></i>
+                    <p class="mt-2 text-muted">Aucune livraison récente</p>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Onglet Livraisons disponibles -->
+        <div class="tab-pane fade" id="disponibles" role="tabpanel" aria-labelledby="disponibles-tab">
+            <div id="livraisonsDisponiblesContainer">
+                <div class="d-flex justify-content-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Chargement...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center mt-3">
+                <a href="{% url 'livraisons:livraisons_disponibles' %}" class="btn btn-outline-primary">Voir toutes les livraisons disponibles</a>
+            </div>
+        </div>
+        
+        <!-- Onglet Notifications -->
+        <div class="tab-pane fade" id="notifications" role="tabpanel" aria-labelledby="notifications-tab">
+            <div id="notificationsContainer">
+                <div class="d-flex justify-content-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Chargement...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center mt-3">
+                <a href="{% url 'livraisons:notifications' %}" class="btn btn-outline-primary">Voir toutes les notifications</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour confirmer la prise en charge d'une livraison -->
+<div class="modal fade" id="acceptLivraisonModal" tabindex="-1" aria-labelledby="acceptLivraisonModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="acceptLivraisonModalLabel">Accepter la livraison</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir accepter cette livraison ?</p>
+                <div id="livraisonDetails"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" id="confirmAcceptBtn">Accepter</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Gestion du switch de disponibilité
+        const disponibiliteSwitch = document.getElementById('disponibiliteSwitch');
+        if (disponibiliteSwitch) {
+            disponibiliteSwitch.addEventListener('change', function() {
+                const estDisponible = this.checked;
+                
+                fetch('/livraisons/api/disponibilite/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        est_disponible: estDisponible,
+                        est_en_ligne: estDisponible
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification(
+                            estDisponible ? 'Vous êtes maintenant disponible pour les livraisons' : 
+                            'Vous n\'êtes plus disponible pour les livraisons', 
+                            'success'
+                        );
+                        
+                        // Recharger les livraisons disponibles si on est sur cet onglet
+                        if (document.querySelector('#disponibles-tab.active')) {
+                            loadLivraisonsDisponibles();
+                        }
+                    } else {
+                        showNotification(data.message || 'Erreur lors de la mise à jour', 'danger');
+                        // Rétablir l'état précédent du switch
+                        this.checked = !estDisponible;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('Erreur de connexion', 'danger');
+                    // Rétablir l'état précédent du switch
+                    this.checked = !estDisponible;
+                });
+            });
+        }
+        
+        // Charger les livraisons disponibles lorsque l'onglet est activé
+        document.getElementById('disponibles-tab').addEventListener('shown.bs.tab', function() {
+            loadLivraisonsDisponibles();
+        });
+        
+        // Charger les notifications lorsque l'onglet est activé
+        document.getElementById('notifications-tab').addEventListener('shown.bs.tab', function() {
+            loadNotifications();
+        });
+        
+        // Variables pour la modal d'acceptation
+        let acceptLivraisonModal;
+        let currentLivraisonId = null;
+        
+        // Initialiser la modal
+        acceptLivraisonModal = new bootstrap.Modal(document.getElementById('acceptLivraisonModal'));
+        
+        // Gestion du bouton de confirmation
+        document.getElementById('confirmAcceptBtn').addEventListener('click', function() {
+            if (currentLivraisonId) {
+                accepterLivraison(currentLivraisonId);
+            }
+        });
+    });
+    
+    // Fonction pour charger les livraisons disponibles
+    function loadLivraisonsDisponibles() {
+        const container = document.getElementById('livraisonsDisponiblesContainer');
+        
+        fetch('/livraisons/api/livraisons/disponibles/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.livraisons.length > 0) {
+                        let html = '<div class="list-group list-group-flush">';
+                        
+                        data.livraisons.forEach(livraison => {
+                            html += `
+                                <div class="list-group-item px-0">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">Commande #${livraison.reference_commande}</h6>
+                                            <p class="mb-1 text-muted">
+                                                <i class="bi bi-geo-alt me-1"></i>
+                                                ${livraison.adresse_livraison}
+                                            </p>
+                                            <div>
+                                                <span class="text-muted">
+                                                    <i class="bi bi-shop me-1"></i>
+                                                    ${livraison.boutique_nom}
+                                                </span>
+                                                ${livraison.distance_metres ? `
+                                                    <span class="text-muted ms-2">
+                                                        <i class="bi bi-signpost-2 me-1"></i>
+                                                        ${(livraison.distance_metres / 1000).toFixed(1)} km
+                                                    </span>
+                                                ` : ''}
+                                            </div>
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="fw-bold">${livraison.cout_livraison} FCFA</div>
+                                            <button class="btn btn-sm btn-primary mt-2" onclick="showAcceptModal(${livraison.id}, '${livraison.reference_commande}', ${livraison.cout_livraison})">
+                                                Accepter
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        
+                        html += '</div>';
+                        container.innerHTML = html;
+                    } else {
+                        container.innerHTML = `
+                            <div class="text-center py-4">
+                                <i class="bi bi-inbox fs-1 text-muted"></i>
+                                <p class="mt-2 text-muted">Aucune livraison disponible pour le moment</p>
+                            </div>
+                        `;
+                    }
+                } else {
+                    container.innerHTML = `
+                        <div class="alert alert-danger">
+                            ${data.message || 'Erreur lors du chargement des livraisons'}
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                container.innerHTML = `
+                    <div class="alert alert-danger">
+                        Erreur de connexion. Veuillez réessayer.
+                    </div>
+                `;
+            });
+    }
+    
+    // Fonction pour charger les notifications
+    function loadNotifications() {
+        const container = document.getElementById('notificationsContainer');
+        
+        fetch('/livraisons/api/notifications/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.notifications.length > 0) {
+                        let html = '<div class="list-group list-group-flush">';
+                        
+                        data.notifications.forEach(notification => {
+                            html += `
+                                <div class="list-group-item px-0 ${notification.est_lue ? '' : 'bg-light'}">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">${notification.titre}</h6>
+                                            <p class="mb-1">${notification.message}</p>
+                                            <div>
+                                                <span class="text-muted">
+                                                    <i class="bi bi-clock me-1"></i>
+                                                    ${formatDate(notification.date_creation)}
+                                                </span>
+                                                ${!notification.est_lue ? '<span class="badge bg-primary ms-2">Nouveau</span>' : ''}
+                                            </div>
+                                        </div>
+                                        ${!notification.est_lue ? `
+                                            <button class="btn btn-sm btn-outline-secondary" onclick="markAsRead(${notification.id})">
+                                                Marquer comme lu
+                                            </button>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        
+                        html += '</div>';
+                        container.innerHTML = html;
+                    } else {
+                        container.innerHTML = `
+                            <div class="text-center py-4">
+                                <i class="bi bi-bell fs-1 text-muted"></i>
+                                <p class="mt-2 text-muted">Aucune notification</p>
+                            </div>
+                        `;
+                    }
+                } else {
+                    container.innerHTML = `
+                        <div class="alert alert-danger">
+                            ${data.message || 'Erreur lors du chargement des notifications'}
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                container.innerHTML = `
+                    <div class="alert alert-danger">
+                        Erreur de connexion. Veuillez réessayer.
+                    </div>
+                `;
+            });
+    }
+    
+    // Fonction pour afficher la modal d'acceptation
+    function showAcceptModal(livraisonId, reference, cout) {
+        currentLivraisonId = livraisonId;
+        document.getElementById('livraisonDetails').innerHTML = `
+            <p><strong>Commande:</strong> #${reference}</p>
+            <p><strong>Coût:</strong> ${cout} FCFA</p>
+        `;
+        acceptLivraisonModal.show();
+    }
+    
+    // Fonction pour accepter une livraison
+    function accepterLivraison(livraisonId) {
+        fetch(`/livraisons/livraisons/${livraisonId}/accepter/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            acceptLivraisonModal.hide();
+            
+            if (data.success) {
+                showNotification(data.message, 'success');
+                
+                // Rediriger vers la page de détails de la livraison
+                setTimeout(() => {
+                    window.location.href = data.redirect_url;
+                }, 1500);
+            } else {
+                showNotification(data.message || 'Erreur lors de l\'acceptation', 'danger');
+            }
+        })
+        .catch(error => {
+            acceptLivraisonModal.hide();
+            console.error('Error:', error);
+            showNotification('Erreur de connexion', 'danger');
+        });
+    }
+    
+    // Fonction pour marquer une notification comme lue
+    function markAsRead(notificationId) {
+        fetch(`/livraisons/notifications/${notificationId}/lire/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Notification marquée comme lue', 'success');
+                // Recharger les notifications
+                loadNotifications();
+            } else {
+                showNotification(data.message || 'Erreur', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Erreur de connexion', 'danger');
+        });
+    }
+    
+    // Fonction pour formater la date
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+        
+        if (diffMins < 1) {
+            return "À l'instant";
+        } else if (diffMins < 60) {
+            return `Il y a ${diffMins} minute${diffMins > 1 ? 's' : ''}`;
+        } else if (diffHours < 24) {
+            return `Il y a ${diffHours} heure${diffHours > 1 ? 's' : ''}`;
+        } else if (diffDays < 7) {
+            return `Il y a ${diffDays} jour${diffDays > 1 ? 's' : ''}`;
+        } else {
+            return date.toLocaleDateString('fr-FR');
+        }
+    }
+</script>
+{% endblock %}

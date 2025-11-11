@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TopNewVision</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Poppins", sans-serif;
+    }
+
+    body {
+      background: linear-gradient(145deg, #fff4ec 0%, #ffe0d2 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      overflow-x: hidden;
+      padding-bottom: 80px;
+    }
+
+    header {
+      width: 100%;
+      text-align: center;
+      margin: 25px 0 20px;
+    }
+
+    header h1 {
+      font-size: 1.8em;
+      font-weight: 700;
+      color: #ff5a36;
+      letter-spacing: -0.5px;
+    }
+
+    header p {
+      color: #555;
+      font-size: 0.9em;
+      margin-top: 5px;
+    }
+
+    /* Section des cartes */
+    .menu {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      width: 100%;
+      align-items: center;
+    }
+
+    .card {
+      position: relative;
+      width: 90%;
+      height: 160px;
+      border-radius: 25px;
+      overflow: hidden;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s ease;
+      cursor: pointer;
+    }
+
+    .card:hover {
+      transform: scale(1.03);
+    }
+
+    .card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: brightness(0.85);
+    }
+
+    .overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 60%;
+      background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
+      border-radius: 25px;
+    }
+
+    .info {
+      position: absolute;
+      bottom: 12px;
+      left: 15px;
+      color: white;
+    }
+
+    .info h3 {
+      font-size: 1.2em;
+      font-weight: 600;
+    }
+
+    .info p {
+      font-size: 0.9em;
+      opacity: 0.9;
+      margin-top: 3px;
+    }
+
+    /* ---- Navigation ---- */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: white;
+      border-top-left-radius: 25px;
+      border-top-right-radius: 25px;
+      box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0;
+    }
+
+    .bottom-nav button {
+      background: none;
+      border: none;
+      outline: none;
+      font-size: 1.4em;
+      color: #888;
+      transition: color 0.2s;
+    }
+
+    .bottom-nav button.active {
+      color: #ff5a36;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>👁️ TopNewVision</h1>
+    <p>Bienvenue sur votre plateforme intelligente</p>
+  </header>
+
+  <div class="menu" id="menuContainer"></div>
+
+  <nav class="bottom-nav">
+    <button class="active">🏠</button>
+    <button>💬</button>
+    <button>🛒</button>
+    <button>👤</button>
+  </nav>
+
+  <script>
+    const sections = [
+      {
+        titre: "Visiter le Marché",
+        desc: "Découvrez les produits disponibles autour de vous",
+        img: "https://images.unsplash.com/photo-1556745757-8d76bdb6984b"
+      },
+      {
+        titre: "Ma Boutique",
+        desc: "Gérez vos articles et vos ventes",
+        img: "https://images.unsplash.com/photo-1598514982430-efcb3dd38449"
+      },
+      {
+        titre: "Je suis Livreur",
+        desc: "Accédez à vos missions de livraison",
+        img: "https://images.unsplash.com/photo-1580894732444-8ecded7900cd"
+      },
+      {
+        titre: "Promotions",
+        desc: "Profitez des offres exclusives",
+        img: "https://images.unsplash.com/photo-1607083206967-05f3d34fe6a9"
+      }
+    ];
+
+    const menuContainer = document.getElementById("menuContainer");
+
+    function afficherAccueil() {
+      sections.forEach(s => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <img src="${s.img}" alt="${s.titre}">
+          <div class="overlay"></div>
+          <div class="info">
+            <h3>${s.titre}</h3>
+            <p>${s.desc}</p>
+          </div>
+        `;
+        menuContainer.appendChild(card);
+      });
+    }
+
+    afficherAccueil();
+  </script>
+
+</body>
+</html>

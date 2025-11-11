@@ -1,0 +1,577 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+
+{% block title %}Mes Produits - {{ user.commercant_profile.nom_boutique }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-30">
+        <div class="px-4 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <button onclick="history.back()" class="p-2 rounded-lg hover:bg-gray-100">
+                        <i class="fas fa-arrow-left text-gray-600"></i>
+                    </button>
+                    <h1 class="text-lg font-semibold text-gray-900">Mes Produits</h1>
+                </div>
+                
+                <button onclick="openAddProductModal()" class="p-2 bg-primary-600 text-gray-50 rounded-lg hover:bg-primary-700 transition-colors">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Search and Filter -->
+        <div class="px-4 pb-3">
+            <div class="flex space-x-2">
+                <div class="flex-1 relative">
+                    <input type="text" 
+                           id="product-search"
+                           value="{{ search }}"
+                           placeholder="Rechercher un produit..." 
+                           class="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                </div>
+                <button onclick="toggleFilterModal()" class="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors relative">
+                    <i class="fas fa-filter text-gray-600"></i>
+                    {% if search or categorie or statut %}
+                        <span class="absolute top-1 right-1 w-2 h-2 bg-primary-600 rounded-full"></span>
+                    {% endif %}
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Stats Bar -->
+    <div class="px-4 py-3 bg-white border-b">
+        <div class="grid grid-cols-4 gap-2 text-center">
+            <div>
+                <div class="text-lg font-bold text-gray-900">{{ produits.count }}</div>
+                <div class="text-xs text-gray-500">Total</div>
+            </div>
+            <div>
+                <div class="text-lg font-bold text-green-600">{{ produits|slice:":100"|selectattr:"est_actif"|to_list|length }}</div>
+                <div class="text-xs text-gray-500">Actifs</div>
+            </div>
+            <div>
+                <div class="text-lg font-bold text-orange-600">{{ produits|slice:":100"|selectattr:"est_en_promotion"|to_list|length }}</div>
+                <div class="text-xs text-gray-500">En promo</div>
+            </div>
+            <div>
+                <div class="text-lg font-bold text-red-600">{{ produits|slice:":100"|selectattr:"stock__lte"|to_list|length }}</div>
+                <div class="text-xs text-gray-500">Stock faible</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Pills -->
+    <div class="px-4 py-3 bg-white border-b">
+        <div class="flex space-x-2 overflow-x-auto scrollbar-hide">
+            <button onclick="filterProducts('')" 
+                    class="category-pill flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-colors
+                           {% if not statut %}bg-primary-100 text-primary-700{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                Tous
+            </button>
+            <button onclick="filterProducts('actif')" 
+                    class="category-pill flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-colors
+                           {% if statut == 'actif' %}bg-primary-100 text-primary-700{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                Actifs
+            </button>
+            <button onclick="filterProducts('inactif')" 
+                    class="category-pill flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-colors
+                           {% if statut == 'inactif' %}bg-primary-100 text-primary-700{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                Inactifs
+            </button>
+            <button onclick="filterProducts('stock_faible')" 
+                    class="category-pill flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-colors
+                           {% if statut == 'stock_faible' %}bg-primary-100 text-primary-700{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                Stock faible
+            </button>
+            <button onclick="filterProducts('promotion')" 
+                    class="category-pill flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-colors
+                           {% if statut == 'promotion' %}bg-primary-100 text-primary-700{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                En promotion
+            </button>
+        </div>
+    </div>
+
+    <!-- Products List -->
+    {% if produits %}
+        <div class="px-4 py-4 space-y-3">
+            {% for produit in produits %}
+            <div class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                <div class="p-4">
+                    <div class="flex space-x-3">
+                        <!-- Product Image -->
+                        <div class="flex-shrink-0">
+                            {% if produit.photo %}
+                                <img src="{{ produit.photo.url }}" 
+                                     alt="{{ produit.nom }}" 
+                                     class="w-16 h-16 object-cover rounded-lg">
+                            {% else %}
+                                <div class="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-box text-gray-400"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Product Info -->
+                        <div class="flex-1">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <h3 class="font-semibold text-gray-900 line-clamp-1">{{ produit.nom }}</h3>
+                                    <p class="text-sm text-gray-500 mt-1">{{ produit.get_categorie_display }}</p>
+                                    
+                                    <!-- Price and Stock -->
+                                    <div class="flex items-center justify-between mt-2">
+                                        <div>
+                                            {% if produit.est_en_promotion %}
+                                                <div class="flex items-center space-x-2">
+                                                    <span class="font-bold text-primary-600">{{ produit.prix_promotionnel|format_currency }}</span>
+                                                    <span class="text-sm text-gray-400 line-through">{{ produit.prix|format_currency }}</span>
+                                                </div>
+                                            {% else %}
+                                                <span class="font-bold text-primary-600">{{ produit.prix|format_currency }}</span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="text-right">
+                                            <p class="text-sm text-gray-500">Stock</p>
+                                            <p class="font-semibold {% if produit.stock <= produit.stock_min %}text-red-600{% else %}text-gray-900{% endif %}">
+                                                {{ produit.stock }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Status Badges -->
+                                    <div class="flex items-center space-x-2 mt-2">
+                                        {% if produit.est_actif %}
+                                            <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
+                                                Actif
+                                            </span>
+                                        {% else %}
+                                            <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
+                                                Inactif
+                                            </span>
+                                        {% endif %}
+                                        
+                                        {% if produit.est_en_promotion %}
+                                            <span class="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full">
+                                                Promo
+                                            </span>
+                                        {% endif %}
+                                        
+                                        {% if produit.stock <= produit.stock_min %}
+                                            <span class="px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full">
+                                                Stock faible
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Actions -->
+                        <div class="flex flex-col space-y-2">
+                            <button onclick="toggleProductStatus({{ produit.id }})" 
+                                    class="p-2 {% if produit.est_actif %}text-orange-600 hover:bg-orange-50{% else %}text-green-600 hover:bg-green-50{% endif %} rounded-lg transition-colors"
+                                    title="{% if produit.est_actif %}Désactiver{% else %}Activer{% endif %}">
+                                <i class="fas fa-{% if produit.est_actif %}pause{% else %}play{% endif %} text-sm"></i>
+                            </button>
+                            
+                            <button onclick="editProduct({{ produit.id }})" 
+                                    class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                    title="Modifier">
+                                <i class="fas fa-edit text-sm"></i>
+                            </button>
+                            
+                            <button onclick="viewProductStats({{ produit.id }})" 
+                                    class="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                                    title="Statistiques">
+                                <i class="fas fa-chart-line text-sm"></i>
+                            </button>
+                            
+                            <button onclick="deleteProduct({{ produit.id }})" 
+                                    class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    title="Supprimer">
+                                <i class="fas fa-trash text-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Load More -->
+        {% if produits|length >= 20 %}
+        <div class="px-4 py-6 text-center">
+            <button onclick="loadMoreProducts()" class="px-6 py-3 bg-white border border-primary-600 text-primary-600 rounded-lg hover:bg-primary-50 transition-colors">
+                Charger plus de produits
+            </button>
+        </div>
+        {% endif %}
+    {% else %}
+        <!-- Empty State -->
+        <div class="px-4 py-12 text-center">
+            <i class="fas fa-box-open text-6xl text-gray-300 mb-4"></i>
+            <h2 class="text-xl font-semibold text-gray-900 mb-2">Aucun produit trouvé</h2>
+            <p class="text-gray-500 mb-6">
+                {% if search or categorie or statut %}
+                    Essayez de modifier votre recherche ou vos filtres
+                {% else %}
+                    Commencez par ajouter votre premier produit
+                {% endif %}
+            </p>
+            
+            <div class="space-y-3">
+                <button onclick="openAddProductModal()" class="inline-block px-6 py-3 bg-primary-600 text-gray-50 rounded-lg hover:bg-primary-700 transition-colors">
+                    <i class="fas fa-plus mr-2"></i>Ajouter un produit
+                </button>
+                
+                {% if search or categorie or statut %}
+                    <button onclick="clearAllFilters()" class="block mx-auto text-primary-600 font-medium hover:underline">
+                        Réinitialiser les filtres
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Filter Modal -->
+<div id="filter-modal" class="modal fixed inset-0 z-50 hidden">
+    <div class="modal-backdrop absolute inset-0 bg-black bg-opacity-50"></div>
+    <div class="modal-content relative bg-white rounded-t-2xl mt-8 max-h-[80vh] overflow-hidden">
+        <div class="p-4 border-b">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold">Filtres</h3>
+                <button onclick="toggleFilterModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+                    <i class="fas fa-times text-gray-500"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-4 overflow-y-auto max-h-[60vh]">
+            <!-- Category Filter -->
+            <div class="mb-6">
+                <h4 class="font-medium text-gray-900 mb-3">Catégorie</h4>
+                <div class="space-y-2">
+                    <label class="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input type="radio" name="categorie" value="" 
+                               {% if not categorie %}checked{% endif %}
+                               class="mr-3 text-primary-600">
+                        <span class="text-sm">Toutes les catégories</span>
+                    </label>
+                    <!-- Categories would be populated here -->
+                </div>
+            </div>
+            
+            <!-- Status Filter -->
+            <div class="mb-6">
+                <h4 class="font-medium text-gray-900 mb-3">Statut</h4>
+                <div class="space-y-2">
+                    <label class="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input type="radio" name="statut" value="" 
+                               {% if not statut %}checked{% endif %}
+                               class="mr-3 text-primary-600">
+                        <span class="text-sm">Tous</span>
+                    </label>
+                    <label class="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input type="radio" name="statut" value="actif" 
+                               {% if statut == 'actif' %}checked{% endif %}
+                               class="mr-3 text-primary-600">
+                        <span class="text-sm">Actifs uniquement</span>
+                    </label>
+                    <label class="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input type="radio" name="statut" value="inactif" 
+                               {% if statut == 'inactif' %}checked{% endif %}
+                               class="mr-3 text-primary-600">
+                        <span class="text-sm">Inactifs uniquement</span>
+                    </label>
+                    <label class="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input type="radio" name="statut" value="stock_faible" 
+                               {% if statut == 'stock_faible' %}checked{% endif %}
+                               class="mr-3 text-primary-600">
+                        <span class="text-sm">Stock faible</span>
+                    </label>
+                    <label class="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input type="radio" name="statut" value="promotion" 
+                               {% if statut == 'promotion' %}checked{% endif %}
+                               class="mr-3 text-primary-600">
+                        <span class="text-sm">En promotion</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="p-4 border-t">
+            <div class="flex space-x-3">
+                <button onclick="clearAllFilters()" class="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    Réinitialiser
+                </button>
+                <button onclick="applyFilters()" class="flex-1 py-3 bg-primary-600 text-gray-50 rounded-lg hover:bg-primary-700 transition-colors">
+                    Appliquer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Add Product Modal -->
+<div id="quick-add-modal" class="modal fixed inset-0 z-50 hidden">
+    <div class="modal-backdrop absolute inset-0 bg-black bg-opacity-50"></div>
+    <div class="modal-content relative bg-white rounded-t-2xl mt-8 max-h-[90vh] overflow-hidden">
+        <div class="p-4 border-b">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold">Ajouter un produit</h3>
+                <button onclick="closeAddProductModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+                    <i class="fas fa-times text-gray-500"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-4 overflow-y-auto max-h-[70vh]">
+            <p class="text-center text-gray-500 py-8">
+                Redirection vers le formulaire complet...
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Search functionality
+document.getElementById('product-search')?.addEventListener('input', debounce(function(e) {
+    const query = e.target.value.trim();
+    const url = new URL(window.location);
+    
+    if (query) {
+        url.searchParams.set('search', query);
+    } else {
+        url.searchParams.delete('search');
+    }
+    
+    // Update URL without reload
+    window.history.replaceState({}, '', url);
+    
+    // Filter products
+    filterProductsList(query);
+}, 300));
+
+function filterProductsList(query) {
+    const products = document.querySelectorAll('.bg-white.rounded-lg');
+    let visibleCount = 0;
+    
+    products.forEach(product => {
+        const productName = product.querySelector('h3').textContent.toLowerCase();
+        const category = product.querySelector('.text-gray-500').textContent.toLowerCase();
+        
+        if (productName.includes(query.toLowerCase()) || category.includes(query.toLowerCase())) {
+            product.style.display = 'block';
+            visibleCount++;
+        } else {
+            product.style.display = 'none';
+        }
+    });
+    
+    // Show/hide empty state
+    const emptyState = document.querySelector('.text-center.py-12');
+    if (emptyState) {
+        emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+    }
+}
+
+// Filter products
+function filterProducts(status) {
+    const url = new URL(window.location);
+    if (status) {
+        url.searchParams.set('statut', status);
+    } else {
+        url.searchParams.delete('statut');
+    }
+    window.location.href = url.toString();
+}
+
+// Filter modal
+function toggleFilterModal() {
+    document.getElementById('filter-modal').classList.toggle('hidden');
+}
+
+function applyFilters() {
+    const formData = new FormData(document.querySelector('#filter-modal form'));
+    const params = new URLSearchParams(window.location.search);
+    
+    // Apply filters
+    const selectedStatus = document.querySelector('input[name="statut"]:checked');
+    if (selectedStatus && selectedStatus.value) {
+        params.set('statut', selectedStatus.value);
+    } else {
+        params.delete('statut');
+    }
+    
+    // Reload page with new filters
+    window.location.href = `${window.location.pathname}?${params.toString()}`;
+}
+
+function clearAllFilters() {
+    window.location.href = window.location.pathname;
+}
+
+// Product actions
+function toggleProductStatus(productId) {
+    const action = event.currentTarget.querySelector('i').classList.contains('fa-pause') ? 'deactivate' : 'activate';
+    const message = action === 'deactivate' ? 'désactiver' : 'activer';
+    
+    if (confirm(`Êtes-vous sûr de vouloir ${message} ce produit ?`)) {
+        marketplace.showLoading();
+        
+        // Simulate API call
+        setTimeout(() => {
+            marketplace.hideLoading();
+            marketplace.showNotification(`Produit ${message}d avec succès`, 'success');
+            location.reload();
+        }, 1000);
+    }
+}
+
+function editProduct(productId) {
+    window.location.href = `/commercants/produits/${productId}/modifier/`;
+}
+
+function viewProductStats(productId) {
+    marketplace.showNotification('Statistiques du produit bientôt disponibles', 'info');
+}
+
+function deleteProduct(productId) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer ce produit ? Cette action est irréversible.')) {
+        marketplace.showLoading();
+        
+        // Simulate API call
+        setTimeout(() => {
+            marketplace.hideLoading();
+            marketplace.showNotification('Produit supprimé avec succès', 'success');
+            location.reload();
+        }, 1000);
+    }
+}
+
+// Quick add product
+function openAddProductModal() {
+    document.getElementById('quick-add-modal').classList.remove('hidden');
+    setTimeout(() => {
+        window.location.href = '{% url "commercants:ajouter_produit" %}';
+    }, 1000);
+}
+
+function closeAddProductModal() {
+    document.getElementById('quick-add-modal').classList.add('hidden');
+}
+
+// Load more products
+function loadMoreProducts() {
+    marketplace.showLoading();
+    
+    // Simulate loading more products
+    setTimeout(() => {
+        marketplace.hideLoading();
+        marketplace.showNotification('Plus de produits bientôt disponibles', 'info');
+    }, 1000);
+}
+
+// Bulk actions
+let selectedProducts = new Set();
+
+function toggleProductSelection(productId) {
+    const checkbox = document.getElementById(`select-${productId}`);
+    if (checkbox.checked) {
+        selectedProducts.add(productId);
+    } else {
+        selectedProducts.delete(productId);
+    }
+    updateBulkActions();
+}
+
+function updateBulkActions() {
+    const bulkActions = document.getElementById('bulk-actions');
+    if (selectedProducts.size > 0) {
+        bulkActions.style.display = 'block';
+        bulkActions.querySelector('span').textContent = `${selectedProducts.size} produit${selectedProducts.size > 1 ? 's' : ''} sélectionné${selectedProducts.size > 1 ? 's' : ''}`;
+    } else {
+        bulkActions.style.display = 'none';
+    }
+}
+
+function selectAllProducts() {
+    const checkboxes = document.querySelectorAll('input[name="product-select"]');
+    const selectAllCheckbox = document.getElementById('select-all');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+        const productId = parseInt(checkbox.value);
+        if (selectAllCheckbox.checked) {
+            selectedProducts.add(productId);
+        } else {
+            selectedProducts.delete(productId);
+        }
+    });
+    
+    updateBulkActions();
+}
+
+// Pull to refresh
+let startY = 0;
+let isPulling = false;
+
+document.addEventListener('touchstart', (e) => {
+    if (window.scrollY === 0) {
+        startY = e.touches[0].clientY;
+        isPulling = true;
+    }
+});
+
+document.addEventListener('touchmove', (e) => {
+    if (!isPulling) return;
+    
+    const currentY = e.touches[0].clientY;
+    const pullDistance = currentY - startY;
+    
+    if (pullDistance > 80) {
+        document.body.classList.add('pulling');
+    }
+});
+
+document.addEventListener('touchend', () => {
+    if (isPulling && document.body.classList.contains('pulling')) {
+        document.body.classList.remove('pulling');
+        location.reload();
+    }
+    isPulling = false;
+});
+
+// Close modals on escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        toggleFilterModal();
+        closeAddProductModal();
+    }
+});
+
+// Utility functions
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+</script>
+{% endblock %}

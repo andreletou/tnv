@@ -1,0 +1,313 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Mes Commandes{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 pb-20">
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-40">
+        <div class="px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <button onclick="history.back()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </button>
+                    <h1 class="text-lg font-semibold">Mes Commandes</h1>
+                </div>
+                <button onclick="refreshCommandes()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Filtres -->
+    <div class="bg-white border-b">
+        <div class="px-4 py-3">
+            <div class="flex space-x-2 overflow-x-auto scrollbar-hide">
+                <button onclick="filterCommandes('')" class="filter-btn px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap bg-primary text-white">
+                    Toutes
+                </button>
+                <button onclick="filterCommandes('en_attente')" class="filter-btn px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap bg-gray-100 text-gray-700 hover:bg-gray-200">
+                    En attente
+                </button>
+                <button onclick="filterCommandes('confirmee')" class="filter-btn px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap bg-gray-100 text-gray-700 hover:bg-gray-200">
+                    Confirmée
+                </button>
+                <button onclick="filterCommandes('en_preparation')" class="filter-btn px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap bg-gray-100 text-gray-700 hover:bg-gray-200">
+                    En préparation
+                </button>
+                <button onclick="filterCommandes('en_livraison')" class="filter-btn px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap bg-gray-100 text-gray-700 hover:bg-gray-200">
+                    En livraison
+                </button>
+                <button onclick="filterCommandes('livree')" class="filter-btn px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap bg-gray-100 text-gray-700 hover:bg-gray-200">
+                    Livrée
+                </button>
+                <button onclick="filterCommandes('annulee')" class="filter-btn px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap bg-gray-100 text-gray-700 hover:bg-gray-200">
+                    Annulée
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des commandes -->
+    <div class="px-4 py-4">
+        <div id="commandesList" class="space-y-4">
+            {% for commande in commandes %}
+            <div class="commande-card bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" data-statut="{{ commande.statut }}">
+                <!-- Header de la commande -->
+                <div class="p-4 border-b border-gray-100">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <p class="text-sm text-gray-500">Commande #{{ commande.reference }}</p>
+                            <p class="text-xs text-gray-400">{{ commande.date_commande|date:"d/m/Y H:i" }}</p>
+                        </div>
+                        <span class="px-2 py-1 text-xs font-medium rounded-full {% if commande.statut == 'livree' %}bg-green-100 text-green-700{% elif commande.statut == 'annulee' %}bg-red-100 text-red-700{% elif commande.statut == 'en_livraison' %}bg-blue-100 text-blue-700{% else %}bg-yellow-100 text-yellow-700{% endif %}">
+                            {{ commande.get_statut_display }}
+                        </span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <p class="font-semibold text-lg">{{ commande.total|format_price }}</p>
+                        <p class="text-sm text-gray-600">{{ commande.articles.count }} article{{ commande.articles.count|pluralize }}</p>
+                    </div>
+                </div>
+
+                <!-- Articles de la commande -->
+                <div class="p-4">
+                    <div class="space-y-3">
+                        {% for article in commande.articles.all %}
+                        <div class="flex items-center space-x-3">
+                            <img src="{{ article.produit.photo.url }}" alt="{{ article.produit.nom }}" class="w-12 h-12 rounded-lg object-cover">
+                            <div class="flex-1">
+                                <p class="font-medium text-sm">{{ article.produit.nom }}</p>
+                                <p class="text-xs text-gray-500">Quantité: {{ article.quantite }} × {{ article.prix_unitaire|format_price }}</p>
+                            </div>
+                            <p class="font-medium text-sm">{{ article.sous_total|format_price }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="p-4 bg-gray-50 border-t border-gray-100">
+                    <div class="flex space-x-2">
+                        <button onclick="viewCommande({{ commande.id }})" class="flex-1 bg-primary text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
+                            Voir détails
+                        </button>
+                        {% if commande.statut == 'en_attente' or commande.statut == 'confirmee' %}
+                        <button onclick="cancelCommande({{ commande.id }})" class="px-4 py-2 border border-red-300 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors">
+                            Annuler
+                        </button>
+                        {% endif %}
+                        {% if commande.statut == 'livree' %}
+                        <button onclick="reorderCommande({{ commande.id }})" class="px-4 py-2 border border-primary text-primary rounded-lg text-sm font-medium hover:bg-primary/50 transition-colors">
+                            Recommander
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-12">
+                <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                </svg>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Aucune commande</h3>
+                <p class="text-gray-500 mb-4">Vous n'avez pas encore passé de commande</p>
+                <a href="{% url 'clients:accueil' %}" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    Commencer mes achats
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Loader -->
+        <div id="loader" class="hidden">
+            <div class="flex justify-center py-8">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal détails commande -->
+<div id="commandeModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-4 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-lg font-semibold">Détails de la commande</h2>
+                    <button onclick="closeModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div id="modalContent" class="p-4">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentFilter = '';
+
+function filterCommandes(statut) {
+    currentFilter = statut;
+    
+    // Update filter buttons
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('bg-primary', 'text-white');
+        btn.classList.add('bg-gray-100', 'text-gray-700');
+    });
+    
+    event.target.classList.remove('bg-gray-100', 'text-gray-700');
+    event.target.classList.add('bg-primary', 'text-white');
+    
+    // Filter commandes
+    document.querySelectorAll('.commande-card').forEach(card => {
+        if (statut === '' || card.dataset.statut === statut) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+function refreshCommandes() {
+    const loader = document.getElementById('loader');
+    const commandesList = document.getElementById('commandesList');
+    
+    loader.classList.remove('hidden');
+    commandesList.style.opacity = '0.5';
+    
+    setTimeout(() => {
+        loader.classList.add('hidden');
+        commandesList.style.opacity = '1';
+        showToast('Commandes actualisées', 'success');
+    }, 1000);
+}
+
+function viewCommande(commandeId) {
+    const modal = document.getElementById('commandeModal');
+    const modalContent = document.getElementById('modalContent');
+    
+    // Show loading state
+    modalContent.innerHTML = `
+        <div class="flex justify-center py-8">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+    `;
+    
+    modal.classList.remove('hidden');
+    
+    // Load commande details
+    fetch(`/clients/commande/${commandeId}/`)
+        .then(response => response.text())
+        .then(html => {
+            // Extract commande details from the HTML
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const commandeDetails = doc.querySelector('.commande-details');
+            
+            if (commandeDetails) {
+                modalContent.innerHTML = commandeDetails.innerHTML;
+            } else {
+                modalContent.innerHTML = '<p class="text-center text-gray-500">Impossible de charger les détails</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            modalContent.innerHTML = '<p class="text-center text-red-500">Erreur de chargement</p>';
+        });
+}
+
+function closeModal() {
+    document.getElementById('commandeModal').classList.add('hidden');
+}
+
+function cancelCommande(commandeId) {
+    if (confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) {
+        fetch(`/clients/api/commande/statut/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                commande_id: commandeId,
+                statut: 'annulee'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Commande annulée', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast(data.message || 'Erreur', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Erreur de connexion', 'error');
+        });
+    }
+}
+
+function reorderCommande(commandeId) {
+    // Add all items from the commande to cart
+    showToast('Ajout des articles au panier...', 'info');
+    
+    // This would typically call an API to reorder items
+    setTimeout(() => {
+        window.location.href = '/clients/panier/';
+    }, 1500);
+}
+
+// Close modal when clicking outside
+document.getElementById('commandeModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeModal();
+    }
+});
+
+// Pull to refresh
+let startY = 0;
+let isPulling = false;
+
+document.addEventListener('touchstart', (e) => {
+    if (window.scrollY === 0) {
+        startY = e.touches[0].pageY;
+        isPulling = true;
+    }
+});
+
+document.addEventListener('touchmove', (e) => {
+    if (!isPulling) return;
+    
+    const currentY = e.touches[0].pageY;
+    const diff = currentY - startY;
+    
+    if (diff > 100) {
+        refreshCommandes();
+        isPulling = false;
+    }
+});
+
+document.addEventListener('touchend', () => {
+    isPulling = false;
+});
+</script>
+{% endblock %}

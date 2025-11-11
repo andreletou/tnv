@@ -1,0 +1,731 @@
+{% extends 'livraisons/base.html' %}
+
+{% block title %}Itinéraire de livraison - Livraison Express{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Itinéraire de livraison</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="centerRouteBtn">
+                <i class="fas fa-crosshairs"></i> Centrer
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="refreshRouteBtn">
+                <i class="fas fa-sync-alt"></i> Actualiser
+            </button>
+        </div>
+        <button type="button" class="btn btn-sm btn-danger" id="emergencyBtn">
+            <i class="fas fa-exclamation-triangle"></i> Urgence
+        </button>
+    </div>
+</div>
+
+<!-- Informations de la livraison -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-box me-2"></i>
+                    Commande {{ livraison.commande.reference }}
+                    <span class="status-badge status-{{ livraison.statut }} float-end">{{ livraison.get_statut_display }}</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Informations client</h6>
+                        <p class="mb-1"><strong>Nom:</strong> {{ livraison.commande.client.first_name }} {{ livraison.commande.client.last_name }}</p>
+                        <p class="mb-1"><strong>Téléphone:</strong> {{ livraison.commande.client.telephone }}</p>
+                        <p class="mb-1"><strong>Adresse:</strong> {{ livraison.commande.adresse_livraison }}</p>
+                        {% if livraison.commande.instructions_livraison %}
+                            <p class="mb-1"><strong>Instructions:</strong> {{ livraison.commande.instructions_livraison }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Détails de la livraison</h6>
+                        <p class="mb-1"><strong>Boutique:</strong> {{ livraison.commande.commercant.nom_boutique }}</p>
+                        <p class="mb-1"><strong>Coût:</strong> {{ livraison.cout_livraison }} FCFA</p>
+                        {% if livraison.distance_estimee %}
+                            <p class="mb-1"><strong>Distance:</strong> {{ livraison.distance_estimee }} km</p>
+                        {% endif %}
+                        {% if livraison.duree_estimee %}
+                            <p class="mb-1"><strong>Durée estimée:</strong> {{ livraison.duree_estimee }} min</p>
+                        {% endif %}
+                        <p class="mb-1"><strong>Début:</strong> 
+                            {% if livraison.date_debut_livraison %}
+                                {{ livraison.date_debut_livraison|date:"H:i" }}
+                            {% else %}
+                                Non commencé
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="row mt-3">
+                    <div class="col-12">
+                        {% if livraison.statut == 'acceptee' %}
+                            <button type="button" class="btn btn-success" id="startDeliveryBtn">
+                                <i class="fas fa-play me-2"></i>Commencer la livraison
+                            </button>
+                        {% elif livraison.statut == 'en_cours' %}
+                            <button type="button" class="btn btn-warning" id="pauseDeliveryBtn">
+                                <i class="fas fa-pause me-2"></i>Pause
+                            </button>
+                            <button type="button" class="btn btn-success" id="completeDeliveryBtn" data-bs-toggle="modal" data-bs-target="#completionModal">
+                                <i class="fas fa-check me-2"></i>Terminer la livraison
+                            </button>
+                        {% endif %}
+                        
+                        <button type="button" class="btn btn-outline-primary" id="callClientBtn">
+                            <i class="fas fa-phone me-2"></i>Appeler le client
+                        </button>
+                        
+                        <button type="button" class="btn btn-outline-info" id="navigateBtn">
+                            <i class="fas fa-directions me-2"></i>Navigation GPS
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="fas fa-clock me-2"></i>Temps réel</h6>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <h2 id="currentTime" class="text-primary mb-0">00:00:00</h2>
+                    <small class="text-muted">Temps de livraison</small>
+                </div>
+                <div class="mb-3">
+                    <h4 id="currentSpeed" class="text-info mb-0">0 km/h</h4>
+                    <small class="text-muted">Vitesse actuelle</small>
+                </div>
+                <div class="mb-3">
+                    <h4 id="distanceTraveled" class="text-success mb-0">0 km</h4>
+                    <small class="text-muted">Distance parcourue</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="fas fa-route me-2"></i>Étapes</h6>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    <div class="timeline-item completed" id="stepBoutique">
+                        <div class="timeline-marker bg-success"></div>
+                        <div class="timeline-content">
+                            <h6>Récupérer à la boutique</h6>
+                            <small class="text-muted">{{ livraison.commande.commercant.nom_boutique }}</small>
+                            <div class="text-success small mt-1">
+                                <i class="fas fa-check-circle"></i> Terminé
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item {% if livraison.statut == 'en_cours' %}active{% else %}pending{% endif %}" id="stepEnRoute">
+                        <div class="timeline-marker {% if livraison.statut == 'en_cours' %}bg-warning{% else %}bg-secondary{% endif %}"></div>
+                        <div class="timeline-content">
+                            <h6>En route vers le client</h6>
+                            <small class="text-muted">{{ livraison.commande.adresse_livraison }}</small>
+                            {% if livraison.statut == 'en_cours' %}
+                                <div class="text-warning small mt-1">
+                                    <i class="fas fa-spinner fa-spin"></i> En cours...
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item pending" id="stepLivraison">
+                        <div class="timeline-marker bg-secondary"></div>
+                        <div class="timeline-content">
+                            <h6>Livrer au client</h6>
+                            <small class="text-muted">Obtenir signature et preuve</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Carte de l'itinéraire -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <div id="routeMap" style="height: 500px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de complétion de livraison -->
+<div class="modal fade" id="completionModal" tabindex="-1" aria-labelledby="completionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="completionModalLabel">
+                    <i class="fas fa-check-circle text-success me-2"></i>Terminer la livraison
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="completionForm" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="preuveLivraison" class="form-label">Photo de preuve de livraison</label>
+                        <input type="file" class="form-control" id="preuveLivraison" name="preuve_livraison" accept="image/*" required>
+                        <div class="form-text">Prenez une photo du colis livré</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="signatureClient" class="form-label">Signature du client</label>
+                        <input type="file" class="form-control" id="signatureClient" name="signature_client" accept="image/*">
+                        <div class="form-text">Photo de la signature du client (optionnel)</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="instructionsSpeciales" class="form-label">Notes de livraison</label>
+                        <textarea class="form-control" id="instructionsSpeciales" name="instructions_speciales" rows="3" placeholder="Notes supplémentaires sur la livraison..."></textarea>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Assurez-vous d'avoir bien livré le colis au client avant de valider.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check me-2"></i>Confirmer la livraison
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal d'urgence -->
+<div class="modal fade" id="emergencyModal" tabindex="-1" aria-labelledby="emergencyModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="emergencyModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Signaler une urgence
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Attention:</strong> Utilisez cette fonctionnalité uniquement en cas d'urgence réelle.
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Type d'urgence:</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="emergencyType" id="accident" value="accident">
+                        <label class="form-check-label" for="accident">
+                            Accident
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="emergencyType" id="panne" value="panne">
+                        <label class="form-check-label" for="panne">
+                            Panne véhicule
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="emergencyType" id="securite" value="securite">
+                        <label class="form-check-label" for="securite">
+                            Problème de sécurité
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="emergencyType" id="autre" value="autre">
+                        <label class="form-check-label" for="autre">
+                            Autre
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="emergencyDescription" class="form-label">Description:</label>
+                    <textarea class="form-control" id="emergencyDescription" rows="3" placeholder="Décrivez la situation..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger" id="sendEmergencyBtn">
+                    <i class="fas fa-paper-plane me-2"></i>Envoyer l'alerte
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 10px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #dee2e6;
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 20px;
+    }
+    
+    .timeline-item.completed::before {
+        content: '';
+        position: absolute;
+        left: -25px;
+        top: 20px;
+        bottom: -20px;
+        width: 2px;
+        background: #28a745;
+    }
+    
+    .timeline-marker {
+        position: absolute;
+        left: -25px;
+        top: 5px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .timeline-item.active .timeline-marker {
+        animation: pulse 2s infinite;
+    }
+    
+    .route-line {
+        stroke: #007bff;
+        stroke-width: 4;
+        fill: none;
+        stroke-dasharray: 10, 5;
+        animation: dash 20s linear infinite;
+    }
+    
+    @keyframes dash {
+        to {
+            stroke-dashoffset: -100;
+        }
+    }
+    
+    .pulse-animation {
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(0, 123, 255, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(0, 123, 255, 0);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let map;
+let routeLine;
+let livreurMarker;
+let livraisonMarker;
+let boutiqueMarker;
+let deliveryStartTime = null;
+let timerInterval = null;
+let positionWatchId = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeRouteMap();
+    setupEventListeners();
+    startDeliveryTimer();
+    
+    // Démarrer le suivi de position
+    startPositionTracking();
+    
+    // Charger l'itinéraire
+    loadRouteData();
+});
+
+function initializeRouteMap() {
+    // Initialiser la carte
+    map = L.map('routeMap').setView([6.1319, 1.2225], 13);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+    }).addTo(map);
+    
+    // Icônes personnalisées
+    const livreurIcon = L.divIcon({
+        html: '<i class="fas fa-motorcycle text-primary" style="font-size: 24px;"></i>',
+        iconSize: [30, 30],
+        className: 'livreur-marker pulse-animation'
+    });
+    
+    const boutiqueIcon = L.divIcon({
+        html: '<i class="fas fa-store text-warning" style="font-size: 20px;"></i>',
+        iconSize: [25, 25],
+        className: 'boutique-marker'
+    });
+    
+    const livraisonIcon = L.divIcon({
+        html: '<i class="fas fa-home text-success" style="font-size: 20px;"></i>',
+        iconSize: [25, 25],
+        className: 'livraison-marker'
+    });
+    
+    // Position actuelle du livreur
+    {% if livreur.position_actuelle %}
+        livreurMarker = L.marker([{{ livreur.latitude }}, {{ livreur.longitude }}], {icon: livreurIcon})
+            .addTo(map)
+            .bindPopup('<b>Votre position</b>');
+    {% endif %}
+    
+    // Position de la boutique
+    {% if livraison.boutique_point %}
+        boutiqueMarker = L.marker([{{ livraison.boutique_point.y }}, {{ livraison.boutique_point.x }}], {icon: boutiqueIcon})
+            .addTo(map)
+            .bindPopup('<b>{{ livraison.commande.commercant.nom_boutique }}</b><br>{{ livraison.commande.commercant.adresse }}');
+    {% endif %}
+    
+    // Position de livraison
+    {% if livraison.adresse_livraison_point %}
+        livraisonMarker = L.marker([{{ livraison.adresse_livraison_point.y }}, {{ livraison.adresse_livraison_point.x }}], {icon: livraisonIcon})
+            .addTo(map)
+            .bindPopup('<b>Adresse de livraison</b><br>{{ livraison.commande.adresse_livraison }}');
+    {% endif %}
+    
+    // Ajuster la vue pour montrer tous les points
+    const group = new L.featureGroup([livreurMarker, boutiqueMarker, livraisonMarker].filter(m => m));
+    map.fitBounds(group.getBounds().pad(0.1));
+}
+
+function setupEventListeners() {
+    // Commencer la livraison
+    document.getElementById('startDeliveryBtn')?.addEventListener('click', function() {
+        startDelivery();
+    });
+    
+    // Terminer la livraison
+    document.getElementById('completionForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        completeDelivery();
+    });
+    
+    // Boutons d'action
+    document.getElementById('centerRouteBtn').addEventListener('click', function() {
+        centerRoute();
+    });
+    
+    document.getElementById('refreshRouteBtn').addEventListener('click', function() {
+        loadRouteData();
+    });
+    
+    document.getElementById('callClientBtn').addEventListener('click', function() {
+        callClient();
+    });
+    
+    document.getElementById('navigateBtn').addEventListener('click', function() {
+        openNavigation();
+    });
+    
+    document.getElementById('emergencyBtn').addEventListener('click', function() {
+        const modal = new bootstrap.Modal(document.getElementById('emergencyModal'));
+        modal.show();
+    });
+    
+    document.getElementById('sendEmergencyBtn').addEventListener('click', function() {
+        sendEmergencyAlert();
+    });
+}
+
+function startDelivery() {
+    fetch(`/livraisons/livraisons/{{ livraison.id }}/commencer/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(data.message, 'success');
+            deliveryStartTime = new Date();
+            updateTimeline();
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            showAlert(data.message, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        showAlert('Erreur lors du démarrage de la livraison', 'danger');
+    });
+}
+
+function completeDelivery() {
+    const formData = new FormData(document.getElementById('completionForm'));
+    
+    fetch(`/livraisons/livraisons/{{ livraison.id }}/terminer/`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(data.message, 'success');
+            stopPositionTracking();
+            setTimeout(() => {
+                window.location.href = data.redirect_url;
+            }, 1500);
+        } else {
+            showAlert(data.message, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        showAlert('Erreur lors de la finalisation de la livraison', 'danger');
+    });
+}
+
+function loadRouteData() {
+    fetch(`/livraisons/api/itineraire/{{ livraison.id }}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateRouteMap(data.itineraire);
+            }
+        })
+        .catch(error => console.error('Erreur:', error));
+}
+
+function updateRouteMap(itineraire) {
+    // Supprimer l'ancienne ligne d'itinéraire
+    if (routeLine) {
+        map.removeLayer(routeLine);
+    }
+    
+    // Créer la nouvelle ligne d'itinéraire
+    const points = [];
+    
+    if (itineraire.position_livreur) {
+        points.push([itineraire.position_livreur.latitude, itineraire.position_livreur.longitude]);
+    }
+    
+    if (itineraire.point_boutique) {
+        points.push([itineraire.point_boutique.latitude, itineraire.point_boutique.longitude]);
+    }
+    
+    if (itineraire.point_livraison) {
+        points.push([itineraire.point_livraison.latitude, itineraire.point_livraison.longitude]);
+    }
+    
+    if (points.length >= 2) {
+        routeLine = L.polyline(points, {
+            color: '#007bff',
+            weight: 4,
+            opacity: 0.7,
+            dashArray: '10, 5'
+        }).addTo(map);
+        
+        // Ajuster la vue
+        map.fitBounds(routeLine.getBounds().pad(0.1));
+    }
+}
+
+function startPositionTracking() {
+    if (navigator.geolocation) {
+        positionWatchId = navigator.geolocation.watchPosition(
+            function(position) {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                
+                // Mettre à jour le marqueur sur la carte
+                if (livreurMarker) {
+                    livreurMarker.setLatLng([lat, lng]);
+                }
+                
+                // Mettre à jour la position sur le serveur
+                updatePositionOnServer(lat, lng);
+                
+                // Mettre à jour la vitesse
+                updateSpeed(position.coords.speed);
+            },
+            function(error) {
+                console.error('Erreur de suivi de position:', error);
+            },
+            {
+                enableHighAccuracy: true,
+                maximumAge: 0,
+                timeout: 5000
+            }
+        );
+    }
+}
+
+function stopPositionTracking() {
+    if (positionWatchId) {
+        navigator.geolocation.clearWatch(positionWatchId);
+        positionWatchId = null;
+    }
+}
+
+function updatePositionOnServer(lat, lng) {
+    fetch('{% url "livraisons:api_mettre_a_jour_position" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            latitude: lat,
+            longitude: lng
+        })
+    }).catch(error => console.error('Erreur de mise à jour de position:', error));
+}
+
+function updateSpeed(speed) {
+    if (speed !== null) {
+        const speedKmh = (speed * 3.6).toFixed(1);
+        document.getElementById('currentSpeed').textContent = speedKmh + ' km/h';
+    }
+}
+
+function startDeliveryTimer() {
+    {% if livraison.date_debut_livraison %}
+        deliveryStartTime = new Date('{{ livraison.date_debut_livraison|date:"c" }}');
+    {% endif %}
+    
+    if (deliveryStartTime) {
+        timerInterval = setInterval(updateTimer, 1000);
+    }
+}
+
+function updateTimer() {
+    if (!deliveryStartTime) return;
+    
+    const now = new Date();
+    const elapsed = Math.floor((now - deliveryStartTime) / 1000);
+    
+    const hours = Math.floor(elapsed / 3600);
+    const minutes = Math.floor((elapsed % 3600) / 60);
+    const seconds = elapsed % 60;
+    
+    const timeString = 
+        String(hours).padStart(2, '0') + ':' +
+        String(minutes).padStart(2, '0') + ':' +
+        String(seconds).padStart(2, '0');
+    
+    document.getElementById('currentTime').textContent = timeString;
+}
+
+function updateTimeline() {
+    // Mettre à jour les étapes du timeline
+    const stepEnRoute = document.getElementById('stepEnRoute');
+    const stepLivraison = document.getElementById('stepLivraison');
+    
+    if (stepEnRoute) {
+        stepEnRoute.classList.remove('pending');
+        stepEnRoute.classList.add('active');
+        const marker = stepEnRoute.querySelector('.timeline-marker');
+        marker.classList.remove('bg-secondary');
+        marker.classList.add('bg-warning');
+    }
+}
+
+function centerRoute() {
+    if (routeLine) {
+        map.fitBounds(routeLine.getBounds().pad(0.1));
+    }
+}
+
+function callClient() {
+    const phone = '{{ livraison.commande.client.telephone }}';
+    window.location.href = `tel:${phone}`;
+}
+
+function openNavigation() {
+    {% if livraison.adresse_livraison_point %}
+        const destination = '{{ livraison.commande.adresse_livraison }}';
+        const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
+        window.open(url, '_blank');
+    {% else %}
+        showAlert('Destination non disponible', 'warning');
+    {% endif %}
+}
+
+function sendEmergencyAlert() {
+    const type = document.querySelector('input[name="emergencyType"]:checked')?.value;
+    const description = document.getElementById('emergencyDescription').value;
+    
+    if (!type) {
+        showAlert('Veuillez sélectionner un type d\'urgence', 'warning');
+        return;
+    }
+    
+    // Envoyer l'alerte (implémenter selon les besoins)
+    showAlert(`Alerte d'urgence envoyée: ${type}`, 'danger');
+    
+    // Fermer la modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('emergencyModal'));
+    modal.hide();
+    
+    // Implémenter l'envoi réel de l'alerte ici
+    console.log('Emergency alert:', { type, description });
+}
+
+// Fonction utilitaire pour obtenir le cookie CSRF
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Nettoyer lors du déchargement de la page
+window.addEventListener('beforeunload', function() {
+    stopPositionTracking();
+    if (timerInterval) {
+        clearInterval(timerInterval);
+    }
+});
+</script>
+{% endblock %}

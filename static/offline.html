@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hors connexion - Marketplace Togo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .animate-pulse-slow {
+            animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 h-full flex items-center justify-center px-4">
+    <div class="max-w-md w-full text-center">
+        <!-- Logo -->
+        <div class="mb-8">
+            <div class="w-20 h-20 mx-auto bg-primary-500 rounded-2xl flex items-center justify-center animate-float">
+                <i class="fas fa-store text-white text-3xl"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-900 mt-4">Marketplace Togo</h1>
+        </div>
+        
+        <!-- Offline Message -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-6">
+            <div class="w-16 h-16 mx-auto bg-orange-100 rounded-full flex items-center justify-center mb-4">
+                <i class="fas fa-wifi-slash text-orange-500 text-2xl"></i>
+            </div>
+            
+            <h2 class="text-xl font-semibold text-gray-900 mb-2">Hors connexion</h2>
+            <p class="text-gray-600 mb-6">
+                Vous êtes actuellement hors connexion. Certaines fonctionnalités peuvent ne pas être disponibles.
+            </p>
+            
+            <!-- Available Features -->
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                <h3 class="font-semibold text-green-900 mb-2">Fonctionnalités disponibles</h3>
+                <ul class="text-sm text-green-800 space-y-1">
+                    <li class="flex items-center justify-center">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        Consultation des produits en cache
+                    </li>
+                    <li class="flex items-center justify-center">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        Accès à votre panier
+                    </li>
+                    <li class="flex items-center justify-center">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        Vos favoris
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Retry Button -->
+            <button onclick="window.location.reload()" class="w-full bg-primary-500 text-white py-3 rounded-lg font-semibold hover:bg-primary-600 transition mb-3">
+                <i class="fas fa-sync-alt mr-2"></i>
+                Réessayer
+            </button>
+            
+            <!-- Home Button -->
+            <a href="/" class="block w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition text-center">
+                <i class="fas fa-home mr-2"></i>
+                Page d'accueil
+            </a>
+        </div>
+        
+        <!-- Tips -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h3 class="font-semibold text-blue-900 mb-2">
+                <i class="fas fa-lightbulb mr-2"></i>
+                Conseils
+            </h3>
+            <ul class="text-sm text-blue-800 space-y-1">
+                <li>• Vérifiez votre connexion internet</li>
+                <li>• Les produits que vous avez consultés récemment sont disponibles</li>
+                <li>• Votre panier sera synchronisé automatiquement dès le retour de la connexion</li>
+            </ul>
+        </div>
+        
+        <!-- Connection Status -->
+        <div class="mt-6">
+            <div class="flex items-center justify-center text-sm text-gray-600">
+                <div class="w-2 h-2 bg-gray-400 rounded-full mr-2 animate-pulse-slow"></div>
+                <span id="connection-status">Vérification de la connexion...</span>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Check connection status
+        function updateConnectionStatus() {
+            const statusElement = document.getElementById('connection-status');
+            const statusDot = document.querySelector('.animate-pulse-slow');
+            
+            if (navigator.onLine) {
+                statusElement.textContent = 'Connexion rétablie';
+                statusDot.classList.remove('bg-gray-400');
+                statusDot.classList.add('bg-green-500');
+                
+                // Redirect to home after a short delay
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+            } else {
+                statusElement.textContent = 'Hors connexion';
+                statusDot.classList.remove('bg-green-500');
+                statusDot.classList.add('bg-gray-400');
+            }
+        }
+        
+        // Listen for connection changes
+        window.addEventListener('online', updateConnectionStatus);
+        window.addEventListener('offline', updateConnectionStatus);
+        
+        // Initial status check
+        updateConnectionStatus();
+        
+        // Periodic connection check
+        setInterval(updateConnectionStatus, 5000);
+        
+        // Try to fetch a small resource to test connection
+        async function testConnection() {
+            try {
+                const response = await fetch('/static/images/icons/icon-192x192.png', {
+                    method: 'HEAD',
+                    cache: 'no-cache'
+                });
+                
+                if (response.ok) {
+                    updateConnectionStatus();
+                }
+            } catch (error) {
+                // Still offline
+            }
+        }
+        
+        // Test connection every 10 seconds
+        setInterval(testConnection, 10000);
+    </script>
+</body>
+</html>

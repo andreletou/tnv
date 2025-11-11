@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Hors ligne - Marketplace{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <div class="max-w-md w-full text-center">
+        <div class="inline-flex items-center justify-center w-24 h-24 bg-gray-200 rounded-full mb-6">
+            <i class="fas fa-wifi-slash text-gray-400 text-4xl"></i>
+        </div>
+        
+        <h1 class="text-2xl font-bold text-gray-900 mb-2">Vous êtes hors ligne</h1>
+        <p class="text-gray-600 mb-8">
+            Vérifiez votre connexion Internet et réessayez. Certaines fonctionnalités peuvent être limitées.
+        </p>
+        
+        <div class="space-y-4">
+            <button onclick="retryConnection()" class="w-full py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+                <i class="fas fa-redo mr-2"></i>
+                Réessayer
+            </button>
+            
+            <div class="text-sm text-gray-500">
+                <p class="mb-2">Pendant ce temps, vous pouvez :</p>
+                <div class="space-y-2">
+                    <a href="/" class="block text-primary-600 hover:underline">
+                        <i class="fas fa-home mr-1"></i> Voir la page d'accueil (mise en cache)
+                    </a>
+                    <a href="/clients/panier/" class="block text-primary-600 hover:underline">
+                        <i class="fas fa-shopping-cart mr-1"></i> Consulter votre panier
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-8 p-4 bg-blue-50 rounded-lg">
+            <h3 class="font-semibold text-blue-900 mb-2">
+                <i class="fas fa-info-circle mr-2"></i>Mode hors ligne
+            </h3>
+            <p class="text-sm text-blue-700">
+                Les produits que vous consultez sont mis en cache pour un accès hors ligne. 
+                Vos actions seront synchronisées automatiquement lorsque vous serez de nouveau connecté.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function retryConnection() {
+    marketplace.showLoading();
+    
+    // Try to fetch a small resource to check connectivity
+    fetch('/static/manifest.json', { 
+        method: 'HEAD',
+        cache: 'no-cache'
+    })
+    .then(response => {
+        if (response.ok) {
+            marketplace.hideLoading();
+            marketplace.showNotification('Connexion rétablie', 'success');
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 1000);
+        } else {
+            throw new Error('Network response was not ok');
+        }
+    })
+    .catch(error => {
+        marketplace.hideLoading();
+        marketplace.showNotification('Toujours hors ligne', 'error');
+    });
+}
+
+// Auto-retry when back online
+window.addEventListener('online', function() {
+    marketplace.showNotification('Connexion rétablie', 'success');
+    setTimeout(() => {
+        window.location.href = '/';
+    }, 1000);
+});
+
+// Show offline status
+window.addEventListener('offline', function() {
+    marketplace.showNotification('Vous êtes hors ligne', 'warning');
+});
+</script>
+{% endblock %}

@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+
+{% block title %}Confirmer la suppression - MarketPlace Togo{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full">
+        <div class="bg-white rounded-lg shadow-xl p-8">
+            <!-- Warning Icon -->
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-6">
+                <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+            </div>
+            
+            <!-- Header -->
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">
+                    Confirmer la suppression
+                </h2>
+                <p class="text-gray-600">
+                    Êtes-vous sûr de vouloir supprimer ce{% if type == 'produit' %} produit{% else %} promotion{% endif %} ?
+                </p>
+            </div>
+            
+            <!-- Object Details -->
+            <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                <div class="flex items-center">
+                    {% if type == 'produit' %}
+                        {% if objet.photo %}
+                            <img src="{{ objet.photo.url }}" alt="{{ objet.nom }}" class="w-12 h-12 rounded-lg object-cover mr-3">
+                        {% else %}
+                            <div class="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
+                                <i class="fas fa-image text-gray-400"></i>
+                            </div>
+                        {% endif %}
+                        <div>
+                            <h3 class="font-medium text-gray-900">{{ objet.nom }}</h3>
+                            <p class="text-sm text-gray-500">{{ objet.categorie|title }} • {{ objet.prix }} FCFA</p>
+                        </div>
+                    {% else %}
+                        <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-tag text-red-600"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-medium text-gray-900">{{ objet.produit.nom }}</h3>
+                            <p class="text-sm text-gray-500">-{{ objet.pourcentage_reduction }}% • Du {{ objet.date_debut|date:"d/m/Y" }} au {{ objet.date_fin|date:"d/m/Y" }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Warning Message -->
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-info-circle text-red-400"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-red-800">
+                            Attention
+                        </h3>
+                        <div class="mt-2 text-sm text-red-700">
+                            {% if type == 'produit' %}
+                                <p>Cette action est irréversible et entraînera :</p>
+                                <ul class="list-disc list-inside mt-2 space-y-1">
+                                    <li>La suppression définitive du produit</li>
+                                    <li>La suppression de toutes les promotions associées</li>
+                                    <li>L'impossibilité de restaurer les données</li>
+                                </ul>
+                            {% else %}
+                                <p>Cette action est irréversible et entraînera :</p>
+                                <ul class="list-disc list-inside mt-2 space-y-1">
+                                    <li>La suppression de la promotion</li>
+                                    <li>Le retour au prix normal du produit</li>
+                                    <li>L'impossibilité de restaurer la promotion</li>
+                                </ul>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Confirmation Form -->
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                
+                <!-- Confirmation Checkbox -->
+                <div class="flex items-center">
+                    <input type="checkbox" 
+                           id="confirmDelete" 
+                           name="confirm_delete" 
+                           required
+                           class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                    <label for="confirmDelete" class="ml-2 block text-sm text-gray-900">
+                        Je comprends que cette action est irréversible
+                    </label>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="flex space-x-4">
+                    <a href="{% if type == 'produit' %}{% url 'commercants:liste_produits' %}{% else %}{% url 'commercants:liste_promotions' %}{% endif %}" 
+                       class="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors text-center font-medium">
+                        Annuler
+                    </a>
+                    <button type="submit" 
+                            id="deleteButton"
+                            disabled
+                            class="flex-1 bg-red-600 text-gray-50 px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed">
+                        <i class="fas fa-trash mr-2"></i>
+                        Supprimer
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Additional Info -->
+        <div class="mt-6 text-center">
+            <p class="text-sm text-gray-500">
+                Besoin d'aide ? 
+                <a href="#" class="text-primary-600 hover:text-primary-800 font-medium">
+                    Contactez le support
+                </a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+// Enable/disable delete button based on checkbox
+document.getElementById('confirmDelete').addEventListener('change', function() {
+    const deleteButton = document.getElementById('deleteButton');
+    deleteButton.disabled = !this.checked;
+});
+
+// Add countdown timer for security
+let countdown = 5;
+const deleteButton = document.getElementById('deleteButton');
+const originalText = deleteButton.innerHTML;
+
+function updateCountdown() {
+    if (countdown > 0) {
+        deleteButton.innerHTML = `<i class="fas fa-clock mr-2"></i>Attendez ${countdown}s`;
+        deleteButton.disabled = true;
+        countdown--;
+        setTimeout(updateCountdown, 1000);
+    } else {
+        deleteButton.innerHTML = originalText;
+        // Keep disabled until checkbox is checked
+        if (document.getElementById('confirmDelete').checked) {
+            deleteButton.disabled = false;
+        }
+    }
+}
+
+// Start countdown on page load
+document.addEventListener('DOMContentLoaded', updateCountdown);
+
+// Add shake animation on invalid submission
+document.querySelector('form').addEventListener('submit', function(e) {
+    const checkbox = document.getElementById('confirmDelete');
+    if (!checkbox.checked) {
+        e.preventDefault();
+        
+        // Add shake animation
+        const modal = document.querySelector('.bg-white');
+        modal.classList.add('animate-shake');
+        
+        setTimeout(() => {
+            modal.classList.remove('animate-shake');
+        }, 500);
+        
+        // Focus on checkbox
+        checkbox.focus();
+    }
+});
+
+// Add keyboard shortcut (Escape to cancel)
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        window.location.href = "{% if type == 'produit' %}{% url 'commercants:liste_produits' %}{% else %}{% url 'commercants:liste_promotions' %}{% endif %}";
+    }
+});
+</script>
+
+<style>
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.animate-shake {
+    animation: shake 0.5s;
+}
+
+/* Custom checkbox styling */
+input[type="checkbox"]:checked {
+    background-color: #dc2626;
+    border-color: #dc2626;
+}
+
+input[type="checkbox"]:focus {
+    ring-color: #dc2626;
+    ring-width: 2px;
+}
+
+/* Button transitions */
+button {
+    transition: all 0.2s ease;
+}
+
+button:not(:disabled):hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+button:disabled {
+    transform: none;
+    box-shadow: none;
+}
+
+/* Focus states */
+a:focus, button:focus, input:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+</style>
+{% endblock %}

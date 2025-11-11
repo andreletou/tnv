@@ -1,0 +1,607 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}{{ produit.nom }} - {{ boutique.nom_boutique }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-30">
+        <div class="px-4 py-3">
+            <div class="flex items-center justify-between">
+                <button onclick="history.back()" class="p-2 rounded-lg hover:bg-gray-100">
+                    <i class="fas fa-arrow-left text-gray-600"></i>
+                </button>
+                
+                <div class="flex items-center space-x-2">
+                    <button onclick="shareProduct()" class="p-2 rounded-lg hover:bg-gray-100">
+                        <i class="fas fa-share-alt text-gray-600"></i>
+                    </button>
+                    <button onclick="toggleFavorite()" class="p-2 rounded-lg hover:bg-gray-100">
+                        <i class="{% if est_favori %}fas text-red-500{% else %}far text-gray-600{% endif %} fa-heart"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Product Images -->
+    <div class="bg-white">
+        <div class="relative">
+            {% if produit.photo %}
+                <img src="{{ produit.photo.url }}" 
+                     alt="{{ produit.nom }}" 
+                     class="w-full h-80 object-cover"
+                     id="main-image">
+            {% else %}
+                <div class="w-full h-80 bg-gray-200 flex items-center justify-center">
+                    <i class="fas fa-box text-gray-400 text-6xl"></i>
+                </div>
+            {% endif %}
+            
+            <!-- Promotional Badge -->
+            {% if produit.est_en_promotion %}
+                <div class="absolute top-4 left-4">
+                    <span class="px-3 py-2 bg-red-500 text-white text-sm rounded-full font-semibold">
+                        -{{ produit.prix|calculate_discount:produit.prix_promotionnel }}%
+                    </span>
+                </div>
+            {% endif %}
+            
+            <!-- Stock Status -->
+            <div class="absolute top-4 right-4">
+                {% if produit.est_en_stock %}
+                    <span class="px-3 py-2 bg-green-500 text-white text-sm rounded-full font-semibold">
+                        En stock
+                    </span>
+                {% else %}
+                    <span class="px-3 py-2 bg-red-500 text-white text-sm rounded-full font-semibold">
+                        Rupture
+                    </span>
+                {% endif %}
+            </div>
+            
+            <!-- Image Gallery Dots -->
+            <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                <span class="swipe-indicator w-6 h-2 bg-white rounded-full active"></span>
+                <span class="swipe-indicator w-2 h-2 bg-white/50 rounded-full"></span>
+                <span class="swipe-indicator w-2 h-2 bg-white/50 rounded-full"></span>
+            </div>
+        </div>
+        
+        <!-- Thumbnail Gallery -->
+        {% if produit.photo %}
+            <div class="px-4 py-3 flex space-x-2 overflow-x-auto scrollbar-hide">
+                <img src="{{ produit.photo.url }}" 
+                     alt="{{ produit.nom }}" 
+                     class="w-20 h-20 object-cover rounded-lg border-2 border-primary-500 flex-shrink-0"
+                     onclick="changeMainImage(this.src)">
+                <!-- Additional images would go here -->
+                <div class="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-plus text-gray-400"></i>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Product Info -->
+    <div class="px-4 py-4 bg-white border-b">
+        <div class="flex items-start justify-between mb-2">
+            <div class="flex-1">
+                <h1 class="text-xl font-bold text-gray-900">{{ produit.nom }}</h1>
+                <p class="text-sm text-gray-500 mt-1">
+                    <i class="fas fa-store mr-1"></i>{{ boutique.nom_boutique }}
+                </p>
+            </div>
+        </div>
+        
+        <!-- Rating -->
+        <div class="flex items-center space-x-3 mb-3">
+            <div class="flex text-yellow-400">
+                {% for i in "12345" %}
+                    {% if forloop.counter <= note_moyenne|default:0 %}
+                        <i class="fas fa-star"></i>
+                    {% else %}
+                        <i class="far fa-star"></i>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            <span class="text-sm text-gray-600">{{ note_moyenne|default:0|floatformat:1 }} ({{ avis_list|length }} avis)</span>
+        </div>
+        
+        <!-- Price -->
+        <div class="flex items-center justify-between">
+            <div>
+                {% if produit.est_en_promotion %}
+                    <div class="flex items-center space-x-2">
+                        <span class="text-2xl font-bold text-primary-600">{{ produit.prix_promotionnel|format_currency }}</span>
+                        <span class="text-lg text-gray-400 line-through">{{ produit.prix|format_currency }}</span>
+                    </div>
+                    <p class="text-sm text-green-600 mt-1">
+                        <i class="fas fa-tag mr-1"></i>Économisez {{ produit.prix|sub:produit.prix_promotionnel|format_currency }}
+                    </p>
+                {% else %}
+                    <span class="text-2xl font-bold text-primary-600">{{ produit.prix|format_currency }}</span>
+                {% endif %}
+            </div>
+            
+            <div class="text-right">
+                <p class="text-sm text-gray-500">Stock</p>
+                <p class="text-lg font-semibold text-gray-900">{{ produit.stock }} unité{{ produit.stock|pluralize }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quantity Selector -->
+    <div class="px-4 py-4 bg-white border-b">
+        <div class="flex items-center justify-between">
+            <span class="text-sm font-medium text-gray-700">Quantité</span>
+            <div class="flex items-center space-x-3">
+                <button onclick="decreaseQuantity()" class="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-minus text-gray-600 text-sm"></i>
+                </button>
+                <input type="number" id="quantity" value="1" min="1" max="{{ produit.stock }}" 
+                       class="w-16 text-center border border-gray-300 rounded-lg py-1 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                <button onclick="increaseQuantity()" class="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-plus text-gray-600 text-sm"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Description -->
+    {% if produit.description %}
+    <div class="px-4 py-4 bg-white border-b">
+        <h2 class="text-lg font-semibold text-gray-900 mb-2">Description</h2>
+        <p class="text-gray-600 text-sm leading-relaxed">{{ produit.description }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Product Details -->
+    <div class="px-4 py-4 bg-white border-b">
+        <h2 class="text-lg font-semibold text-gray-900 mb-3">Détails</h2>
+        <div class="space-y-2">
+            <div class="flex justify-between text-sm">
+                <span class="text-gray-500">Catégorie</span>
+                <span class="text-gray-900">{{ produit.get_categorie_display }}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+                <span class="text-gray-500">Référence</span>
+                <span class="text-gray-900">#PRD-{{ produit.id|stringformat:"06d" }}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+                <span class="text-gray-500">Stock minimum</span>
+                <span class="text-gray-900">{{ produit.stock_min }} unité{{ produit.stock_min|pluralize }}</span>
+            </div>
+            {% if produit.date_ajout %}
+            <div class="flex justify-between text-sm">
+                <span class="text-gray-500">Ajouté le</span>
+                <span class="text-gray-900">{{ produit.date_ajout|date:"d/m/Y" }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Reviews Section -->
+    <div class="px-4 py-4 bg-white border-b">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-gray-900">Avis ({{ avis_list|length }})</h2>
+            <button onclick="openReviewModal()" class="text-primary-600 text-sm font-medium">
+                Écrire un avis
+            </button>
+        </div>
+        
+        {% if avis_list %}
+            <div class="space-y-4">
+                {% for avis in avis_list|slice:":3" %}
+                <div class="border-b pb-4 last:border-b-0">
+                    <div class="flex items-start justify-between mb-2">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-primary-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-900">{{ avis.client.get_full_name|default:avis.client.username }}</p>
+                                <div class="flex items-center space-x-2">
+                                    <div class="flex text-yellow-400">
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= avis.note %}
+                                                <i class="fas fa-star text-xs"></i>
+                                            {% else %}
+                                                <i class="far fa-star text-xs"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                    <span class="text-xs text-gray-500">{{ avis.date_creation|date:"d/m/Y" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% if avis.commentaire %}
+                        <p class="text-sm text-gray-600 ml-13">{{ avis.commentaire }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            
+            {% if avis_list|length > 3 %}
+                <button onclick="viewAllReviews()" class="w-full py-2 mt-4 text-center text-primary-600 text-sm font-medium">
+                    Voir tous les avis ({{ avis_list|length }})
+                </button>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-8">
+                <i class="fas fa-comment-slash text-4xl text-gray-300 mb-2"></i>
+                <p class="text-gray-500 text-sm">Aucun avis pour ce produit</p>
+                <p class="text-gray-400 text-xs mt-1">Soyez le premier à donner votre avis</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Similar Products -->
+    {% if similaires %}
+    <div class="px-4 py-4 bg-white">
+        <h2 class="text-lg font-semibold text-gray-900 mb-3">Produits similaires</h2>
+        <div class="flex space-x-3 overflow-x-auto scrollbar-hide">
+            {% for similaire in similaires %}
+            <div class="flex-shrink-0 w-40">
+                <a href="{% url 'clients:detail_produit' similaire.id %}" class="block">
+                    <div class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                        <div class="relative">
+                            {% if similaire.photo %}
+                                <img src="{{ similaire.photo.url }}" 
+                                     alt="{{ similaire.nom }}" 
+                                     class="w-full h-28 object-cover"
+                                     loading="lazy">
+                            {% else %}
+                                <div class="w-full h-28 bg-gray-200 flex items-center justify-center">
+                                    <i class="fas fa-box text-gray-400 text-xl"></i>
+                                </div>
+                            {% endif %}
+                            
+                            {% if similaire.est_en_promotion %}
+                                <span class="absolute top-2 left-2 px-2 py-1 bg-red-500 text-white text-xs rounded-full">
+                                    -{{ similaire.prix|calculate_discount:similaire.prix_promotionnel }}%
+                                </span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="p-3">
+                            <h3 class="text-sm font-semibold text-gray-900 line-clamp-2">{{ similaire.nom }}</h3>
+                            <div class="mt-2">
+                                <span class="text-base font-bold text-primary-600">{{ similaire.prix_effectif|format_currency }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Boutique Info -->
+    <div class="px-4 py-4 bg-white border-b">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-semibold text-gray-900">Vendu par</h2>
+            <a href="{% url 'clients:detail_boutique' boutique.id %}" class="text-primary-600 text-sm font-medium">
+                Voir la boutique
+            </a>
+        </div>
+        
+        <div class="flex items-center space-x-3">
+            {% if boutique.photo_boutique %}
+                <img src="{{ boutique.photo_boutique.url }}" 
+                     alt="{{ boutique.nom_boutique }}" 
+                     class="w-12 h-12 rounded-lg object-cover">
+            {% else %}
+                <div class="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-store text-primary-600"></i>
+                </div>
+            {% endif %}
+            
+            <div class="flex-1">
+                <h3 class="font-semibold text-gray-900">{{ boutique.nom_boutique }}</h3>
+                <p class="text-sm text-gray-500">{{ boutique.get_categorie_display }}</p>
+            </div>
+            
+            <div class="text-right">
+                <div class="flex items-center text-yellow-400 mb-1">
+                    {% for i in "12345" %}
+                        <i class="fas fa-star text-xs"></i>
+                    {% endfor %}
+                </div>
+                <p class="text-xs text-gray-500">4.5 (128)</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Action Bar -->
+    <div class="fixed bottom-16 left-0 right-0 bg-white border-t p-4 z-20">
+        <div class="flex space-x-3">
+            <button onclick="addToCart()" 
+                    class="flex-1 py-3 {% if produit.est_en_stock %}bg-primary-600 text-white hover:bg-primary-700{% else %}bg-gray-300 text-gray-500 cursor-not-allowed{% endif %} rounded-lg font-semibold transition-colors flex items-center justify-center"
+                    {% if not produit.est_en_stock %}disabled{% endif %}>
+                <i class="fas fa-cart-plus mr-2"></i>
+                {% if produit.est_en_stock %}
+                    Ajouter au panier
+                {% else %}
+                    Indisponible
+                {% endif %}
+            </button>
+            
+            <button onclick="buyNow()" 
+                    class="flex-1 py-3 {% if produit.est_en_stock %}bg-green-600 text-white hover:bg-green-700{% else %}bg-gray-300 text-gray-500 cursor-not-allowed{% endif %} rounded-lg font-semibold transition-colors"
+                    {% if not produit.est_en_stock %}disabled{% endif %}>
+                Acheter maintenant
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Review Modal -->
+<div id="review-modal" class="modal fixed inset-0 z-50 hidden">
+    <div class="modal-backdrop absolute inset-0 bg-black bg-opacity-50"></div>
+    <div class="modal-content relative bg-white rounded-t-2xl mt-8 max-h-[80vh] overflow-hidden">
+        <div class="p-4 border-b">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold">Donner votre avis</h3>
+                <button onclick="closeReviewModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+                    <i class="fas fa-times text-gray-500"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-4">
+            <form id="review-form" class="space-y-4">
+                <!-- Rating -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Note</label>
+                    <div class="flex space-x-2" id="rating-stars">
+                        {% for i in "12345" %}
+                            <button type="button" onclick="setRating({{ forloop.counter }})" class="text-3xl text-gray-300 hover:text-yellow-400 transition-colors">
+                                <i class="far fa-star" data-rating="{{ forloop.counter }}"></i>
+                            </button>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Comment -->
+                <div>
+                    <label for="review-comment" class="block text-sm font-medium text-gray-700 mb-2">Commentaire (optionnel)</label>
+                    <textarea id="review-comment" rows="4" placeholder="Partagez votre expérience avec ce produit..." 
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"></textarea>
+                </div>
+                
+                <!-- Submit -->
+                <button type="submit" class="w-full py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors">
+                    Envoyer mon avis
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedRating = 0;
+let currentQuantity = 1;
+
+// Quantity management
+function increaseQuantity() {
+    const input = document.getElementById('quantity');
+    const max = parseInt(input.max);
+    if (currentQuantity < max) {
+        currentQuantity++;
+        input.value = currentQuantity;
+    }
+}
+
+function decreaseQuantity() {
+    const input = document.getElementById('quantity');
+    if (currentQuantity > 1) {
+        currentQuantity--;
+        input.value = currentQuantity;
+    }
+}
+
+// Image gallery
+function changeMainImage(src) {
+    document.getElementById('main-image').src = src;
+}
+
+// Favorite management
+async function toggleFavorite() {
+    const heartIcon = event.currentTarget.querySelector('i');
+    const isFavorited = heartIcon.classList.contains('fas');
+    
+    if (isFavorited) {
+        const result = await API.Favorites.remove({{ produit.id }});
+        if (result) {
+            heartIcon.classList.remove('fas', 'text-red-500');
+            heartIcon.classList.add('far', 'text-gray-600');
+        }
+    } else {
+        const result = await API.Favorites.add({{ produit.id }});
+        if (result) {
+            heartIcon.classList.remove('far', 'text-gray-600');
+            heartIcon.classList.add('fas', 'text-red-500');
+        }
+    }
+}
+
+// Cart management
+async function addToCart() {
+    if (!{{ produit.est_en_stock|yesno:"true,false" }}) {
+        marketplace.showNotification('Ce produit n\'est pas en stock', 'error');
+        return;
+    }
+    
+    const quantity = parseInt(document.getElementById('quantity').value);
+    const result = await API.Cart.addItem({{ produit.id }}, quantity);
+    
+    if (result) {
+        // Update cart UI
+        updateCartUI(result);
+    }
+}
+
+function buyNow() {
+    if (!{{ produit.est_en_stock|yesno:"true,false" }}) {
+        marketplace.showNotification('Ce produit n\'est pas en stock', 'error');
+        return;
+    }
+    
+    // Add to cart and redirect to checkout
+    addToCart().then(() => {
+        window.location.href = '{% url "clients:panier" %}';
+    });
+}
+
+function updateCartUI(cartData) {
+    // Update cart count
+    const cartCountElement = document.getElementById('cart-count');
+    if (cartCountElement) {
+        cartCountElement.textContent = cartData.nombre_articles;
+        if (cartData.nombre_articles > 0) {
+            cartCountElement.classList.add('badge-pulse');
+        }
+    }
+    
+    // Show added to cart animation
+    const button = event.currentTarget;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-check mr-2"></i>Ajouté !';
+    button.classList.add('bg-green-600');
+    
+    setTimeout(() => {
+        button.innerHTML = originalText;
+        button.classList.remove('bg-green-600');
+    }, 2000);
+}
+
+// Review modal
+function openReviewModal() {
+    document.getElementById('review-modal').classList.remove('hidden');
+}
+
+function closeReviewModal() {
+    document.getElementById('review-modal').classList.add('hidden');
+    resetReviewForm();
+}
+
+function setRating(rating) {
+    selectedRating = rating;
+    const stars = document.querySelectorAll('#rating-stars i');
+    
+    stars.forEach((star, index) => {
+        if (index < rating) {
+            star.classList.remove('far');
+            star.classList.add('fas', 'text-yellow-400');
+        } else {
+            star.classList.remove('fas', 'text-yellow-400');
+            star.classList.add('far');
+        }
+    });
+}
+
+function resetReviewForm() {
+    selectedRating = 0;
+    document.getElementById('review-comment').value = '';
+    document.querySelectorAll('#rating-stars i').forEach(star => {
+        star.classList.remove('fas', 'text-yellow-400');
+        star.classList.add('far');
+    });
+}
+
+// Submit review
+document.getElementById('review-form')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    if (selectedRating === 0) {
+        marketplace.showNotification('Veuillez sélectionner une note', 'error');
+        return;
+    }
+    
+    const commentaire = document.getElementById('review-comment').value;
+    
+    const result = await API.Reviews.add({{ produit.id }}, selectedRating, commentaire);
+    
+    if (result) {
+        closeReviewModal();
+        // Reload page to show new review
+        setTimeout(() => location.reload(), 1000);
+    }
+});
+
+// Share functionality
+function shareProduct() {
+    const shareData = {
+        title: '{{ produit.nom }}',
+        text: 'Découvrez ce produit sur Marketplace',
+        url: window.location.href
+    };
+    
+    marketplace.shareContent(shareData.title, shareData.text, shareData.url);
+}
+
+function viewAllReviews() {
+    // Scroll to reviews section or load more
+    marketplace.showNotification('Affichage de tous les avis', 'info');
+}
+
+// Image swipe gestures
+let touchStartX = 0;
+let touchEndX = 0;
+
+document.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+});
+
+document.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+});
+
+function handleSwipe() {
+    const swipeThreshold = 50;
+    const diff = touchStartX - touchEndX;
+    
+    if (Math.abs(diff) > swipeThreshold) {
+        if (diff > 0) {
+            // Swipe left - next image
+            console.log('Next image');
+        } else {
+            // Swipe right - previous image
+            console.log('Previous image');
+        }
+    }
+}
+
+// Quantity input validation
+document.getElementById('quantity')?.addEventListener('input', function(e) {
+    let value = parseInt(e.target.value);
+    const max = parseInt(e.target.max);
+    const min = parseInt(e.target.min);
+    
+    if (isNaN(value) || value < min) {
+        e.target.value = min;
+        currentQuantity = min;
+    } else if (value > max) {
+        e.target.value = max;
+        currentQuantity = max;
+    } else {
+        currentQuantity = value;
+    }
+});
+
+// Close modals on escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeReviewModal();
+    }
+});
+</script>
+{% endblock %}

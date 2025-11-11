@@ -1,0 +1,508 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Modifier mon profil{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 pb-20">
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-40">
+        <div class="px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <button onclick="history.back()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </button>
+                    <h1 class="text-lg font-semibold">Modifier mon profil</h1>
+                </div>
+                <button type="submit" form="profileForm" class="text-primary font-medium">
+                    Enregistrer
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <form method="post" enctype="multipart/form-data" id="profileForm">
+        {% csrf_token %}
+        
+        <!-- Photo de la boutique -->
+        <div class="bg-white p-4 mb-2">
+            <div class="text-center">
+                <div class="relative inline-block mb-4">
+                    <img id="photoPreview" 
+                         src="{% if form.instance.photo_boutique %}{{ form.instance.photo_boutique.url }}{% else %}{% static 'images/default-store.png' %}{% endif %}" 
+                         alt="Photo de la boutique" 
+                         class="w-24 h-24 rounded-full border-4 border-gray-200 object-cover">
+                    <label for="id_photo_boutique" class="absolute bottom-0 right-0 bg-primary text-gray-50 p-2 rounded-full cursor-pointer hover:bg-primary/90 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                    </label>
+                    <input type="file" id="id_photo_boutique" name="photo_boutique" accept="image/*" class="hidden" onchange="previewPhoto(event)">
+                </div>
+                <p class="text-sm text-gray-500">Appuyez sur l'icône pour changer la photo</p>
+            </div>
+        </div>
+
+        <!-- Informations boutique -->
+        <div class="bg-white p-4 mb-2">
+            <h3 class="font-semibold mb-4">Informations boutique</h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nom de la boutique *</label>
+                    {{ form.nom_boutique }}
+                    {% if form.nom_boutique.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.nom_boutique.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Catégorie *</label>
+                    {{ form.categorie }}
+                    {% if form.categorie.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.categorie.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.description.errors.0 }}</p>
+                    {% endif %}
+                    <p class="text-xs text-gray-500 mt-1">{{ form.description.value|length|default:0 }}/300 caractères</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Adresse complète *</label>
+                    {{ form.adresse }}
+                    {% if form.adresse.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.adresse.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Téléphone *</label>
+                    {{ form.telephone }}
+                    {% if form.telephone.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.telephone.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Horaires -->
+        <div class="bg-white p-4 mb-2">
+            <h3 class="font-semibold mb-4">Horaires d'ouverture</h3>
+            
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Heure d'ouverture *</label>
+                        {{ form.horaire_ouverture }}
+                        {% if form.horaire_ouverture.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ form.horaire_ouverture.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Heure de fermeture *</label>
+                        {{ form.horaire_fermeture }}
+                        {% if form.horaire_fermeture.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ form.horaire_fermeture.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Jours d'ouverture *</label>
+                    {{ form.jours_ouverture }}
+                    {% if form.jours_ouverture.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.jours_ouverture.errors.0 }}</p>
+                    {% endif %}
+                    <p class="text-xs text-gray-500 mt-1">Ex: Lundi-Mardi-Mercredi-Jeudi-Vendredi-Samedi</p>
+                </div>
+
+                <!-- Visual schedule -->
+                <div class="bg-gray-50 p-3 rounded-lg">
+                    <p class="text-sm font-medium text-gray-700 mb-2">Récapitulatif</p>
+                    <div class="text-sm text-gray-600">
+                        <span id="scheduleSummary">{{ form.instance.jours_ouverture|default:"Lundi-Mardi-Mercredi-Jeudi-Vendredi-Samedi" }}</span>
+                        <br>
+                        <span id="scheduleHours">{{ form.instance.horaire_ouverture|default:"08:00" }} - {{ form.instance.horaire_fermeture|default:"18:00" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informations personnelles -->
+        <div class="bg-white p-4 mb-2">
+            <h3 class="font-semibold mb-4">Informations personnelles</h3>
+            
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Prénom *</label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ form.first_name.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ form.last_name.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.email.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Options -->
+        <div class="bg-white p-4 mb-20">
+            <h3 class="font-semibold mb-4">Options</h3>
+            
+            <div class="space-y-4">
+                <div class="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg">
+                    <div>
+                        <p class="font-medium text-sm">Boutique active</p>
+                        <p class="text-xs text-gray-500">Votre boutique est visible par les clients</p>
+                    </div>
+                    {{ form.est_actif }}
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- Loading overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-lg p-6 max-w-xs mx-4">
+            <div class="flex flex-col items-center">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
+                <p class="text-sm text-gray-600">Enregistrement en cours...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('profileForm');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    
+    // Style form inputs
+    const inputs = form.querySelectorAll('input[type="text"], input[type="email"], input[type="tel"], input[type="time"], textarea, select');
+    inputs.forEach(input => {
+        input.classList.add('w-full', 'px-3', 'py-2', 'border', 'border-gray-300', 'rounded-lg', 'focus:ring-2', 'focus:ring-primary', 'focus:border-transparent');
+    });
+    
+    // Style checkbox
+    const checkbox = form.querySelector('input[type="checkbox"]');
+    if (checkbox) {
+        checkbox.classList.add('w-4', 'h-4', 'text-primary', 'border-gray-300', 'rounded', 'focus:ring-primary');
+    }
+    
+    // Update schedule summary
+    updateScheduleSummary();
+    
+    // Event listeners for schedule
+    document.querySelector('input[name="jours_ouverture"]').addEventListener('input', updateScheduleSummary);
+    document.querySelector('input[name="horaire_ouverture"]').addEventListener('change', updateScheduleSummary);
+    document.querySelector('input[name="horaire_fermeture"]').addEventListener('change', updateScheduleSummary);
+    
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (!validateForm()) {
+            return;
+        }
+        
+        loadingOverlay.classList.remove('hidden');
+        
+        const formData = new FormData(form);
+        
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            loadingOverlay.classList.add('hidden');
+            
+            if (data.success) {
+                showToast('Profil mis à jour avec succès', 'success');
+                setTimeout(() => {
+                    window.location.href = '/commercants/profil/';
+                }, 1500);
+            } else {
+                if (data.errors) {
+                    Object.keys(data.errors).forEach(field => {
+                        const input = form.querySelector(`[name="${field}"]`);
+                        if (input) {
+                            input.classList.add('border-red-500');
+                            const errorDiv = document.createElement('p');
+                            errorDiv.className = 'text-red-500 text-xs mt-1';
+                            errorDiv.textContent = data.errors[field][0];
+                            input.parentNode.appendChild(errorDiv);
+                        }
+                    });
+                } else {
+                    showToast(data.message || 'Erreur lors de la mise à jour', 'error');
+                }
+            }
+        })
+        .catch(error => {
+            loadingOverlay.classList.add('hidden');
+            console.error('Error:', error);
+            form.submit();
+        });
+    });
+    
+    // Character counter for description
+    const textarea = form.querySelector('textarea[name="description"]');
+    if (textarea) {
+        textarea.addEventListener('input', function() {
+            const counter = this.parentNode.querySelector('.text-gray-500');
+            if (counter) {
+                counter.textContent = `${this.value.length}/300 caractères`;
+                if (this.value.length > 300) {
+                    this.value = this.value.substring(0, 300);
+                    counter.classList.add('text-red-500');
+                } else {
+                    counter.classList.remove('text-red-500');
+                }
+            }
+        });
+    }
+    
+    // Auto-save draft
+    let autoSaveTimer;
+    form.addEventListener('input', function() {
+        clearTimeout(autoSaveTimer);
+        autoSaveTimer = setTimeout(() => {
+            const formData = new FormData(form);
+            const data = {};
+            for (let [key, value] of formData.entries()) {
+                if (value instanceof File && value.size === 0) continue;
+                data[key] = value;
+            }
+            localStorage.setItem('commercant_profile_draft', JSON.stringify(data));
+        }, 2000);
+    });
+    
+    // Load draft if exists
+    const draft = localStorage.getItem('commercant_profile_draft');
+    if (draft) {
+        const data = JSON.parse(draft);
+        Object.keys(data).forEach(key => {
+            const input = form.querySelector(`[name="${key}"]`);
+            if (input && data[key]) {
+                if (input.type === 'checkbox') {
+                    input.checked = data[key] === 'on' || data[key] === true;
+                } else {
+                    input.value = data[key];
+                }
+            }
+        });
+        updateScheduleSummary();
+    }
+    
+    // Clear draft on successful submission
+    form.addEventListener('submit', function() {
+        localStorage.removeItem('commercant_profile_draft');
+    });
+});
+
+function previewPhoto(event) {
+    const file = event.target.files[0];
+    const preview = document.getElementById('photoPreview');
+    
+    if (file) {
+        // Validate file size
+        if (file.size > 5 * 1024 * 1024) {
+            showToast('L\'image ne doit pas dépasser 5MB', 'error');
+            event.target.value = '';
+            return;
+        }
+        
+        // Validate file type
+        if (!file.type.match(/^image\/(jpeg|jpg|png)$/)) {
+            showToast('Format d\'image non supporté (JPG, PNG uniquement)', 'error');
+            event.target.value = '';
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function updateScheduleSummary() {
+    const jours = document.querySelector('input[name="jours_ouverture"]').value;
+    const ouverture = document.querySelector('input[name="horaire_ouverture"]').value;
+    const fermeture = document.querySelector('input[name="horaire_fermeture"]').value;
+    
+    document.getElementById('scheduleSummary').textContent = jours || 'Lundi-Mardi-Mercredi-Jeudi-Vendredi-Samedi';
+    document.getElementById('scheduleHours').textContent = `${ouverture || '08:00'} - ${fermeture || '18:00'}`;
+}
+
+function validateForm() {
+    const form = document.getElementById('profileForm');
+    let isValid = true;
+    
+    // Validate required fields
+    const requiredFields = form.querySelectorAll('[required]');
+    requiredFields.forEach(field => {
+        if (!field.value.trim()) {
+            field.classList.add('border-red-500');
+            isValid = false;
+        } else {
+            field.classList.remove('border-red-500');
+        }
+    });
+    
+    // Validate opening hours
+    const ouverture = document.querySelector('input[name="horaire_ouverture"]').value;
+    const fermeture = document.querySelector('input[name="horaire_fermeture"]').value;
+    
+    if (ouverture && fermeture && ouverture >= fermeture) {
+        document.querySelector('input[name="horaire_fermeture"]').classList.add('border-red-500');
+        showToast('L\'heure de fermeture doit être postérieure à l\'heure d\'ouverture', 'error');
+        isValid = false;
+    }
+    
+    // Validate email format
+    const email = document.querySelector('input[name="email"]').value;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (email && !emailRegex.test(email)) {
+        document.querySelector('input[name="email"]').classList.add('border-red-500');
+        showToast('Veuillez entrer une adresse email valide', 'error');
+        isValid = false;
+    }
+    
+    // Validate phone format
+    const telephone = document.querySelector('input[name="telephone"]').value;
+    const phoneRegex = /^\228\s?\d{2}\s?\d{2}\s?\d{2}\s?\d{2}$/;
+    if (telephone && !phoneRegex.test(telephone.replace(/\s/g, ''))) {
+        document.querySelector('input[name="telephone"]').classList.add('border-red-500');
+        showToast('Veuillez entrer un numéro de téléphone valide (format: 228 XX XX XX XX)', 'error');
+        isValid = false;
+    }
+    
+    if (!isValid) {
+        showToast('Veuillez corriger les erreurs', 'error');
+    }
+    
+    return isValid;
+}
+
+// Remove error styling on input
+document.addEventListener('input', function(e) {
+    if (e.target.classList.contains('border-red-500')) {
+        e.target.classList.remove('border-red-500');
+        const errorDiv = e.target.parentNode.querySelector('.text-red-500');
+        if (errorDiv) {
+            errorDiv.remove();
+        }
+    }
+});
+
+// Phone number formatting
+document.querySelector('input[name="telephone"]')?.addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\s/g, '');
+    if (value.startsWith('228')) {
+        value = '228 ' + value.substring(3).replace(/(\d{2})(\d{2})(\d{2})(\d{2})/, '$1 $2 $3 $4');
+    }
+    e.target.value = value;
+});
+
+// Quick day selection
+const dayButtons = document.createElement('div');
+dayButtons.className = 'flex flex-wrap gap-2 mt-2';
+dayButtons.innerHTML = `
+    <button type="button" onclick="toggleDay('Lundi')" class="day-btn px-3 py-1 text-xs border border-gray-300 rounded-full hover:bg-gray-100">Lun</button>
+    <button type="button" onclick="toggleDay('Mardi')" class="day-btn px-3 py-1 text-xs border border-gray-300 rounded-full hover:bg-gray-100">Mar</button>
+    <button type="button" onclick="toggleDay('Mercredi')" class="day-btn px-3 py-1 text-xs border border-gray-300 rounded-full hover:bg-gray-100">Mer</button>
+    <button type="button" onclick="toggleDay('Jeudi')" class="day-btn px-3 py-1 text-xs border border-gray-300 rounded-full hover:bg-gray-100">Jeu</button>
+    <button type="button" onclick="toggleDay('Vendredi')" class="day-btn px-3 py-1 text-xs border border-gray-300 rounded-full hover:bg-gray-100">Ven</button>
+    <button type="button" onclick="toggleDay('Samedi')" class="day-btn px-3 py-1 text-xs border border-gray-300 rounded-full hover:bg-gray-100">Sam</button>
+    <button type="button" onclick="toggleDay('Dimanche')" class="day-btn px-3 py-1 text-xs border border-gray-300 rounded-full hover:bg-gray-100">Dim</button>
+`;
+
+const joursField = document.querySelector('input[name="jours_ouverture"]');
+joursField.parentNode.appendChild(dayButtons);
+
+function toggleDay(day) {
+    const currentDays = joursField.value.split('-').map(d => d.trim()).filter(d => d);
+    const dayIndex = currentDays.indexOf(day);
+    
+    if (dayIndex > -1) {
+        currentDays.splice(dayIndex, 1);
+    } else {
+        currentDays.push(day);
+    }
+    
+    joursField.value = currentDays.join('-');
+    updateScheduleSummary();
+    updateDayButtons();
+}
+
+function updateDayButtons() {
+    const currentDays = joursField.value.split('-').map(d => d.trim()).filter(d => d);
+    const buttons = document.querySelectorAll('.day-btn');
+    
+    buttons.forEach(btn => {
+        const day = btn.getAttribute('onclick').match(/'([^']+)'/)[1];
+        if (currentDays.includes(day)) {
+            btn.classList.remove('border-gray-300');
+            btn.classList.add('bg-primary', 'text-gray', 'border-primary');
+        } else {
+            btn.classList.remove('bg-primary', 'text-gray', 'border-primary');
+            btn.classList.add('border-gray-300');
+        }
+    });
+}
+
+// Initialize day buttons
+updateDayButtons();
+</script>
+
+<style>
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+input[type="time"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: invert(0.5);
+}
+
+input[type="file"]::-webkit-file-upload-button {
+    visibility: hidden;
+}
+</style>
+{% endblock %}

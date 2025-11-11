@@ -1,0 +1,722 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Détail de la commande #{{ commande.reference }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #007bff;
+        --success-color: #28a745;
+        --warning-color: #ffc107;
+        --danger-color: #dc3545;
+        --light-gray: #f8f9fa;
+        --medium-gray: #e9ecef;
+        --dark-gray: #6c757d;
+        --white: #ffffff;
+    }
+
+    body {
+        background-color: var(--light-gray);
+        padding-top: 0;
+    }
+
+    .detail-commande-container {
+        max-width: 100%;
+        margin: 0 auto;
+        padding-bottom: 80px; /* Espace pour le footer fixe */
+    }
+
+    /* Header de la commande */
+    .commande-header {
+        background: linear-gradient(135deg, var(--primary-color), #0056b3);
+        color: var(--white);
+        padding: 20px 15px;
+        text-align: center;
+    }
+
+    .commande-reference {
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    .commande-date {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+
+    /* Timeline de suivi */
+    .suivi-timeline {
+        background: var(--white);
+        padding: 20px 15px;
+        margin-bottom: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .timeline {
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+        margin: 20px 0;
+    }
+
+    .timeline::before {
+        content: '';
+        position: absolute;
+        top: 20px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--medium-gray);
+        z-index: 1;
+    }
+
+    .timeline-step {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        flex: 1;
+    }
+
+    .timeline-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--medium-gray);
+        color: var(--dark-gray);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 8px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .timeline-step.active .timeline-icon {
+        background: var(--primary-color);
+        color: var(--white);
+        transform: scale(1.1);
+    }
+
+    .timeline-step.completed .timeline-icon {
+        background: var(--success-color);
+        color: var(--white);
+    }
+
+    .timeline-label {
+        font-size: 0.75rem;
+        color: var(--dark-gray);
+        line-height: 1.2;
+    }
+
+    .timeline-step.active .timeline-label {
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+
+    /* Section Carte */
+    .map-section {
+        height: 300px;
+        position: relative;
+        background: var(--white);
+    }
+
+    #map-detail {
+        height: 100%;
+        width: 100%;
+    }
+
+    .map-overlay-info {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 10px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        z-index: 1000;
+    }
+
+    /* Cartes d'information */
+    .info-card {
+        background: var(--white);
+        border-radius: 10px;
+        padding: 15px;
+        margin: 10px 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .info-card-title {
+        font-weight: 600;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+    }
+
+    .info-card-title i {
+        margin-right: 8px;
+        color: var(--primary-color);
+    }
+
+    /* Livreur */
+    .livreur-info {
+        display: flex;
+        align-items: center;
+    }
+
+    .livreur-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 15px;
+        border: 3px solid var(--medium-gray);
+    }
+
+    .livreur-details h5 {
+        margin: 0 0 5px 0;
+        font-size: 1.1rem;
+    }
+
+    .livreur-details p {
+        margin: 0;
+        color: var(--dark-gray);
+        font-size: 0.9rem;
+    }
+
+    .contact-livreur-btn {
+        margin-top: 10px;
+        width: 100%;
+    }
+
+    /* Articles de la commande */
+    .article-item {
+        display: flex;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--light-gray);
+    }
+
+    .article-item:last-child {
+        border-bottom: none;
+    }
+
+    .article-image {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        object-fit: cover;
+        margin-right: 12px;
+    }
+
+    .article-details {
+        flex: 1;
+    }
+
+    .article-name {
+        font-weight: 500;
+        margin-bottom: 3px;
+    }
+
+    .article-price {
+        color: var(--dark-gray);
+        font-size: 0.9rem;
+    }
+
+    .article-quantity {
+        background: var(--light-gray);
+        padding: 4px 8px;
+        border-radius: 15px;
+        font-size: 0.85rem;
+    }
+
+    /* Évaluation */
+    .evaluation-section {
+        padding: 20px 15px;
+    }
+
+    .star-rating {
+        display: flex;
+        justify-content: center;
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+    }
+
+    .star {
+        color: var(--medium-gray);
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+
+    .star:hover,
+    .star.active {
+        color: var(--warning-color);
+    }
+
+    .criteria-rating {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .criteria-rating label {
+        flex: 1;
+        font-weight: 500;
+    }
+
+    .criteria-rating select {
+        width: 120px;
+        padding: 5px;
+        border: 1px solid var(--medium-gray);
+        border-radius: 5px;
+    }
+
+    .evaluation-comment {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid var(--medium-gray);
+        border-radius: 8px;
+        margin-top: 10px;
+        resize: none;
+    }
+
+    /* Footer */
+    .commande-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--white);
+        padding: 15px;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        z-index: 100;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .commande-total {
+        font-weight: 700;
+        font-size: 1.2rem;
+    }
+
+    /* Animations et transitions */
+    .fade-in {
+        animation: fadeIn 0.5s ease-in;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Toast Notifications */
+    .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 2000;
+    }
+    .toast {
+        background: var(--white);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        display: flex;
+        align-items: center;
+        min-width: 250px;
+        max-width: 350px;
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+    }
+    .toast.show { transform: translateX(0); }
+    .toast-success { border-left: 4px solid var(--success-color); }
+    .toast-error { border-left: 4px solid var(--danger-color); }
+    .toast-icon { margin-right: 10px; font-size: 20px; }
+    .toast-success .toast-icon { color: var(--success-color); }
+    .toast-error .toast-icon { color: var(--danger-color); }
+    .toast-content { flex: 1; }
+    .toast-title { font-weight: 600; margin-bottom: 3px; }
+    .toast-message { font-size: 0.9rem; color: var(--dark-gray); }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-commande-container">
+    <!-- Header -->
+    <div class="commande-header">
+        <div class="commande-reference">Commande #{{ commande.reference }}</div>
+        <div class="commande-date">Passée le {{ commande.date_commande|date:"d/m/Y à H:i" }}</div>
+    </div>
+
+    <!-- Timeline de suivi -->
+    <div class="suivi-timeline">
+        <h5>Suivi de votre commande</h5>
+        <div class="timeline">
+            <div class="timeline-step {% if commande.statut != 'en_attente' %}completed{% endif %}" data-status="en_attente">
+                <div class="timeline-icon"><i class="fas fa-clock"></i></div>
+                <div class="timeline-label">En attente</div>
+            </div>
+            <div class="timeline-step {% if commande.statut in 'validee,en_preparation,prete,en_livraison,livree' %}completed{% endif %}" data-status="validee">
+                <div class="timeline-icon"><i class="fas fa-check-circle"></i></div>
+                <div class="timeline-label">Validée</div>
+            </div>
+            <div class="timeline-step {% if commande.statut in 'en_preparation,prete,en_livraison,livree' %}completed{% endif %}" data-status="en_preparation">
+                <div class="timeline-icon"><i class="fas fa-utensils"></i></div>
+                <div class="timeline-label">En préparation</div>
+            </div>
+            <div class="timeline-step {% if commande.statut in 'prete,en_livraison,livree' %}completed{% endif %}" data-status="prete">
+                <div class="timeline-icon"><i class="fas fa-box"></i></div>
+                <div class="timeline-label">Prête</div>
+            </div>
+            <div class="timeline-step {% if commande.statut in 'en_livraison,livree' %}completed{% endif %}" data-status="en_livraison">
+                <div class="timeline-icon"><i class="fas fa-truck"></i></div>
+                <div class="timeline-label">En livraison</div>
+            </div>
+            <div class="timeline-step {% if commande.statut == 'livree' %}completed{% endif %}" data-status="livree">
+                <div class="timeline-icon"><i class="fas fa-home"></i></div>
+                <div class="timeline-label">Livrée</div>
+            </div>
+        </div>
+        <p class="text-center mt-3" id="status-text">
+            <strong>Statut actuel : {{ commande.get_statut_display }}</strong>
+        </p>
+    </div>
+
+    <!-- Section Carte (si en livraison) -->
+    {% if commande.statut == 'en_livraison' %}
+    <div class="map-section">
+        <div id="map-detail"></div>
+        <div class="map-overlay-info">
+            <strong>Arrivée estimée : <span id="eta">15-20 min</span></strong>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Infos Livreur (si en livraison ou livrée) -->
+    {% if commande.statut in 'en_livraison,livree' and commande.livraison.livreur %}
+    <div class="info-card fade-in">
+        <div class="info-card-title">
+            <i class="fas fa-user-tie"></i> Votre livreur
+        </div>
+        <div class="livreur-info">
+            <img src="{{ commande.livraison.livreur.user.photo_profil.url }}" alt="Livreur" class="livreur-avatar">
+            <div class="livreur-details">
+                <h5>{{ commande.livraison.livreur.user.get_full_name }}</h5>
+                <p>Note moyenne : <span id="livreur-note">4.8</span>/5 ⭐</p>
+            </div>
+        </div>
+        {% if commande.statut == 'en_livraison' %}
+        <button class="btn btn-primary contact-livreur-btn" onclick="appelerLivreur('{{ commande.livraison.livreur.user.telephone }}')">
+            <i class="fas fa-phone"></i> Appeler
+        </button>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Articles de la commande -->
+    <div class="info-card">
+        <div class="info-card-title">
+            <i class="fas fa-shopping-bag"></i> Articles commandés
+        </div>
+        {% for article in commande.articles.all %}
+        <div class="article-item">
+            <img src="{{ article.produit.photo.url }}" alt="{{ article.produit.nom }}" class="article-image">
+            <div class="article-details">
+                <div class="article-name">{{ article.produit.nom }}</div>
+                <div class="article-price">{{ article.prix_unitaire }} FCFA</div>
+            </div>
+            <div class="article-quantity">x{{ article.quantite }}</div>
+        </div>
+        {% endfor %}
+        <hr style="margin: 15px 0;">
+        <div style="display: flex; justify-content: space-between; font-weight: 600;">
+            <span>Total</span>
+            <span>{{ commande.total }} FCFA</span>
+        </div>
+    </div>
+
+    <!-- Adresse de livraison -->
+    <div class="info-card">
+        <div class="info-card-title">
+            <i class="fas fa-map-marker-alt"></i> Adresse de livraison
+        </div>
+        <p>{{ commande.adresse_livraison }}</p>
+        {% if commande.instructions_livraison %}
+        <p><strong>Instructions :</strong> {{ commande.instructions_livraison }}</p>
+        {% endif %}
+    </div>
+
+    <!-- Boutique -->
+    <div class="info-card">
+        <div class="info-card-title">
+            <i class="fas fa-store"></i> Boutique
+        </div>
+        <p><strong>{{ commande.commercant.nom_boutique }}</strong></p>
+        <p>{{ commande.commercant.adresse }}</p>
+    </div>
+
+    <!-- Section Évaluation (si la commande est livrée et non encore évaluée) -->
+    {% if commande.statut == 'livree' %}
+    <div class="evaluation-section">
+        <div class="info-card">
+            <div class="info-card-title">
+                <i class="fas fa-star"></i> Évaluer la livraison
+            </div>
+            <form id="evaluation-form">
+                <input type="hidden" name="commande_id" value="{{ commande.id }}">
+                <input type="hidden" name="livreur_id" value="{{ commande.livraison.livreur.id }}">
+                <input type="hidden" id="note-globale" name="note" value="5">
+
+                <div class="text-center mb-3">Note générale</div>
+                <div class="star-rating" id="star-rating">
+                    <i class="fas fa-star star" data-value="1"></i>
+                    <i class="fas fa-star star" data-value="2"></i>
+                    <i class="fas fa-star star" data-value="3"></i>
+                    <i class="fas fa-star star" data-value="4"></i>
+                    <i class="fas fa-star star active" data-value="5"></i>
+                </div>
+
+                <div class="criteria-rating">
+                    <label for="ponctualite">Ponctualité</label>
+                    <select name="ponctualite" id="ponctualite">
+                        <option value="5">5/5</option>
+                        <option value="4">4/5</option>
+                        <option value="3">3/5</option>
+                        <option value="2">2/5</option>
+                        <option value="1">1/5</option>
+                    </select>
+                </div>
+
+                <div class="criteria-rating">
+                    <label for="professionalisme">Professionalisme</label>
+                    <select name="professionalisme" id="professionalisme">
+                        <option value="5">5/5</option>
+                        <option value="4">4/5</option>
+                        <option value="3">3/5</option>
+                        <option value="2">2/5</option>
+                        <option value="1">1/5</option>
+                    </select>
+                </div>
+
+                <div class="criteria-rating">
+                    <label for="securite">Sécurité (respect du protocole)</label>
+                    <select name="securite" id="securite">
+                        <option value="5">5/5</option>
+                        <option value="4">4/5</option>
+                        <option value="3">3/5</option>
+                        <option value="2">2/5</option>
+                        <option value="1">1/5</option>
+                    </select>
+                </div>
+
+                <textarea name="commentaire" class="evaluation-comment" rows="4" placeholder="Laissez un commentaire (optionnel)..."></textarea>
+
+                <button type="submit" class="btn btn-success w-100 mt-3">
+                    <i class="fas fa-paper-plane"></i> Envoyer l'évaluation
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- Footer -->
+<div class="commande-footer">
+    <div class="commande-total">Total: {{ commande.total }} FCFA</div>
+    <div>
+        <small class="text-muted">Moyen de paiement : {{ commande.get_methode_paiement_display }}</small>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toast-container"></div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Leaflet pour la carte -->
+{% if commande.statut == 'en_livraison' %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Mettre à jour l'état actif sur la timeline
+    const currentStatus = '{{ commande.statut }}';
+    document.querySelectorAll('.timeline-step').forEach(step => {
+        if (step.dataset.status === currentStatus) {
+            step.classList.add('active');
+        }
+    });
+
+    // Logique pour la carte si la commande est en livraison
+    {% if commande.statut == 'en_livraison' %}
+    initMap();
+    {% endif %}
+
+    // Logique pour le système d'évaluation par étoiles
+    const stars = document.querySelectorAll('#star-rating .star');
+    stars.forEach(star => {
+        star.addEventListener('click', function() {
+            const rating = this.dataset.value;
+            document.getElementById('note-globale').value = rating;
+            updateStars(rating);
+        });
+    });
+
+    // Soumission du formulaire d'évaluation
+    const evaluationForm = document.getElementById('evaluation-form');
+    if (evaluationForm) {
+        evaluationForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitEvaluation();
+        });
+    }
+});
+
+function updateStars(rating) {
+    document.querySelectorAll('#star-rating .star').forEach(star => {
+        star.classList.remove('active');
+        if (star.dataset.value <= rating) {
+            star.classList.add('active');
+        }
+    });
+}
+
+function appelerLivreur(telephone) {
+    window.location.href = `tel:${telephone}`;
+}
+
+{% if commande.statut == 'en_livraison' %}
+function initMap() {
+    // Coordonnées de la boutique et de la livraison
+    const boutiqueLat = {{ commande.commercant.latitude|default:6.1319 }};
+    const boutiqueLng = {{ commande.commercant.longitude|default:1.2122 }};
+    const livraisonLat = {{ commande.latitude_livraison|default:6.1729 }};
+    const livraisonLng = {{ commande.longitude_livraison|default:1.2222 }};
+
+    // Initialiser la carte
+    const map = L.map('map-detail').setView([livraisonLat, livraisonLng], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // Marqueur pour la boutique
+    const boutiqueIcon = L.divIcon({
+        html: '<i class="fas fa-store" style="color: #007bff; font-size: 24px;"></i>',
+        iconSize: [30, 30],
+        className: 'custom-div-icon'
+    });
+    L.marker([boutiqueLat, boutiqueLng], { icon: boutiqueIcon }).addTo(map)
+        .bindPopup('<b>{{ commande.commercant.nom_boutique }}</b><br>Départ de la livraison');
+
+    // Marqueur pour l'adresse de livraison
+    const homeIcon = L.divIcon({
+        html: '<i class="fas fa-home" style="color: #28a745; font-size: 24px;"></i>',
+        iconSize: [30, 30],
+        className: 'custom-div-icon'
+    });
+    L.marker([livraisonLat, livraisonLng], { icon: homeIcon }).addTo(map)
+        .bindPopup('<b>Votre adresse</b><br>{{ commande.adresse_livraison }}');
+
+    // Simuler la position du livreur (à remplacer par un appel API réel)
+    const livreurLat = livraisonLat + 0.01;
+    const livreurLng = livraisonLng - 0.01;
+    const livreurIcon = L.divIcon({
+        html: '<i class="fas fa-motorcycle" style="color: #dc3545; font-size: 24px;"></i>',
+        iconSize: [30, 30],
+        className: 'custom-div-icon'
+    });
+    const livreurMarker = L.marker([livreurLat, livreurLng], { icon: livreurIcon }).addTo(map)
+        .bindPopup('<b>Livreur</b><br>{{ commande.livraison.livreur.user.get_full_name }}');
+
+    // Tracer l'itinéraire
+    const routeCoordinates = [
+        [boutiqueLat, boutiqueLng],
+        [livreurLat, livreurLng],
+        [livraisonLat, livraisonLng]
+    ];
+    L.polyline(routeCoordinates, { color: '#007bff', weight: 4, opacity: 0.7 }).addTo(map);
+
+    // Ajuster la vue pour montrer tous les points
+    const group = new L.featureGroup([livreurMarker]);
+    map.fitBounds(group.getBounds().pad(0.1));
+}
+{% endif %}
+
+function submitEvaluation() {
+    const form = document.getElementById('evaluation-form');
+    const formData = new FormData(form);
+
+    fetch('{% url "clients:api_ajouter_avis" %}', { // Assurez-vous d'avoir une URL pour ça
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Accept': 'application/json',
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Merci ! Votre évaluation a été envoyée.', 'success');
+            // Désactiver le formulaire après envoi
+            form.querySelector('button[type="submit"]').disabled = true;
+            form.querySelector('button[type="submit"]').innerText = 'Évaluation envoyée';
+        } else {
+            showToast(data.message || 'Une erreur est survenue.', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Une erreur réseau est survenue.', 'error');
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function showToast(message, type = 'info') {
+    const toastContainer = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+
+    const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+    const title = type === 'success' ? 'Succès' : 'Erreur';
+
+    toast.innerHTML = `
+        <i class="fas ${icon} toast-icon"></i>
+        <div class="toast-content">
+            <div class="toast-title">${title}</div>
+            <div class="toast-message">${message}</div>
+        </div>
+    `;
+    
+    toastContainer.appendChild(toast);
+    setTimeout(() => toast.classList.add('show'), 100);
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toastContainer.removeChild(toast), 300);
+    }, 3000);
+}
+</script>
+{% endblock %}

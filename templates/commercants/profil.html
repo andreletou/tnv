@@ -1,0 +1,366 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mon Profil Commerçant{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 pb-20">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-primary to-primary/80 text-gray">
+        <div class="px-4 py-6">
+            <div class="flex items-center justify-between mb-4">
+                <button onclick="history.back()" class="p-2 hover:bg-white/20 rounded-lg transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                </button>
+                <button onclick="editProfile()" class="p-2 hover:bg-white/20 rounded-lg transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Profile info -->
+            <div class="text-center">
+                <div class="relative inline-block mb-4">
+                    {% if commercant.photo_boutique %}
+                    <img src="{{ commercant.photo_boutique.url }}" alt="{{ commercant.nom_boutique }}" class="w-24 h-24 rounded-full border-4 border-white/30 object-cover">
+                    {% else %}
+                    <div class="w-24 h-24 rounded-full border-4 border-white/30 bg-white/20 flex items-center justify-center">
+                        <svg class="w-12 h-12 text-gray/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                    </div>
+                    {% endif %}
+                    <div class="absolute bottom-0 right-0 w-6 h-6 {% if commercant.est_actif %}bg-green-500{% else %}bg-gray-400{% endif %} border-2 border-white rounded-full"></div>
+                </div>
+                <h1 class="text-2xl font-bold mb-1">{{ commercant.nom_boutique }}</h1>
+                <p class="text-gray/80 text-sm mb-4">{{ commercant.get_categorie_display }}</p>
+                
+                <!-- Stats -->
+                <div class="grid grid-cols-3 gap-4 max-w-xs mx-auto">
+                    <div class="text-center">
+                        <p class="text-2xl font-bold">{{ commercant.produits.count }}</p>
+                        <p class="text-xs text-gray/70">Produits</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-2xl font-bold">{{ commercant.commandes.count }}</p>
+                        <p class="text-xs text-gray/70">Commandes</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-2xl font-bold">{{ commercant.promotions.count }}</p>
+                        <p class="text-xs text-gray/70">Promotions</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Quick actions -->
+    <div class="bg-white -mt-4 mx-4 rounded-xl shadow-sm p-4 mb-4">
+        <div class="grid grid-cols-4 gap-4">
+            <button onclick="goToProducts()" class="flex flex-col items-center space-y-2 p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                </div>
+                <span class="text-xs text-gray-600">Produits</span>
+            </button>
+            
+            <button onclick="goToOrders()" class="flex flex-col items-center space-y-2 p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                </div>
+                <span class="text-xs text-gray-600">Commandes</span>
+            </button>
+            
+            <button onclick="goToPromotions()" class="flex flex-col items-center space-y-2 p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <span class="text-xs text-gray-600">Promotions</span>
+            </button>
+            
+            <button onclick="goToDashboard()" class="flex flex-col items-center space-y-2 p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                </div>
+                <span class="text-xs text-gray-600">Stats</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Boutique Information -->
+    <div class="bg-white mx-4 rounded-xl shadow-sm p-4 mb-4">
+        <h3 class="font-semibold mb-4 flex items-center">
+            <svg class="w-5 h-5 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+            </svg>
+            Informations boutique
+        </h3>
+        
+        <div class="space-y-3">
+            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="text-sm text-gray-600">Statut</span>
+                <span class="text-sm font-medium {% if commercant.est_actif %}text-green-600{% else %}text-red-600{% endif %}">
+                    {% if commercant.est_actif %}Active{% else %}Inactive{% endif %}
+                </span>
+            </div>
+            
+            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="text-sm text-gray-600">Catégorie</span>
+                <span class="text-sm font-medium">{{ commercant.get_categorie_display }}</span>
+            </div>
+            
+            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="text-sm text-gray-600">Téléphone</span>
+                <span class="text-sm font-medium">{{ commercant.telephone }}</span>
+            </div>
+            
+            <div class="flex justify-between items-start py-2 border-b border-gray-100">
+                <span class="text-sm text-gray-600">Adresse</span>
+                <span class="text-sm font-medium text-right max-w-xs">{{ commercant.adresse }}</span>
+            </div>
+            
+            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="text-sm text-gray-600">Horaires</span>
+                <span class="text-sm font-medium">{{ commercant.horaire_ouverture }} - {{ commercant.horaire_fermeture }}</span>
+            </div>
+            
+            <div class="flex justify-between items-center py-2">
+                <span class="text-sm text-gray-600">Jours d'ouverture</span>
+                <span class="text-sm font-medium">{{ commercant.jours_ouverture }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance -->
+    <div class="bg-white mx-4 rounded-xl shadow-sm p-4 mb-4">
+        <h3 class="font-semibold mb-4 flex items-center">
+            <svg class="w-5 h-5 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            Performance (30 derniers jours)
+        </h3>
+        
+        <div class="grid grid-cols-2 gap-4">
+            <div class="text-center p-3 bg-blue-50 rounded-lg">
+                <p class="text-2xl font-bold text-blue-600" id="caTotal">0 XOF</p>
+                <p class="text-xs text-gray-600">Chiffre d'affaires</p>
+            </div>
+            <div class="text-center p-3 bg-green-50 rounded-lg">
+                <p class="text-2xl font-bold text-green-600" id="ordersTotal">0</p>
+                <p class="text-xs text-gray-600">Commandes</p>
+            </div>
+            <div class="text-center p-3 bg-purple-50 rounded-lg">
+                <p class="text-2xl font-bold text-purple-600" id="productsSold">0</p>
+                <p class="text-xs text-gray-600">Produits vendus</p>
+            </div>
+            <div class="text-center p-3 bg-orange-50 rounded-lg">
+                <p class="text-2xl font-bold text-orange-600" id="avgRating">0.0</p>
+                <p class="text-xs text-gray-600">Note moyenne</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Personal Information -->
+    <div class="bg-white mx-4 rounded-xl shadow-sm p-4 mb-4">
+        <h3 class="font-semibold mb-4 flex items-center">
+            <svg class="w-5 h-5 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+            </svg>
+            Informations personnelles
+        </h3>
+        
+        <div class="space-y-3">
+            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="text-sm text-gray-600">Nom complet</span>
+                <span class="text-sm font-medium">{{ commercant.user.get_full_name }}</span>
+            </div>
+            
+            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="text-sm text-gray-600">Email</span>
+                <span class="text-sm font-medium">{{ commercant.user.email }}</span>
+            </div>
+            
+            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="text-sm text-gray-600">Nom d'utilisateur</span>
+                <span class="text-sm font-medium">@{{ commercant.user.username }}</span>
+            </div>
+            
+            <div class="flex justify-between items-center py-2">
+                <span class="text-sm text-gray-600">Membre depuis</span>
+                <span class="text-sm font-medium">{{ commercant.date_creation|date:"d/m/Y" }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="bg-white mx-4 rounded-xl shadow-sm p-4 mb-20">
+        <h3 class="font-semibold mb-4">Actions rapides</h3>
+        
+        <div class="space-y-3">
+            <button onclick="toggleShopStatus()" class="w-full flex justify-between items-center py-3 px-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 mr-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    <span class="text-sm font-medium">
+                        {% if commercant.est_actif %}Désactiver la boutique{% else %}Activer la boutique{% endif %}
+                    </span>
+                </div>
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+            </button>
+            
+            <button onclick="shareShop()" class="w-full flex justify-between items-center py-3 px-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 mr-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path>
+                    </svg>
+                    <span class="text-sm font-medium">Partager la boutique</span>
+                </div>
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+            </button>
+            
+            <button onclick="contactSupport()" class="w-full flex justify-between items-center py-3 px-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 mr-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span class="text-sm font-medium">Contacter le support</span>
+                </div>
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadPerformanceData();
+    
+    // Auto-refresh performance data every 30 seconds
+    setInterval(loadPerformanceData, 30000);
+});
+
+function loadPerformanceData() {
+    fetch('/commercants/api/statistiques/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const stats = data.statistiques;
+                
+                document.getElementById('caTotal').textContent = formatPrice(stats.chiffre_affaires);
+                document.getElementById('ordersTotal').textContent = stats.commandes_total;
+                document.getElementById('productsSold').textContent = stats.produits_vendus.reduce((sum, p) => sum + p.total_vendu, 0);
+                
+                // Calculate average rating from products
+                const avgRating = stats.produits_notes.reduce((sum, p) => sum + p.note_moyenne, 0) / stats.produits_notes.length || 0;
+                document.getElementById('avgRating').textContent = avgRating.toFixed(1);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading performance data:', error);
+        });
+}
+
+function editProfile() {
+    window.location.href = '/commercants/profil/modifier/';
+}
+
+function goToProducts() {
+    window.location.href = '/commercants/produits/';
+}
+
+function goToOrders() {
+    window.location.href = '/commercants/api/commandes/';
+}
+
+function goToPromotions() {
+    window.location.href = '/commercants/promotions/';
+}
+
+function goToDashboard() {
+    window.location.href = '/commercants/tableau-de-bord/';
+}
+
+function toggleShopStatus() {
+    const isActive = {{ commercant.est_actif|yesno:'true,false' }};
+    const action = isActive ? 'désactiver' : 'activer';
+    
+    if (confirm(`Êtes-vous sûr de vouloir ${action} votre boutique ?`)) {
+        fetch('/commercants/api/profile/toggle-status/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(`Boutique ${action} avec succès`, 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showToast(data.message || 'Erreur', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Erreur de connexion', 'error');
+        });
+    }
+}
+
+function shareShop() {
+    const shopUrl = window.location.origin + '/clients/boutique/{{ commercant.id }}/';
+    
+    if (navigator.share) {
+        navigator.share({
+            title: '{{ commercant.nom_boutique }}',
+            text: 'Découvrez ma boutique sur Marketplace',
+            url: shopUrl
+        }).then(() => {
+            showToast('Boutique partagée avec succès', 'success');
+        }).catch((error) => {
+            console.log('Error sharing:', error);
+        });
+    } else {
+        // Fallback: copy to clipboard
+        navigator.clipboard.writeText(shopUrl).then(() => {
+            showToast('Lien copié dans le presse-papiers', 'success');
+        });
+    }
+}
+
+function contactSupport() {
+    showToast('Redirection vers le support...', 'info');
+    setTimeout(() => {
+        window.location.href = '/support/';
+    }, 1000);
+}
+
+function formatPrice(amount) {
+    return new Intl.NumberFormat('fr-FR', {
+        style: 'currency',
+        currency: 'XOF',
+        minimumFractionDigits: 0
+    }).format(amount);
+}
+</script>
+{% endblock %}

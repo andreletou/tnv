@@ -1,0 +1,241 @@
+{% extends 'livraisons/base.html' %}
+
+{% block title %}Inscription Livreur - Livraison Express{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-lg border-0">
+            <div class="card-body p-5">
+                <div class="text-center mb-4">
+                    <i class="fas fa-motorcycle fa-3x text-primary mb-3"></i>
+                    <h2 class="fw-bold">Inscription Livreur</h2>
+                    <p class="text-muted">Rejoignez notre équipe de livreurs professionnels</p>
+                </div>
+
+                <form method="post" enctype="multipart/form-data" id="inscriptionForm">
+                    {% csrf_token %}
+                    
+                    <!-- Informations personnelles -->
+                    <div class="mb-4">
+                        <h5 class="mb-3"><i class="fas fa-user me-2"></i>Informations personnelles</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.username.id_for_label }}" class="form-label">Nom d'utilisateur *</label>
+                                {{ form.username }}
+                                {% if form.username.errors %}
+                                    <div class="text-danger small">{{ form.username.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.email.id_for_label }}" class="form-label">Email *</label>
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                    <div class="text-danger small">{{ form.email.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.first_name.id_for_label }}" class="form-label">Prénom *</label>
+                                {{ form.first_name }}
+                                {% if form.first_name.errors %}
+                                    <div class="text-danger small">{{ form.first_name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.last_name.id_for_label }}" class="form-label">Nom *</label>
+                                {{ form.last_name }}
+                                {% if form.last_name.errors %}
+                                    <div class="text-danger small">{{ form.last_name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.password1.id_for_label }}" class="form-label">Mot de passe *</label>
+                                {{ form.password1 }}
+                                {% if form.password1.errors %}
+                                    <div class="text-danger small">{{ form.password1.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.password2.id_for_label }}" class="form-label">Confirmer le mot de passe *</label>
+                                {{ form.password2 }}
+                                {% if form.password2.errors %}
+                                    <div class="text-danger small">{{ form.password2.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.telephone.id_for_label }}" class="form-label">Téléphone *</label>
+                            {{ form.telephone }}
+                            {% if form.telephone.errors %}
+                                <div class="text-danger small">{{ form.telephone.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Photo de profil -->
+                    <div class="mb-4">
+                        <h5 class="mb-3"><i class="fas fa-camera me-2"></i>Photo de profil</h5>
+                        <div class="mb-3">
+                            <label for="{{ form.photo_profil.id_for_label }}" class="form-label">Photo de profil</label>
+                            {{ form.photo_profil }}
+                            <div class="form-text">{{ form.photo_profil.help_text }}</div>
+                            {% if form.photo_profil.errors %}
+                                <div class="text-danger small">{{ form.photo_profil.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div id="photoPreview" class="text-center mb-3"></div>
+                    </div>
+
+                    <!-- Informations du véhicule -->
+                    <div class="mb-4">
+                        <h5 class="mb-3"><i class="fas fa-motorcycle me-2"></i>Informations du véhicule</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.type_vehicule.id_for_label }}" class="form-label">Type de véhicule *</label>
+                                {{ form.type_vehicule }}
+                                {% if form.type_vehicule.errors %}
+                                    <div class="text-danger small">{{ form.type_vehicule.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.immatriculation.id_for_label }}" class="form-label">Immatriculation *</label>
+                                {{ form.immatriculation }}
+                                {% if form.immatriculation.errors %}
+                                    <div class="text-danger small">{{ form.immatriculation.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Documents requis -->
+                    <div class="mb-4">
+                        <h5 class="mb-3"><i class="fas fa-file-alt me-2"></i>Documents requis</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.permis_conduire.id_for_label }}" class="form-label">Permis de conduire *</label>
+                                {{ form.permis_conduire }}
+                                <div class="form-text">{{ form.permis_conduire.help_text }}</div>
+                                {% if form.permis_conduire.errors %}
+                                    <div class="text-danger small">{{ form.permis_conduire.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.carte_grise.id_for_label }}" class="form-label">Carte grise *</label>
+                                {{ form.carte_grise }}
+                                <div class="form-text">{{ form.carte_grise.help_text }}</div>
+                                {% if form.carte_grise.errors %}
+                                    <div class="text-danger small">{{ form.carte_grise.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Consentements -->
+                    <div class="mb-4">
+                        <h5 class="mb-3"><i class="fas fa-shield-alt me-2"></i>Consentements</h5>
+                        <div class="form-check mb-3">
+                            {{ form.consentement_donnees }}
+                            <label class="form-check-label" for="{{ form.consentement_donnees.id_for_label }}">
+                                J'accepte que mes données soient utilisées pour la géolocalisation pendant les livraisons
+                            </label>
+                            {% if form.consentement_donnees.errors %}
+                                <div class="text-danger small">{{ form.consentement_donnees.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="form-check mb-3">
+                            {{ form.consentement_conditions }}
+                            <label class="form-check-label" for="{{ form.consentement_conditions.id_for_label }}">
+                                J'accepte les <a href="#" class="text-primary">conditions générales d'utilisation</a>
+                            </label>
+                            {% if form.consentement_conditions.errors %}
+                                <div class="text-danger small">{{ form.consentement_conditions.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Bouton de soumission -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                            <i class="fas fa-user-plus me-2"></i>S'inscrire
+                        </button>
+                    </div>
+
+                    <div class="text-center mt-3">
+                        <span class="text-muted">Vous avez déjà un compte ?</span>
+                        <a href="{% url 'livraisons:connexion' %}" class="text-primary">Connectez-vous</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Prévisualisation de la photo de profil
+    const photoInput = document.getElementById('{{ form.photo_profil.id_for_label }}');
+    const photoPreview = document.getElementById('photoPreview');
+    
+    photoInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                photoPreview.innerHTML = `
+                    <img src="${e.target.result}" class="img-thumbnail" style="max-width: 200px; max-height: 200px;">
+                    <p class="mt-2 text-muted small">Aperçu de la photo</p>
+                `;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Validation du formulaire avant soumission
+    const form = document.getElementById('inscriptionForm');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    form.addEventListener('submit', function(e) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Inscription en cours...';
+        
+        // Le formulaire sera soumis normalement
+    });
+
+    // Validation en temps réel
+    const password1 = document.getElementById('{{ form.password1.id_for_label }}');
+    const password2 = document.getElementById('{{ form.password2.id_for_label }}');
+    
+    function validatePasswords() {
+        if (password1.value && password2.value) {
+            if (password1.value !== password2.value) {
+                password2.setCustomValidity('Les mots de passe ne correspondent pas');
+            } else {
+                password2.setCustomValidity('');
+            }
+        }
+    }
+    
+    password1.addEventListener('change', validatePasswords);
+    password2.addEventListener('keyup', validatePasswords);
+
+    // Validation du numéro de téléphone
+    const telephone = document.getElementById('{{ form.telephone.id_for_label }}');
+    telephone.addEventListener('input', function(e) {
+        // Formatage simple du numéro de téléphone
+        let value = e.target.value.replace(/\s/g, '');
+        if (value.length > 0 && !value.startsWith('+')) {
+            // Ajouter l'indicatif du Togo si non présent
+            if (value.length === 8 && /^\d{8}$/.test(value)) {
+                e.target.value = '228 ' + value;
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

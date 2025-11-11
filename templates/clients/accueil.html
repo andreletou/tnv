@@ -1,0 +1,477 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Marketplace Local - Accueil{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-consistent-gray">
+    <!-- Header -->
+    <header class="bg-consistent-white shadow-sm sticky top-0 z-30">
+        <div class="px-4 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <button class="p-2 rounded-lg hover:bg-consistent-light" onclick="toggleLocationModal()">
+                        <i class="fas fa-map-marker-alt text-primary-600"></i>
+                    </button>
+                    <div>
+                        <h1 class="text-lg font-semibold text-consistent-primary">Marketplace</h1>
+                        <p class="text-xs text-consistent-muted" id="location-text">Toute la ville</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                    <button class="p-2 rounded-lg hover:bg-consistent-light relative" onclick="toggleNotifications()">
+                        <i class="fas fa-bell text-consistent-muted"></i>
+                        <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                    </button>
+                    <button class="p-2 rounded-lg hover:bg-consistent-light" onclick="openSearchModal()">
+                        <i class="fas fa-search text-consistent-muted"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Search Bar -->
+    <div class="px-4 py-3 bg-consistent-white border-b border-consistent">
+        <div class="relative">
+            <input type="text" 
+                   placeholder="Rechercher des produits, boutiques..." 
+                   class="w-full pl-10 pr-4 py-3 bg-consistent-light rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 input-consistent"
+                   data-search>
+            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-consistent-muted"></i>
+        </div>
+    </div>
+
+    <!-- Categories -->
+    <div class="px-4 py-4 bg-consistent-white">
+        <div class="flex space-x-3 overflow-x-auto scrollbar-hide">
+            <button class="category-pill flex-shrink-0 px-4 py-2 bg-primary-100 text-primary-700 rounded-full text-sm font-medium active">
+                <i class="fas fa-th mr-2"></i>Tout
+            </button>
+            <button class="category-pill flex-shrink-0 px-4 py-2 bg-consistent-light text-consistent-secondary rounded-full text-sm font-medium">
+                <i class="fas fa-utensils mr-2"></i>Restaurants
+            </button>
+            <button class="category-pill flex-shrink-0 px-4 py-2 bg-consistent-light text-consistent-secondary rounded-full text-sm font-medium">
+                <i class="fas fa-shopping-bag mr-2"></i>Mode
+            </button>
+            <button class="category-pill flex-shrink-0 px-4 py-2 bg-consistent-light text-consistent-secondary rounded-full text-sm font-medium">
+                <i class="fas fa-laptop mr-2"></i>Électronique
+            </button>
+            <button class="category-pill flex-shrink-0 px-4 py-2 bg-consistent-light text-consistent-secondary rounded-full text-sm font-medium">
+                <i class="fas fa-home mr-2"></i>Maison
+            </button>
+            <button class="category-pill flex-shrink-0 px-4 py-2 bg-consistent-light text-consistent-secondary rounded-full text-sm font-medium">
+                <i class="fas fa-basketball-ball mr-2"></i>Sports
+            </button>
+        </div>
+    </div>
+
+    <!-- Auth Section for non-logged users -->
+    {% if not user.is_authenticated %}
+    <div class="px-4 py-4 bg-consistent-white">
+        <div class="text-center mb-4">
+            <h2 class="text-lg font-bold text-consistent-primary mb-2">Rejoignez notre marketplace</h2>
+            <p class="text-sm text-consistent-secondary">Accédez à des milliers de produits et boutiques locales</p>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-3">
+            <a href="{% url 'clients:inscription' %}" class="btn-consistent-primary text-center py-3 rounded-lg transition-colors">
+                <i class="fas fa-user mr-2"></i>
+                <span class="text-sm font-medium">S'inscrire</span>
+            </a>
+            <a href="{% url 'clients:connexion' %}" class="btn-consistent-secondary text-center py-3 rounded-lg transition-colors">
+                <i class="fas fa-sign-in-alt mr-2"></i>
+                <span class="text-sm font-medium">Se connecter</span>
+            </a>
+        </div>
+        
+        <div class="mt-4 text-center">
+            <p class="text-xs text-consistent-muted mb-2">Vous êtes commerçant ?</p>
+            <a href="{% url 'commercants:inscription' %}" class="inline-flex items-center text-primary-600 text-sm font-medium hover:text-primary-700">
+                <i class="fas fa-store mr-2"></i>
+                Ouvrir ma boutique
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Promotions Banner -->
+    {% if produits_promotion %}
+    <div class="px-4 py-3">
+        <div class="bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl p-4 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-bold">Promotions du jour</h2>
+                    <p class="text-sm opacity-90">Jusqu'à -50% sur des produits sélectionnés</p>
+                </div>
+                <i class="fas fa-tag text-2xl opacity-50"></i>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent Boutiques -->
+    {% if boutiques %}
+    <section class="px-4 py-4">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-bold text-consistent-primary">Boutiques récentes</h2>
+            <a href="{% url 'clients:liste_boutiques' %}" class="text-primary-600 text-sm font-medium">
+                Voir tout
+                <i class="fas fa-chevron-right ml-1"></i>
+            </a>
+        </div>
+        
+        <div class="flex space-x-3 overflow-x-auto scrollbar-hide">
+            {% for boutique_data in boutiques_data %}
+            <div class="flex-shrink-0 w-32">
+                <a href="{% url 'clients:detail_boutique' boutique_data.boutique.id %}" class="block">
+                    <div class="card-consistent rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                        {% if boutique_data.boutique.photo_boutique %}
+                            <img src="{{ boutique_data.boutique.photo_boutique.url }}" 
+                                 alt="{{ boutique_data.boutique.nom_boutique }}" 
+                                 class="w-full h-24 object-cover">
+                        {% else %}
+                            <div class="w-full h-24 bg-consistent-light flex items-center justify-center">
+                                <i class="fas fa-store text-consistent-muted text-2xl"></i>
+                            </div>
+                        {% endif %}
+                        <div class="p-2">
+                            <h3 class="text-sm font-semibold text-consistent-primary truncate">{{ boutique_data.boutique.nom_boutique }}</h3>
+                            <p class="text-xs text-consistent-muted">{{ boutique_data.total_produits }} produits</p>
+                            {% if boutique_data.promo_count > 0 %}
+                                <span class="inline-block mt-1 px-2 py-1 bg-red-100 text-red-600 text-xs rounded-full">
+                                    {{ boutique_data.promo_count }} promo(s)
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Popular Products -->
+    {% if produits_populaires %}
+    <section class="px-4 py-4">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-bold text-consistent-primary">Produits populaires</h2>
+            <button class="text-primary-600 text-sm font-medium">
+                Voir tout
+                <i class="fas fa-chevron-right ml-1"></i>
+            </button>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-3">
+            {% for produit in produits_populaires %}
+            <div class="product-card card-consistent rounded-lg shadow-sm overflow-hidden">
+                <a href="{% url 'clients:detail_produit' produit.id %}" class="block">
+                    <div class="relative">
+                        {% if produit.photo %}
+                            <img src="{{ produit.photo.url }}" 
+                                 alt="{{ produit.nom }}" 
+                                 class="w-full h-32 object-cover"
+                                 loading="lazy">
+                        {% else %}
+                            <div class="w-full h-32 bg-consistent-light flex items-center justify-center">
+                                <i class="fas fa-box text-consistent-muted text-2xl"></i>
+                            </div>
+                        {% endif %}
+                        
+                        {% if produit.est_en_promotion %}
+                            <span class="absolute top-2 left-2 px-2 py-1 bg-red-500 text-white text-xs rounded-full">
+                                -{{ produit.prix|calculate_discount:produit.prix_promotionnel }}%
+                            </span>
+                        {% endif %}
+                        
+                        <button class="absolute top-2 right-2 p-1.5 bg-consistent-white rounded-full shadow-md hover:shadow-lg transition-shadow"
+                                onclick="event.preventDefault(); toggleFavorite({{ produit.id }})">
+                            <i class="fas fa-heart text-consistent-muted text-sm"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="p-3">
+                        <h3 class="text-sm font-semibold text-consistent-primary line-clamp-2">{{ produit.nom }}</h3>
+                        <p class="text-xs text-consistent-muted mt-1">{{ produit.commercant.nom_boutique }}</p>
+                        
+                        <div class="flex items-center mt-2">
+                            <div class="flex text-yellow-400">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= produit.note_moyenne|default:0 %}
+                                        <i class="fas fa-star text-xs"></i>
+                                    {% else %}
+                                        <i class="far fa-star text-xs"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <span class="text-xs text-consistent-muted ml-1">({{ produit.nb_avis|default:0 }})</span>
+                        </div>
+                        
+                        <div class="mt-2">
+                            {% if produit.est_en_promotion %}
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-lg font-bold text-primary-600">{{ produit.prix_promotionnel|format_currency }}</span>
+                                    <span class="text-xs text-consistent-muted line-through">{{ produit.prix|format_currency }}</span>
+                                </div>
+                            {% else %}
+                                <span class="text-lg font-bold text-primary-600">{{ produit.prix|format_currency }}</span>
+                            {% endif %}
+                        </div>
+                        
+                        <button class="mt-2 w-full py-2 btn-consistent-primary text-sm rounded-lg transition-colors"
+                                onclick="event.preventDefault(); API.Cart.addItem({{ produit.id }})">
+                            <i class="fas fa-cart-plus mr-1"></i>
+                            Ajouter
+                        </button>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Trending Products -->
+    {% if produits_tendance %}
+    <section class="px-4 py-4">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-bold text-consistent-primary">Tendances</h2>
+            <div class="flex items-center text-primary-600">
+                <i class="fas fa-fire text-sm mr-1"></i>
+                <span class="text-sm font-medium">Cette semaine</span>
+            </div>
+        </div>
+        
+        <div class="flex space-x-3 overflow-x-auto scrollbar-hide">
+            {% for produit in produits_tendance %}
+            <div class="flex-shrink-0 w-40">
+                <a href="{% url 'clients:detail_produit' produit.id %}" class="block">
+                    <div class="card-consistent rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                        <div class="relative">
+                            {% if produit.photo %}
+                                <img src="{{ produit.photo.url }}" 
+                                     alt="{{ produit.nom }}" 
+                                     class="w-full h-28 object-cover"
+                                     loading="lazy">
+                            {% else %}
+                                <div class="w-full h-28 bg-consistent-light flex items-center justify-center">
+                                    <i class="fas fa-box text-consistent-muted text-xl"></i>
+                                </div>
+                            {% endif %}
+                            
+                            <span class="absolute top-2 left-2 px-2 py-1 bg-orange-500 text-white text-xs rounded-full">
+                                <i class="fas fa-fire mr-1"></i>Tendance
+                            </span>
+                        </div>
+                        
+                        <div class="p-3">
+                            <h3 class="text-sm font-semibold text-consistent-primary line-clamp-2">{{ produit.nom }}</h3>
+                            <p class="text-xs text-consistent-muted mt-1">{{ produit.commercant.nom_boutique }}</p>
+                            
+                            <div class="mt-2">
+                                <span class="text-base font-bold text-primary-600">{{ produit.prix_effectif|format_currency }}</span>
+                            </div>
+                            
+                            <button class="mt-2 w-full py-1.5 btn-consistent-primary text-xs rounded-lg transition-colors"
+                                    onclick="event.preventDefault(); API.Cart.addItem({{ produit.id }})">
+                                <i class="fas fa-cart-plus mr-1"></i>
+                                Ajouter
+                            </button>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Empty State -->
+    {% if not boutiques and not produits_populaires and not produits_tendance %}
+    <div class="px-4 py-12 text-center">
+        <i class="fas fa-store text-6xl text-consistent-muted mb-4"></i>
+        <h2 class="text-xl font-semibold text-consistent-primary mb-2">Aucun contenu disponible</h2>
+        <p class="text-consistent-secondary mb-6">Les boutiques et produits apparaîtront bientôt</p>
+        <a href="{% url 'clients:liste_boutiques' %}" class="inline-block px-6 py-3 btn-consistent-primary rounded-lg transition-colors">
+            Explorer les boutiques
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Search Modal -->
+<div id="search-modal" class="modal fixed inset-0 z-50 hidden">
+    <div class="modal-backdrop absolute inset-0 bg-black bg-opacity-50"></div>
+    <div class="modal-content relative card-consistent rounded-t-2xl mt-8 max-h-[80vh] overflow-hidden">
+        <div class="p-4 border-b border-consistent">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-consistent-primary">Rechercher</h3>
+                <button onclick="closeSearchModal()" class="p-2 hover:bg-consistent-light rounded-lg">
+                    <i class="fas fa-times text-consistent-muted"></i>
+                </button>
+            </div>
+            <div class="mt-3 relative">
+                <input type="text" 
+                       id="modal-search-input"
+                       placeholder="Que cherchez-vous ?" 
+                       class="w-full pl-10 pr-4 py-3 bg-consistent-light rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 input-consistent">
+                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-consistent-muted"></i>
+            </div>
+        </div>
+        
+        <div class="p-4 overflow-y-auto max-h-[60vh]">
+            <div id="search-suggestions" class="space-y-3">
+                <!-- Search suggestions will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Location Modal -->
+<div id="location-modal" class="modal fixed inset-0 z-50 hidden">
+    <div class="modal-backdrop absolute inset-0 bg-black bg-opacity-50"></div>
+    <div class="modal-content relative card-consistent rounded-t-2xl mt-8 max-h-[80vh] overflow-hidden">
+        <div class="p-4 border-b border-consistent">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-consistent-primary">Choisir la localisation</h3>
+                <button onclick="toggleLocationModal()" class="p-2 hover:bg-consistent-light rounded-lg">
+                    <i class="fas fa-times text-consistent-muted"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-4 overflow-y-auto max-h-[60vh]">
+            <button class="w-full p-3 bg-primary-50 text-primary-600 rounded-lg mb-3 hover:bg-primary-100 transition-colors">
+                <i class="fas fa-location-arrow mr-2"></i>
+                Utiliser ma position actuelle
+            </button>
+            
+            <div class="space-y-2">
+                <button class="w-full p-3 text-left hover:bg-consistent-light rounded-lg transition-colors">
+                    <div class="font-medium text-consistent-primary">Lomé</div>
+                    <div class="text-sm text-consistent-muted">Togo</div>
+                </button>
+                <button class="w-full p-3 text-left hover:bg-gray-50 rounded-lg transition-colors">
+                    <div class="font-medium">Kara</div>
+                    <div class="text-sm text-gray-500">Togo</div>
+                </button>
+                <button class="w-full p-3 text-left hover:bg-gray-50 rounded-lg transition-colors">
+                    <div class="font-medium">Sokodé</div>
+                    <div class="text-sm text-gray-500">Togo</div>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Search functionality
+function openSearchModal() {
+    document.getElementById('search-modal').classList.remove('hidden');
+    document.getElementById('modal-search-input').focus();
+}
+
+function closeSearchModal() {
+    document.getElementById('search-modal').classList.add('hidden');
+    document.getElementById('modal-search-input').value = '';
+    document.getElementById('search-suggestions').innerHTML = '';
+}
+
+// Search suggestions
+document.getElementById('modal-search-input')?.addEventListener('input', async function(e) {
+    const query = e.target.value.trim();
+    const suggestionsContainer = document.getElementById('search-suggestions');
+    
+    if (query.length < 2) {
+        suggestionsContainer.innerHTML = '';
+        return;
+    }
+    
+    suggestionsContainer.innerHTML = '<div class="text-center py-4"><div class="loader mx-auto"></div></div>';
+    
+    const suggestions = await API.Search.getSuggestions(query);
+    
+    if (suggestions.length > 0) {
+        suggestionsContainer.innerHTML = suggestions.map(product => `
+            <a href="/clients/produit/${product.id}/" class="block p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div class="flex items-center space-x-3">
+                    ${product.image ? 
+                        `<img src="${product.image}" alt="${product.nom}" class="w-12 h-12 object-cover rounded-lg">` :
+                        `<div class="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-box text-gray-400"></i>
+                        </div>`
+                    }
+                    <div class="flex-1">
+                        <h4 class="font-medium text-gray-900">${product.nom}</h4>
+                        <p class="text-sm text-gray-500">${product.boutique_nom}</p>
+                        <div class="flex items-center justify-between mt-1">
+                            <span class="text-primary-600 font-semibold">${formatCurrency(product.prix)}</span>
+                            ${product.est_en_promotion ? 
+                                `<span class="text-xs text-red-600">-${product.pourcentage_remise}%</span>` : 
+                                ''
+                            }
+                        </div>
+                    </div>
+                </div>
+            </a>
+        `).join('');
+    } else {
+        suggestionsContainer.innerHTML = '<div class="text-center py-8 text-gray-500">Aucun résultat trouvé</div>';
+    }
+});
+
+// Location modal
+function toggleLocationModal() {
+    document.getElementById('location-modal').classList.toggle('hidden');
+}
+
+// Category pills
+document.querySelectorAll('.category-pill').forEach(pill => {
+    pill.addEventListener('click', function() {
+        document.querySelectorAll('.category-pill').forEach(p => p.classList.remove('active', 'bg-primary-100', 'text-primary-700'));
+        document.querySelectorAll('.category-pill').forEach(p => p.classList.add('bg-gray-100', 'text-gray-700'));
+        
+        this.classList.remove('bg-gray-100', 'text-gray-700');
+        this.classList.add('active', 'bg-primary-100', 'text-primary-700');
+    });
+});
+
+// Toggle favorite
+async function toggleFavorite(productId) {
+    const heartIcon = event.currentTarget.querySelector('i');
+    const isFavorited = heartIcon.classList.contains('fas');
+    
+    if (isFavorited) {
+        const result = await API.Favorites.remove(productId);
+        if (result) {
+            heartIcon.classList.remove('fas', 'text-red-500');
+            heartIcon.classList.add('far', 'text-gray-400');
+        }
+    } else {
+        const result = await API.Favorites.add(productId);
+        if (result) {
+            heartIcon.classList.remove('far', 'text-gray-400');
+            heartIcon.classList.add('fas', 'text-red-500');
+        }
+    }
+}
+
+// Notifications
+function toggleNotifications() {
+    marketplace.showNotification('Aucune nouvelle notification', 'info');
+}
+
+// Close modals on escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeSearchModal();
+        document.getElementById('location-modal').classList.add('hidden');
+    }
+});
+</script>
+{% endblock %}

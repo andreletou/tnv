@@ -1,0 +1,565 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Tableau de bord - {{ user.commercant_profile.nom_boutique }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-30">
+        <div class="px-4 py-3">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-lg font-semibold text-gray-900">Tableau de bord</h1>
+                    <p class="text-sm text-gray-500">Bienvenue, {{ user.first_name }}</p>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                    <button onclick="refreshData()" class="p-2 rounded-lg hover:bg-gray-100">
+                        <i class="fas fa-sync-alt text-gray-600"></i>
+                    </button>
+                    <button onclick="showNotifications()" class="p-2 rounded-lg hover:bg-gray-100 relative">
+                        <i class="fas fa-bell text-gray-600"></i>
+                        <span id="notification-badge" class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full hidden"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Quick Stats -->
+    <div class="px-4 py-4">
+        <div class="grid grid-cols-2 gap-3">
+            <div class="bg-white rounded-lg p-4 shadow-sm">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-box text-blue-600"></i>
+                    </div>
+                    <span class="text-xs text-gray-500">Aujourd'hui</span>
+                </div>
+                <div class="text-2xl font-bold text-gray-900">{{ total_produits }}</div>
+                <div class="text-xs text-gray-500">Total produits</div>
+                <div class="mt-2 flex items-center text-xs">
+                    <span class="text-green-600">{{ produits_actifs }}</span>
+                    <span class="text-gray-400 mx-1">/</span>
+                    <span class="text-gray-600">{{ total_produits }} actifs</span>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg p-4 shadow-sm">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-cubes text-green-600"></i>
+                    </div>
+                    <span class="text-xs text-gray-500">Stock</span>
+                </div>
+                <div class="text-2xl font-bold text-gray-900">{{ stock_total }}</div>
+                <div class="text-xs text-gray-500">Unités en stock</div>
+                <div class="mt-2">
+                    {% if stock_faible > 0 %}
+                        <div class="flex items-center text-xs text-red-600">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                            {{ stock_faible }} stock faible
+                        </div>
+                    {% else %}
+                        <div class="flex items-center text-xs text-green-600">
+                            <i class="fas fa-check-circle mr-1"></i>
+                            Stock optimal
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Promotions Active -->
+        {% if promotions_actives %}
+        <div class="mt-3 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg p-4 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="font-semibold">Promotions actives</h3>
+                    <p class="text-sm opacity-90">{{ promotions_actives|length }} promotion{{ promotions_actives|length|pluralize }} en cours</p>
+                </div>
+                <i class="fas fa-tag text-2xl opacity-50"></i>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Commandes Statistics -->
+    <div class="px-4 py-2">
+        <div class="grid grid-cols-2 gap-3">
+            <!-- Commandes en attente -->
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-xs font-semibold text-yellow-800 uppercase">En attente</div>
+                        <div class="text-2xl font-bold text-yellow-900">{{ commandes_en_attente }}</div>
+                    </div>
+                    <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-clock text-yellow-600"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Commandes validées -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-xs font-semibold text-blue-800 uppercase">Validées</div>
+                        <div class="text-2xl font-bold text-blue-900">{{ commandes_validees }}</div>
+                    </div>
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-check text-blue-600"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- En préparation -->
+            <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-xs font-semibold text-indigo-800 uppercase">Préparation</div>
+                        <div class="text-2xl font-bold text-indigo-900">{{ commandes_en_preparation }}</div>
+                    </div>
+                    <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-utensils text-indigo-600"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Prêtes pour livraison -->
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-xs font-semibold text-green-800 uppercase">Prêtes</div>
+                        <div class="text-2xl font-bold text-green-900">{{ commandes_pretes }}</div>
+                    </div>
+                    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-box text-green-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="px-4 py-2">
+        <div class="grid grid-cols-2 gap-3">
+            <button onclick="window.location.href='{% url 'commercants:ajouter_produit' %}'" class="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-3 mx-auto">
+                    <i class="fas fa-plus text-blue-600"></i>
+                </div>
+                <h3 class="font-semibold text-gray-900 text-sm">Ajouter un produit</h3>
+                <p class="text-xs text-gray-500 mt-1">Nouvel article</p>
+            </button>
+            
+            <button onclick="window.location.href='{% url 'commercants:ajouter_promotion' %}'" class="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mb-3 mx-auto">
+                    <i class="fas fa-percentage text-orange-600"></i>
+                </div>
+                <h3 class="font-semibold text-gray-900 text-sm">Créer une promo</h3>
+                <p class="text-xs text-gray-500 mt-1">Réduction</p>
+            </button>
+            
+            <button onclick="window.location.href='{% url 'commercants:gestion_commandes' %}'" class="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mb-3 mx-auto">
+                    <i class="fas fa-shopping-bag text-purple-600"></i>
+                </div>
+                <h3 class="font-semibold text-gray-900 text-sm">Commandes</h3>
+                <p class="text-xs text-gray-500 mt-1">Gérer</p>
+            </button>
+            
+            <button onclick="window.location.href='{% url 'commercants:liste_produits' %}'" class="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mb-3 mx-auto">
+                    <i class="fas fa-list text-green-600"></i>
+                </div>
+                <h3 class="font-semibold text-gray-900 text-sm">Tous les produits</h3>
+                <p class="text-xs text-gray-500 mt-1">Voir tout</p>
+            </button>
+        </div>
+    </div>
+
+    <!-- Recent Products -->
+    {% if produits_recents %}
+    <div class="px-4 py-4">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-semibold text-gray-900">Produits récents</h2>
+            <button onclick="window.location.href='{% url 'commercants:liste_produits' %}'" class="text-blue-600 text-sm font-medium">
+                Voir tout
+            </button>
+        </div>
+        
+        <div class="space-y-3">
+            {% for produit in produits_recents %}
+            <div class="bg-white rounded-lg p-3 shadow-sm">
+                <div class="flex items-center space-x-3">
+                    {% if produit.photo %}
+                        <img src="{{ produit.photo.url }}" alt="{{ produit.nom }}" class="w-12 h-12 object-cover rounded-lg">
+                    {% else %}
+                        <div class="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-box text-gray-400"></i>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-gray-900 text-sm">{{ produit.nom }}</h3>
+                        <div class="flex items-center justify-between mt-1">
+                            <span class="text-blue-600 font-bold">{{ produit.prix|format_currency }}</span>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs text-gray-500">Stock: {{ produit.stock }}</span>
+                                {% if produit.est_en_promotion %}
+                                    <span class="px-2 py-1 bg-red-100 text-red-600 text-xs rounded-full">Promo</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-1">
+                        <button onclick="editProduct({{ produit.id }})" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
+                            <i class="fas fa-edit text-sm"></i>
+                        </button>
+                        <button onclick="viewProductStats({{ produit.id }})" class="p-2 text-green-600 hover:bg-green-50 rounded-lg">
+                            <i class="fas fa-chart-line text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent Orders -->
+    {% if commandes_recentes %}
+    <div class="px-4 py-4">
+        <div class="bg-white rounded-lg p-4 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-900">Commandes récentes</h2>
+                <button onclick="window.location.href='{% url 'commercants:gestion_commandes' %}'" class="text-blue-600 text-sm font-medium">
+                    Voir tout
+                </button>
+            </div>
+            
+            <div class="space-y-3">
+                {% for commande in commandes_recentes %}
+                <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <span class="font-semibold text-gray-900 text-sm">{{ commande.reference }}</span>
+                                <span class="px-2 py-1 text-xs rounded-full 
+                                    {% if commande.statut == 'en_attente' %}bg-yellow-100 text-yellow-800
+                                    {% elif commande.statut == 'validee' %}bg-blue-100 text-blue-800
+                                    {% elif commande.statut == 'en_preparation' %}bg-indigo-100 text-indigo-800
+                                    {% elif commande.statut == 'prete' %}bg-green-100 text-green-800
+                                    {% elif commande.statut == 'livree' %}bg-gray-100 text-gray-800
+                                    {% else %}bg-red-100 text-red-800{% endif %}">
+                                    {{ commande.get_statut_display }}
+                                </span>
+                            </div>
+                            <div class="text-xs text-gray-500">
+                                {{ commande.client.first_name }} {{ commande.client.last_name }}
+                            </div>
+                            <div class="text-xs text-gray-500">
+                                {{ commande.date_commande|date:"d/m/Y H:i" }}
+                            </div>
+                        </div>
+                        
+                        <div class="text-right">
+                            <div class="font-bold text-gray-900 text-sm">{{ commande.total }} FCFA</div>
+                            <button onclick="window.location.href='{% url 'commercants:detail_commande_commercant' commande.id %}'" 
+                                    class="mt-1 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors">
+                                Voir
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Sales Chart -->
+    <div class="px-4 py-4">
+        <div class="bg-white rounded-lg p-4 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-900">Performance</h2>
+                <select onchange="updateChart(this.value)" class="text-sm border border-gray-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="7">7 jours</option>
+                    <option value="30">30 jours</option>
+                    <option value="90">90 jours</option>
+                </select>
+            </div>
+            
+            <div class="h-48 flex items-center justify-center bg-gray-50 rounded-lg">
+                <div class="text-center">
+                    <i class="fas fa-chart-line text-4xl text-gray-300 mb-2"></i>
+                    <p class="text-gray-500 text-sm">Graphique des ventes</p>
+                    <p class="text-gray-400 text-xs mt-1">Prochainement disponible</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Low Stock Alert -->
+    {% if stock_faible > 0 %}
+    <div class="px-4 py-4">
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div class="flex items-start space-x-3">
+                <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-exclamation-triangle text-red-600"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-semibold text-red-900">Stock faible</h3>
+                    <p class="text-red-700 text-sm mt-1">{{ stock_faible }} produit{{ stock_faible|pluralize }} ont besoin d'être réapprovisionné{{ stock_faible|pluralize }}</p>
+                    <button onclick="window.location.href='{% url 'commercants:liste_produits' %}?statut=stock_faible'" class="mt-2 text-red-600 text-sm font-medium hover:underline">
+                        Voir les produits concernés
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Tips -->
+    <div class="px-4 py-4">
+        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4">
+            <h3 class="font-semibold text-gray-900 mb-2">Conseils du jour</h3>
+            <div class="space-y-2">
+                <div class="flex items-start space-x-2">
+                    <i class="fas fa-lightbulb text-yellow-500 mt-0.5"></i>
+                    <p class="text-sm text-gray-700">Mettez en avant vos produits avec des photos de qualité pour augmenter les ventes de 30%</p>
+                </div>
+                <div class="flex items-start space-x-2">
+                    <i class="fas fa-chart-line text-green-500 mt-0.5"></i>
+                    <p class="text-sm text-gray-700">Les promotions de 10-20% génèrent le plus de ventes sans trop impacter vos marges</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notifications Panel -->
+<div id="notifications-panel" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black bg-opacity-50" onclick="hideNotifications()"></div>
+    <div class="absolute right-0 top-0 h-full w-80 bg-white shadow-xl">
+        <div class="p-4 border-b">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold">Notifications</h3>
+                <button onclick="hideNotifications()" class="p-2 hover:bg-gray-100 rounded-lg">
+                    <i class="fas fa-times text-gray-500"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-4 overflow-y-auto h-full pb-20">
+            <div id="notifications-list" class="space-y-3">
+                <div class="text-center py-8">
+                    <i class="fas fa-bell-slash text-4xl text-gray-300 mb-2"></i>
+                    <p class="text-gray-500 text-sm">Aucune notification</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// API functions
+const API = {
+    Merchant: {
+        async getStatistics() {
+            try {
+                const response = await fetch('/commercants/api/statistiques/');
+                if (response.ok) {
+                    return await response.json();
+                }
+                return null;
+            } catch (error) {
+                console.error('Error fetching statistics:', error);
+                return null;
+            }
+        },
+        
+        async getNotifications() {
+            try {
+                const response = await fetch('/commercants/api/notifications/');
+                if (response.ok) {
+                    return await response.json();
+                }
+                return null;
+            } catch (error) {
+                console.error('Error fetching notifications:', error);
+                return null;
+            }
+        }
+    }
+};
+
+// Marketplace utilities
+const marketplace = {
+    showLoading() {
+        // Implement loading indicator
+        console.log('Loading...');
+    },
+    
+    hideLoading() {
+        // Hide loading indicator
+        console.log('Loading complete');
+    },
+    
+    showNotification(message, type = 'info') {
+        // Simple notification implementation
+        alert(message);
+    }
+};
+
+let notificationCount = 0;
+
+// Load dashboard data
+async function loadDashboardData() {
+    try {
+        const stats = await API.Merchant.getStatistics();
+        if (stats && stats.success) {
+            updateDashboardStats(stats.statistiques);
+        }
+        
+        const notifications = await API.Merchant.getNotifications();
+        if (notifications && notifications.success) {
+            updateNotificationBadge(notifications.notifications.total);
+            notificationCount = notifications.notifications.total;
+        }
+    } catch (error) {
+        console.error('Error loading dashboard data:', error);
+    }
+}
+
+function updateDashboardStats(stats) {
+    // Update stats with real data
+    console.log('Dashboard stats:', stats);
+}
+
+function updateNotificationBadge(count) {
+    const badge = document.getElementById('notification-badge');
+    if (count > 0) {
+        badge.classList.remove('hidden');
+        badge.textContent = count > 99 ? '99+' : count;
+    } else {
+        badge.classList.add('hidden');
+    }
+}
+
+// Refresh data
+function refreshData() {
+    marketplace.showLoading();
+    
+    setTimeout(() => {
+        loadDashboardData();
+        marketplace.hideLoading();
+        marketplace.showNotification('Données actualisées', 'success');
+    }, 1000);
+}
+
+// Notifications
+function showNotifications() {
+    document.getElementById('notifications-panel').classList.remove('hidden');
+    loadNotifications();
+}
+
+function hideNotifications() {
+    document.getElementById('notifications-panel').classList.add('hidden');
+}
+
+async function loadNotifications() {
+    try {
+        const response = await API.Merchant.getNotifications();
+        const notificationsList = document.getElementById('notifications-list');
+        
+        if (response && response.success && response.notifications) {
+            const notifs = response.notifications;
+            let html = '';
+            
+            if (notifs.commandes_attente > 0) {
+                html += `
+                    <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-shopping-bag text-blue-600 mt-1"></i>
+                            <div>
+                                <p class="text-sm font-medium text-blue-900">${notifs.commandes_attente} commande${notifs.commandes_attente > 1 ? 's' : ''} en attente</p>
+                                <p class="text-xs text-blue-700 mt-1">Nouvelles commandes à traiter</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (notifs.stock_faible > 0) {
+                html += `
+                    <div class="p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-exclamation-triangle text-red-600 mt-1"></i>
+                            <div>
+                                <p class="text-sm font-medium text-red-900">${notifs.stock_faible} produit${notifs.stock_faible > 1 ? 's' : ''} en stock faible</p>
+                                <p class="text-xs text-red-700 mt-1">Réapprovisionnement nécessaire</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (notifs.avis_attente > 0) {
+                html += `
+                    <div class="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-star text-yellow-600 mt-1"></i>
+                            <div>
+                                <p class="text-sm font-medium text-yellow-900">${notifs.avis_attente} avis à modérer</p>
+                                <p class="text-xs text-yellow-700 mt-1">Nouveaux avis clients</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            notificationsList.innerHTML = html || `
+                <div class="text-center py-8">
+                    <i class="fas fa-bell-slash text-4xl text-gray-300 mb-2"></i>
+                    <p class="text-gray-500 text-sm">Aucune notification</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading notifications:', error);
+    }
+}
+
+// Product actions
+function editProduct(productId) {
+    window.location.href = `/commercants/produits/${productId}/modifier/`;
+}
+
+function viewProductStats(productId) {
+    marketplace.showNotification('Statistiques du produit bientôt disponibles', 'info');
+}
+
+// Chart placeholder
+function updateChart(period) {
+    marketplace.showNotification(`Graphique des ${period} derniers jours`, 'info');
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardData();
+});
+
+// Close notifications on escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        hideNotifications();
+    }
+});
+</script>
+{% endblock %}

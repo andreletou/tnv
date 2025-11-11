@@ -1,0 +1,463 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Mes Promotions{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 pb-20">
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-40">
+        <div class="px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <button onclick="history.back()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </button>
+                    <h1 class="text-lg font-semibold">Mes Promotions</h1>
+                </div>
+                <button onclick="addPromotion()" class="bg-primary text-gray-50 px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Nouvelle
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Filtres -->
+    <div class="bg-white border-b">
+        <div class="px-4 py-3">
+            <div class="flex space-x-2 overflow-x-auto scrollbar-hide">
+                <button onclick="filterPromotions('')" class="filter-btn px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap bg-primary text-gray">
+                    Toutes
+                </button>
+                <button onclick="filterPromotions('active')" class="filter-btn px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap bg-gray-100 text-gray-700 hover:bg-gray-200">
+                    Actives
+                </button>
+                <button onclick="filterPromotions('upcoming')" class="filter-btn px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap bg-gray-100 text-gray-700 hover:bg-gray-200">
+                    À venir
+                </button>
+                <button onclick="filterPromotions('expired')" class="filter-btn px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap bg-gray-100 text-gray-700 hover:bg-gray-200">
+                    Expirées
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des promotions -->
+    <div class="px-4 py-4">
+        <div id="promotionsList" class="space-y-4">
+            {% for promotion in promotions %}
+            <div class="promotion-card bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" 
+                 data-status="{% if promotion.est_active and promotion.est_en_cours %}active{% elif promotion.est_active and not promotion.est_en_cours %}upcoming{% else %}expired{% endif %}">
+                
+                <!-- Header -->
+                <div class="p-4 border-b border-gray-100">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h3 class="font-semibold text-lg">{{ promotion.produit.nom }}</h3>
+                            <p class="text-sm text-gray-500">{{ promotion.produit.categorie }}</p>
+                        </div>
+                        <span class="px-2 py-1 text-xs font-medium rounded-full 
+                            {% if promotion.est_active and promotion.est_en_cours %}bg-green-100 text-green-700
+                            {% elif promotion.est_active and not promotion.est_en_cours %}bg-blue-100 text-blue-700
+                            {% else %}bg-gray-100 text-gray-700{% endif %}">
+                            {% if promotion.est_active and promotion.est_en_cours %}Active
+                            {% elif promotion.est_active and not promotion.est_en_cours %}À venir
+                            {% else %}Expirée{% endif %}
+                        </span>
+                    </div>
+                    
+                    <!-- Badge de réduction -->
+                    <div class="flex items-center space-x-2">
+                        <span class="bg-red-500 text-gray-50 px-3 py-1 rounded-full text-sm font-bold">
+                            -{{ promotion.pourcentage_reduction }}%
+                        </span>
+                        <span class="text-sm text-gray-500">
+                            {{ promotion.produit.prix|format_price }} → 
+                            <span class="font-semibold text-primary">{{ promotion.produit.prix_promotionnel|format_price }}</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Détails -->
+                <div class="p-4">
+                    {% if promotion.description %}
+                    <p class="text-sm text-gray-600 mb-3">{{ promotion.description|truncatechars:100 }}</p>
+                    {% endif %}
+                    
+                    <!-- Dates -->
+                    <div class="grid grid-cols-2 gap-4 mb-3">
+                        <div>
+                            <p class="text-xs text-gray-500">Début</p>
+                            <p class="text-sm font-medium">{{ promotion.date_debut|date:"d/m/Y H:i" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500">Fin</p>
+                            <p class="text-sm font-medium">{{ promotion.date_fin|date:"d/m/Y H:i" }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Progress bar si active -->
+                    {% if promotion.est_active and promotion.est_en_cours %}
+                    <div class="mb-3">
+                        <div class="flex justify-between text-xs text-gray-500 mb-1">
+                            <span>Progression</span>
+                            <span>{{ promotion.date_debut|timesince:promotion.date_fin }} restants</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-primary h-2 rounded-full" style="width: {{ promotion.progress_percentage }}%"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Statistiques -->
+                    <div class="grid grid-cols-3 gap-2 mb-3 p-3 bg-gray-50 rounded-lg">
+                        <div class="text-center">
+                            <p class="text-lg font-bold text-primary">{{ promotion.vues|default:0 }}</p>
+                            <p class="text-xs text-gray-500">Vues</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-lg font-bold text-green-600">{{ promotion.ventes|default:0 }}</p>
+                            <p class="text-xs text-gray-500">Ventes</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-lg font-bold text-blue-600">{{ promotion.caisse|default:0|format_price }}</p>
+                            <p class="text-xs text-gray-500">Caisse</p>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex space-x-2">
+                        {% if promotion.est_active %}
+                        <button onclick="togglePromotion({{ promotion.id }}, false)" 
+                                class="flex-1 bg-orange-500 text-gray-50 py-2 px-3 rounded-lg text-sm font-medium hover:bg-orange-600 transition-colors">
+                            Désactiver
+                        </button>
+                        {% else %}
+                        <button onclick="togglePromotion({{ promotion.id }}, true)" 
+                                class="flex-1 bg-green-500 text-gray-50 py-2 px-3 rounded-lg text-sm font-medium hover:bg-green-600 transition-colors">
+                            Activer
+                        </button>
+                        {% endif %}
+                        
+                        <button onclick="editPromotion({{ promotion.id }})" 
+                                class="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                        </button>
+                        
+                        <button onclick="deletePromotion({{ promotion.id }})" 
+                                class="p-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-12">
+                <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Aucune promotion</h3>
+                <p class="text-gray-500 mb-4">Créez votre première promotion pour attirer plus de clients</p>
+                <button onclick="addPromotion()" class="inline-flex items-center px-4 py-2 bg-primary text-gray-50 rounded-lg hover:bg-primary/90 transition-colors">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Créer une promotion
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Loader -->
+        <div id="loader" class="hidden">
+            <div class="flex justify-center py-8">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal promotion rapide -->
+<div id="promotionModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-4 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-lg font-semibold">Nouvelle promotion</h2>
+                    <button onclick="closeModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div id="modalContent" class="p-4">
+                <!-- Quick promotion form -->
+                <form id="quickPromotionForm">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Produit</label>
+                            <select id="quickProduit" class="w-full px-3 py-2 border border-gray-300 rounded-lg" required>
+                                <option value="">Sélectionner un produit</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Réduction (%)</label>
+                            <input type="number" id="quickReduction" min="1" max="90" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="10-90%" required>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Date de début</label>
+                                <input type="datetime-local" id="quickDebut" class="w-full px-3 py-2 border border-gray-300 rounded-lg" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Date de fin</label>
+                                <input type="datetime-local" id="quickFin" class="w-full px-3 py-2 border border-gray-300 rounded-lg" required>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea id="quickDescription" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Description de la promotion..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-3 mt-6">
+                        <button type="button" onclick="closeModal()" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                            Annuler
+                        </button>
+                        <button type="submit" class="flex-1 px-4 py-2 bg-primary text-gray-50 rounded-lg hover:bg-primary/90">
+                            Créer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentFilter = '';
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadProducts();
+    
+    // Quick promotion form
+    document.getElementById('quickPromotionForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        createQuickPromotion();
+    });
+    
+    // Set default dates
+    const now = new Date();
+    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    
+    document.getElementById('quickDebut').value = formatDateTimeLocal(tomorrow);
+    document.getElementById('quickFin').value = formatDateTimeLocal(nextWeek);
+});
+
+function filterPromotions(filter) {
+    currentFilter = filter;
+    
+    // Update filter buttons
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('bg-primary', 'text-gray');
+        btn.classList.add('bg-gray-100', 'text-gray-700');
+    });
+    
+    event.target.classList.remove('bg-gray-100', 'text-gray-700');
+    event.target.classList.add('bg-primary', 'text-gray');
+    
+    // Filter promotions
+    document.querySelectorAll('.promotion-card').forEach(card => {
+        if (filter === '' || card.dataset.status === filter) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+function addPromotion() {
+    document.getElementById('promotionModal').classList.remove('hidden');
+}
+
+function editPromotion(promotionId) {
+    window.location.href = `/commercants/promotions/${promotionId}/modifier/`;
+}
+
+function togglePromotion(promotionId, activate) {
+    const action = activate ? 'activer' : 'désactiver';
+    
+    if (confirm(`Êtes-vous sûr de vouloir ${action} cette promotion ?`)) {
+        fetch(`/commercants/api/promotions/${promotionId}/toggle/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ active: activate })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(`Promotion ${action} avec succès`, 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast(data.message || 'Erreur', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Erreur de connexion', 'error');
+        });
+    }
+}
+
+function deletePromotion(promotionId) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer cette promotion ? Cette action est irréversible.')) {
+        fetch(`/commercants/promotions/${promotionId}/supprimer/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Promotion supprimée avec succès', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast(data.message || 'Erreur', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Erreur de connexion', 'error');
+        });
+    }
+}
+
+function loadProducts() {
+    fetch('/commercants/api/produits/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const select = document.getElementById('quickProduit');
+                data.produits.forEach(produit => {
+                    const option = document.createElement('option');
+                    option.value = produit.id;
+                    option.textContent = `${produit.nom} - ${produit.prix} XOF`;
+                    select.appendChild(option);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading products:', error);
+        });
+}
+
+function createQuickPromotion() {
+    const formData = {
+        produit: document.getElementById('quickProduit').value,
+        pourcentage_reduction: document.getElementById('quickReduction').value,
+        date_debut: document.getElementById('quickDebut').value,
+        date_fin: document.getElementById('quickFin').value,
+        description: document.getElementById('quickDescription').value,
+        est_active: true
+    };
+    
+    fetch('/commercants/promotions/ajouter/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Promotion créée avec succès', 'success');
+            closeModal();
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(data.message || 'Erreur', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Erreur de connexion', 'error');
+    });
+}
+
+function closeModal() {
+    document.getElementById('promotionModal').classList.add('hidden');
+    document.getElementById('quickPromotionForm').reset();
+}
+
+function formatDateTimeLocal(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+// Close modal when clicking outside
+document.getElementById('promotionModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeModal();
+    }
+});
+
+// Auto-refresh for active promotions
+setInterval(() => {
+    if (currentFilter === '' || currentFilter === 'active') {
+        // Refresh promotion data
+        fetch('/commercants/api/promotions/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update statistics
+                    updatePromotionStats(data.promotions);
+                }
+            })
+            .catch(error => {
+                console.error('Error refreshing promotions:', error);
+            });
+    }
+}, 30000); // Refresh every 30 seconds
+
+function updatePromotionStats(promotions) {
+    promotions.forEach(promotion => {
+        const card = document.querySelector(`[data-promotion-id="${promotion.id}"]`);
+        if (card) {
+            // Update statistics in the card
+            const vuesElement = card.querySelector('.text-primary');
+            const ventesElement = card.querySelector('.text-green-600');
+            const caisseElement = card.querySelector('.text-blue-600');
+            
+            if (vuesElement) vuesElement.textContent = promotion.vues || 0;
+            if (ventesElement) ventesElement.textContent = promotion.ventes || 0;
+            if (caisseElement) caisseElement.textContent = formatPrice(promotion.caisse || 0);
+        }
+    });
+}
+</script>
+{% endblock %}

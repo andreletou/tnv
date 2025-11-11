@@ -1,0 +1,175 @@
+<!-- Mobile Bottom Navigation -->
+<nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t z-40">
+    <div class="flex justify-around items-center h-16">
+        <a href="{% url 'clients:accueil' %}" class="flex flex-col items-center justify-center text-gray-600 hover:text-primary-500 transition">
+            <i class="fas fa-home text-xl mb-1"></i>
+            <span class="text-xs">Accueil</span>
+        </a>
+        
+        <a href="{% url 'clients:liste_boutiques' %}" class="flex flex-col items-center justify-center text-gray-600 hover:text-primary-500 transition">
+            <i class="fas fa-store text-xl mb-1"></i>
+            <span class="text-xs">Boutiques</span>
+        </a>
+        
+        <button onclick="openSearchModal()" class="flex flex-col items-center justify-center text-gray-600 hover:text-primary-500 transition">
+            <i class="fas fa-search text-xl mb-1"></i>
+            <span class="text-xs">Rechercher</span>
+        </button>
+        
+        <a href="{% url 'clients:panier' %}" class="flex flex-col items-center justify-center text-gray-600 hover:text-primary-500 transition relative">
+            <i class="fas fa-shopping-cart text-xl mb-1"></i>
+            <span class="text-xs">Panier</span>
+            <span id="mobile-cart-count" class="absolute -top-1 -right-1 bg-red-500 text-gray-50 text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+        </a>
+        
+        {% if user.is_authenticated %}
+            <button onclick="toggleMobileUserMenu()" class="flex flex-col items-center justify-center text-gray-600 hover:text-primary-500 transition">
+                {% if user.photo_profil %}
+                    <img src="{{ user.photo_profil.url }}" alt="{{ user.get_full_name }}" class="w-6 h-6 rounded-full object-cover mb-1">
+                {% else %}
+                    <i class="fas fa-user text-xl mb-1"></i>
+                {% endif %}
+                <span class="text-xs">Compte</span>
+            </button>
+        {% else %}
+            <a href="{% url 'clients:connexion' %}" class="flex flex-col items-center justify-center text-gray-600 hover:text-primary-500 transition">
+                <i class="fas fa-user text-xl mb-1"></i>
+                <span class="text-xs">Connexion</span>
+            </a>
+        {% endif %}
+    </div>
+</nav>
+
+<!-- Mobile User Menu -->
+<div id="mobile-user-menu" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50">
+    <div class="absolute bottom-16 left-0 right-0 bg-white rounded-t-2xl">
+        <div class="p-4">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold">Mon compte</h3>
+                <button onclick="toggleMobileUserMenu()" class="text-gray-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            {% if user.is_authenticated %}
+                <div class="flex items-center mb-4 pb-4 border-b">
+                    {% if user.photo_profil %}
+                        <img src="{{ user.photo_profil.url }}" alt="{{ user.get_full_name }}" class="w-12 h-12 rounded-full object-cover mr-3">
+                    {% else %}
+                        <div class="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center mr-3">
+                            <i class="fas fa-user text-gray-600"></i>
+                        </div>
+                    {% endif %}
+                    <div>
+                        <p class="font-semibold">{{ user.get_full_name|default:user.username }}</p>
+                        <p class="text-sm text-gray-600">{{ user.email }}</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-2">
+                    <a href="{% url 'clients:profil' %}" class="flex items-center py-2 text-gray-700 hover:text-primary-500">
+                        <i class="fas fa-user mr-3"></i> Mon profil
+                    </a>
+                    <a href="{% url 'clients:mes_commandes' %}" class="flex items-center py-2 text-gray-700 hover:text-primary-500">
+                        <i class="fas fa-shopping-bag mr-3"></i> Mes commandes
+                    </a>
+                    <a href="{% url 'clients:mes_favoris' %}" class="flex items-center py-2 text-gray-700 hover:text-primary-500">
+                        <i class="fas fa-heart mr-3"></i> Mes favoris
+                    </a>
+                    {% if user.is_staff %}
+                        <a href="{% url 'commercants:tableau_de_bord' %}" class="flex items-center py-2 text-gray-700 hover:text-primary-500">
+                            <i class="fas fa-store mr-3"></i> Ma boutique
+                        </a>
+                    {% endif %}
+                    <a href="{% url 'clients:deconnexion' %}" class="flex items-center py-2 text-red-600 hover:text-red-700">
+                        <i class="fas fa-sign-out-alt mr-3"></i> Déconnexion
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Search Modal -->
+<div id="search-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50">
+    <div class="absolute top-0 left-0 right-0 bg-white">
+        <div class="p-4">
+            <div class="flex items-center mb-4">
+                <button onclick="closeSearchModal()" class="text-gray-500 mr-3">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <form action="{% url 'clients:recherche' %}" method="GET" class="flex-1">
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            name="q" 
+                            placeholder="Rechercher des produits, boutiques..."
+                            class="w-full px-4 py-2 pl-10 pr-4 text-gray-700 bg-gray-100 rounded-full focus:outline-none focus:bg-white focus:ring-2 focus:ring-primary-500"
+                            autofocus
+                        >
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Recent Searches -->
+            <div class="mb-4">
+                <h4 class="text-sm font-semibold text-gray-600 mb-2">Recherches récentes</h4>
+                <div class="flex flex-wrap gap-2">
+                    <span class="px-3 py-1 bg-gray-100 rounded-full text-sm">Téléphones</span>
+                    <span class="px-3 py-1 bg-gray-100 rounded-full text-sm">Vêtements</span>
+                    <span class="px-3 py-1 bg-gray-100 rounded-full text-sm">Électronique</span>
+                </div>
+            </div>
+            
+            <!-- Trending Searches -->
+            <div>
+                <h4 class="text-sm font-semibold text-gray-600 mb-2">Tendances</h4>
+                <div class="space-y-2">
+                    <a href="#" class="flex items-center text-gray-700">
+                        <i class="fas fa-fire text-orange-500 mr-2"></i>
+                        <span>iPhone 15</span>
+                    </a>
+                    <a href="#" class="flex items-center text-gray-700">
+                        <i class="fas fa-fire text-orange-500 mr-2"></i>
+                        <span>Nike Air Max</span>
+                    </a>
+                    <a href="#" class="flex items-center text-gray-700">
+                        <i class="fas fa-fire text-orange-500 mr-2"></i>
+                        <span>Samsung Galaxy</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleMobileUserMenu() {
+    const menu = document.getElementById('mobile-user-menu');
+    menu.classList.toggle('hidden');
+}
+
+function openSearchModal() {
+    document.getElementById('search-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeSearchModal() {
+    document.getElementById('search-modal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+
+// Close modals when clicking outside
+document.getElementById('mobile-user-menu').addEventListener('click', function(e) {
+    if (e.target === this) {
+        toggleMobileUserMenu();
+    }
+});
+
+document.getElementById('search-modal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeSearchModal();
+    }
+});
+</script>
