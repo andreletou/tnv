@@ -1,0 +1,527 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ titre }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 pb-20">
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-40">
+        <div class="px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <button onclick="history.back()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </button>
+                    <h1 class="text-lg font-semibold">{{ titre }}</h1>
+                </div>
+                <button type="submit" form="promotionForm" class="text-primary font-medium">
+                    Enregistrer
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <form method="post" id="promotionForm">
+        {% csrf_token %}
+        
+        <!-- Sélection du produit -->
+        <div class="bg-white p-4 mb-2">
+            <h3 class="font-semibold mb-4">Produit concerné</h3>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Produit *</label>
+                {{ form.produit }}
+                {% if form.produit.errors %}
+                <p class="text-red-500 text-xs mt-1">{{ form.produit.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Aperçu du produit sélectionné -->
+            <div id="productPreview" class="hidden mt-4 p-3 bg-gray-50 rounded-lg">
+                <div class="flex items-center space-x-3">
+                    <img id="productImage" src="" alt="" class="w-16 h-16 rounded-lg object-cover">
+                    <div class="flex-1">
+                        <h4 id="productName" class="font-medium"></h4>
+                        <p id="productPrice" class="text-sm text-gray-500"></p>
+                        <p id="productStock" class="text-xs text-gray-400"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Détails de la promotion -->
+        <div class="bg-white p-4 mb-2">
+            <h3 class="font-semibold mb-4">Détails de la promotion</h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Pourcentage de réduction *</label>
+                    <div class="relative">
+                        {{ form.pourcentage_reduction }}
+                        <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">%</span>
+                    </div>
+                    {% if form.pourcentage_reduction.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.pourcentage_reduction.errors.0 }}</p>
+                    {% endif %}
+                    <p class="text-xs text-gray-500 mt-1">Entre 1% et 90%</p>
+                </div>
+
+                <!-- Calcul du prix promotionnel -->
+                <div class="bg-blue-50 p-3 rounded-lg">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-xs text-gray-600">Prix original</p>
+                            <p id="originalPrice" class="font-semibold">0 XOF</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-600">Prix promotionnel</p>
+                            <p id="promoPrice" class="font-semibold text-primary">0 XOF</p>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <p class="text-xs text-gray-600">Économie pour le client</p>
+                        <p id="economy" class="font-semibold text-green-600">0 XOF</p>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.description.errors.0 }}</p>
+                    {% endif %}
+                    <p class="text-xs text-gray-500 mt-1">{{ form.description.value|length|default:0 }}/200 caractères</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Période de validité -->
+        <div class="bg-white p-4 mb-2">
+            <h3 class="font-semibold mb-4">Période de validité</h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Date de début *</label>
+                    {{ form.date_debut }}
+                    {% if form.date_debut.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.date_debut.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Date de fin *</label>
+                    {{ form.date_fin }}
+                    {% if form.date_fin.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.date_fin.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Durée de la promotion -->
+                <div class="bg-gray-50 p-3 rounded-lg">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">Durée totale</span>
+                        <span id="duration" class="font-medium">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Options -->
+        <div class="bg-white p-4 mb-20">
+            <h3 class="font-semibold mb-4">Options</h3>
+            
+            <div class="space-y-4">
+                <div class="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg">
+                    <div>
+                        <p class="font-medium text-sm">Promotion active</p>
+                        <p class="text-xs text-gray-500">Démarrer automatiquement</p>
+                    </div>
+                    {{ form.est_active }}
+                </div>
+
+                <!-- Statut actuel -->
+                <div id="statusInfo" class="hidden p-3 rounded-lg">
+                    <div class="flex items-center space-x-2">
+                        <div id="statusIcon" class="w-2 h-2 rounded-full"></div>
+                        <span id="statusText" class="text-sm font-medium"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- Loading overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-lg p-6 max-w-xs mx-4">
+            <div class="flex flex-col items-center">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
+                <p class="text-sm text-gray-600">Enregistrement en cours...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('promotionForm');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    
+    // Style form inputs
+    const inputs = form.querySelectorAll('input[type="text"], input[type="number"], input[type="datetime-local"], textarea, select');
+    inputs.forEach(input => {
+        input.classList.add('w-full', 'px-3', 'py-2', 'border', 'border-gray-300', 'rounded-lg', 'focus:ring-2', 'focus:ring-primary', 'focus:border-transparent');
+    });
+    
+    // Style checkbox
+    const checkbox = form.querySelector('input[type="checkbox"]');
+    if (checkbox) {
+        checkbox.classList.add('w-4', 'h-4', 'text-primary', 'border-gray-300', 'rounded', 'focus:ring-primary');
+    }
+    
+    // Product data
+    let products = [];
+    
+    // Load products
+    loadProducts();
+    
+    // Event listeners
+    const produitSelect = document.querySelector('select[name="produit"]');
+    const reductionInput = document.querySelector('input[name="pourcentage_reduction"]');
+    const dateDebutInput = document.querySelector('input[name="date_debut"]');
+    const dateFinInput = document.querySelector('input_fin"]');
+    const activeCheckbox = document.querySelector('input[name="est_active"]');
+    
+    produitSelect.addEventListener('change', updateProductPreview);
+    reductionInput.addEventListener('input', updatePriceCalculation);
+    dateDebutInput.addEventListener('change', updateDuration);
+    dateFinInput.addEventListener('change', updateDuration);
+    activeCheckbox.addEventListener('change', updateStatus);
+    
+    // Set default dates
+    setDefaultDates();
+    
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (!validateForm()) {
+            return;
+        }
+        
+        loadingOverlay.classList.remove('hidden');
+        
+        const formData = new FormData(form);
+        
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            loadingOverlay.classList.add('hidden');
+            
+            if (data.success) {
+                showToast('Promotion enregistrée avec succès', 'success');
+                setTimeout(() => {
+                    window.location.href = '/commercants/promotions/';
+                }, 1500);
+            } else {
+                if (data.errors) {
+                    Object.keys(data.errors).forEach(field => {
+                        const input = form.querySelector(`[name="${field}"]`);
+                        if (input) {
+                            input.classList.add('border-red-500');
+                            const errorDiv = document.createElement('p');
+                            errorDiv.className = 'text-red-500 text-xs mt-1';
+                            errorDiv.textContent = data.errors[field][0];
+                            input.parentNode.appendChild(errorDiv);
+                        }
+                    });
+                } else {
+                    showToast(data.message || 'Erreur lors de l\'enregistrement', 'error');
+                }
+            }
+        })
+        .catch(error => {
+            loadingOverlay.classList.add('hidden');
+            console.error('Error:', error);
+            form.submit();
+        });
+    });
+    
+    // Character counter
+    const textarea = form.querySelector('textarea[name="description"]');
+    if (textarea) {
+        textarea.addEventListener('input', function() {
+            const counter = this.parentNode.querySelector('.text-gray-500');
+            if (counter) {
+                counter.textContent = `${this.value.length}/200 caractères`;
+                if (this.value.length > 200) {
+                    this.value = this.value.substring(0, 200);
+                    counter.classList.add('text-red-500');
+                } else {
+                    counter.classList.remove('text-red-500');
+                }
+            }
+        });
+    }
+});
+
+function loadProducts() {
+    fetch('/commercants/api/produits/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                products = data.produits;
+                populateProductSelect();
+                
+                // Pre-select if editing
+                {% if form.instance.produit %}
+                const select = document.querySelector('select[name="produit"]');
+                select.value = {{ form.instance.produit.id }};
+                updateProductPreview();
+                {% endif %}
+            }
+        })
+        .catch(error => {
+            console.error('Error loading products:', error);
+        });
+}
+
+function populateProductSelect() {
+    const select = document.querySelector('select[name="produit"]');
+    select.innerHTML = '<option value="">Sélectionner un produit</option>';
+    
+    products.forEach(product => {
+        const option = document.createElement('option');
+        option.value = product.id;
+        option.textContent = `${product.nom} - ${product.prix} XOF`;
+        option.dataset.price = product.prix;
+        option.dataset.stock = product.stock;
+        option.dataset.image = product.image || '';
+        select.appendChild(option);
+    });
+}
+
+function updateProductPreview() {
+    const select = document.querySelector('select[name="produit"]');
+    const selectedOption = select.options[select.selectedIndex];
+    const preview = document.getElementById('productPreview');
+    
+    if (select.value && selectedOption.dataset.price) {
+        const price = parseFloat(selectedOption.dataset.price);
+        const stock = parseInt(selectedOption.dataset.stock);
+        const image = selectedOption.dataset.image;
+        
+        document.getElementById('productImage').src = image || '/static/images/default-product.png';
+        document.getElementById('productName').textContent = selectedOption.textContent.split(' - ')[0];
+        document.getElementById('productPrice').textContent = formatPrice(price);
+        document.getElementById('productStock').textContent = `Stock: ${stock} unités`;
+        
+        preview.classList.remove('hidden');
+        updatePriceCalculation();
+    } else {
+        preview.classList.add('hidden');
+    }
+}
+
+function updatePriceCalculation() {
+    const select = document.querySelector('select[name="produit"]');
+    const reduction = parseFloat(document.querySelector('input[name="pourcentage_reduction"]').value) || 0;
+    const selectedOption = select.options[select.selectedIndex];
+    
+    if (select.value && selectedOption.dataset.price) {
+        const originalPrice = parseFloat(selectedOption.dataset.price);
+        const promoPrice = originalPrice * (1 - reduction / 100);
+        const economy = originalPrice - promoPrice;
+        
+        document.getElementById('originalPrice').textContent = formatPrice(originalPrice);
+        document.getElementById('promoPrice').textContent = formatPrice(promoPrice);
+        document.getElementById('economy').textContent = formatPrice(economy);
+    } else {
+        document.getElementById('originalPrice').textContent = '0 XOF';
+        document.getElementById('promoPrice').textContent = '0 XOF';
+        document.getElementById('economy').textContent = '0 XOF';
+    }
+}
+
+function updateDuration() {
+    const dateDebut = document.querySelector('input[name="date_debut"]').value;
+    const dateFin = document.querySelector('input[name="date_fin"]').value;
+    
+    if (dateDebut && dateFin) {
+        const debut = new Date(dateDebut);
+        const fin = new Date(dateFin);
+        const diff = fin - debut;
+        
+        if (diff > 0) {
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            
+            let duration = '';
+            if (days > 0) {
+                duration += `${days} jour${days > 1 ? 's' : ''}`;
+            }
+            if (hours > 0) {
+                if (duration) duration += ' ';
+                duration += `${hours} heure${hours > 1 ? 's' : ''}`;
+            }
+            
+            document.getElementById('duration').textContent = duration || 'Moins d\'une heure';
+        } else {
+            document.getElementById('duration').textContent = 'Dates invalides';
+        }
+    } else {
+        document.getElementById('duration').textContent = '-';
+    }
+    
+    updateStatus();
+}
+
+function updateStatus() {
+    const dateDebut = document.querySelector('input[name="date_debut"]').value;
+    const dateFin = document.querySelector('input[name="date_fin"]').value;
+    const isActive = document.querySelector('input[name="est_active"]').checked;
+    const statusInfo = document.getElementById('statusInfo');
+    
+    if (dateDebut && dateFin) {
+        const now = new Date();
+        const debut = new Date(dateDebut);
+        const fin = new Date(dateFin);
+        
+        statusInfo.classList.remove('hidden');
+        
+        const statusIcon = document.getElementById('statusIcon');
+        const statusText = document.getElementById('statusText');
+        
+        if (!isActive) {
+            statusIcon.className = 'w-2 h-2 rounded-full bg-gray-400';
+            statusText.textContent = 'Désactivée';
+            statusText.className = 'text-sm font-medium text-gray-600';
+        } else if (now < debut) {
+            statusIcon.className = 'w-2 h-2 rounded-full bg-blue-500';
+            statusText.textContent = 'À venir';
+            statusText.className = 'text-sm font-medium text-blue-600';
+        } else if (now > fin) {
+            statusIcon.className = 'w-2 h-2 rounded-full bg-gray-400';
+            statusText.textContent = 'Expirée';
+            statusText.className = 'text-sm font-medium text-gray-600';
+        } else {
+            statusIcon.className = 'w-2 h-2 rounded-full bg-green-500 animate-pulse';
+            statusText.textContent = 'Active';
+            statusText.className = 'text-sm font-medium text-green-600';
+        }
+    } else {
+        statusInfo.classList.add('hidden');
+    }
+}
+
+function setDefaultDates() {
+    const now = new Date();
+    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    
+    {% if not form.instance.pk %}
+    document.querySelector('input[name="date_debut"]').value = formatDateTimeLocal(tomorrow);
+    document.querySelector('input[name="date_fin"]').value = formatDateTimeLocal(nextWeek);
+    {% endif %}
+    
+    updateDuration();
+}
+
+function validateForm() {
+    const form = document.getElementById('promotionForm');
+    let isValid = true;
+    
+    // Validate required fields
+    const requiredFields = form.querySelectorAll('[required]');
+    requiredFields.forEach(field => {
+        if (!field.value.trim()) {
+            field.classList.add('border-red-500');
+            isValid = false;
+        } else {
+            field.classList.remove('border-red-500');
+        }
+    });
+    
+    // Validate reduction percentage
+    const reduction = parseFloat(form.querySelector('input[name="pourcentage_reduction"]').value) || 0;
+    if (reduction < 1 || reduction > 90) {
+        form.querySelector('input[name="pourcentage_reduction"]').classList.add('border-red-500');
+        showToast('La réduction doit être entre 1% et 90%', 'error');
+        isValid = false;
+    }
+    
+    // Validate dates
+    const dateDebut = new Date(form.querySelector('input[name="date_debut"]').value);
+    const dateFin = new Date(form.querySelector('input[name="date_fin"]').value);
+    
+    if (dateDebut >= dateFin) {
+        form.querySelector('input[name="date_fin"]').classList.add('border-red-500');
+        showToast('La date de fin doit être postérieure à la date de début', 'error');
+        isValid = false;
+    }
+    
+    if (!isValid) {
+        showToast('Veuillez corriger les erreurs', 'error');
+    }
+    
+    return isValid;
+}
+
+function formatPrice(amount) {
+    return new Intl.NumberFormat('fr-FR', {
+        style: 'currency',
+        currency: 'XOF',
+        minimumFractionDigits: 0
+    }).format(amount);
+}
+
+function formatDateTimeLocal(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+// Remove error styling on input
+document.addEventListener('input', function(e) {
+    if (e.target.classList.contains('border-red-500')) {
+        e.target.classList.remove('border-red-500');
+        const errorDiv = e.target.parentNode.querySelector('.text-red-500');
+        if (errorDiv) {
+            errorDiv.remove();
+        }
+    }
+});
+</script>
+
+<style>
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .5; }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,1227 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestion des commandes - {{ commercant.nom_boutique }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root {
+    --primary-color: #4f46e5;
+    --primary-dark: #4338ca;
+    --secondary-color: #06b6d4;
+    --success-color: #10b981;
+    --warning-color: #f59e0b;
+    --danger-color: #ef4444;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #111827;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --radius: 0.5rem;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background-color: var(--gray-50);
+    color: var(--gray-800);
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 100%;
+    padding: 0 1rem;
+    margin: 0 auto;
+}
+
+/* Header */
+.header {
+    background-color: white;
+    box-shadow: var(--shadow);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+}
+
+.header-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--gray-900);
+}
+
+.header-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.header-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--radius);
+    background-color: var(--gray-100);
+    color: var(--gray-600);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.header-btn:hover {
+    background-color: var(--gray-200);
+}
+
+.header-btn.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* Stats Cards */
+.stats-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.stat-card {
+    background-color: white;
+    border-radius: var(--radius);
+    padding: 1rem;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.stat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: var(--gray-500);
+}
+
+/* Filter Tabs */
+.filter-tabs {
+    display: flex;
+    overflow-x: auto;
+    padding: 0.5rem 0;
+    margin-bottom: 1rem;
+    scrollbar-width: none;
+}
+
+.filter-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.filter-tab {
+    padding: 0.5rem 1rem;
+    margin-right: 0.5rem;
+    border-radius: 2rem;
+    background-color: white;
+    color: var(--gray-600);
+    border: 1px solid var(--gray-200);
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-tab.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+/* Order Cards */
+.orders-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.order-card {
+    background-color: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.order-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.order-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--gray-100);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.order-info {
+    flex: 1;
+}
+
+.order-number {
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-bottom: 0.25rem;
+}
+
+.order-date {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+}
+
+.order-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 2rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.status-en_attente {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.status-validee {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.status-en_preparation {
+    background-color: #e0e7ff;
+    color: #3730a3;
+}
+
+.status-prete {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.status-en_livraison {
+    background-color: #e9d5ff;
+    color: #6b21a8;
+}
+
+.status-livree {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.status-annulee {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.order-body {
+    padding: 1rem;
+}
+
+.order-customer {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.customer-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background-color: var(--gray-200);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.75rem;
+    color: var(--gray-600);
+}
+
+.customer-info {
+    flex: 1;
+}
+
+.customer-name {
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.customer-address {
+    font-size: 0.875rem;
+    color: var(--gray-500);
+}
+
+.order-items {
+    margin-bottom: 1rem;
+}
+
+.order-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.item-image {
+    width: 3rem;
+    height: 3rem;
+    border-radius: var(--radius);
+    object-fit: cover;
+    margin-right: 0.75rem;
+}
+
+.item-details {
+    flex: 1;
+}
+
+.item-name {
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.item-price {
+    font-size: 0.875rem;
+    color: var(--gray-500);
+}
+
+.item-quantity {
+    font-weight: 500;
+    color: var(--gray-700);
+}
+
+.order-footer {
+    padding: 1rem;
+    border-top: 1px solid var(--gray-100);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.order-total {
+    font-weight: 600;
+    color: var(--gray-900);
+}
+
+.order-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+}
+
+.btn-secondary {
+    background-color: var(--gray-200);
+    color: var(--gray-700);
+}
+
+.btn-secondary:hover {
+    background-color: var(--gray-300);
+}
+
+.btn-success {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.btn-success:hover {
+    background-color: #059669;
+}
+
+.btn-danger {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #dc2626;
+}
+
+.btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+}
+
+/* Order Detail Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+.modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: white;
+    border-radius: var(--radius);
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--gray-100);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-title {
+    font-weight: 600;
+    color: var(--gray-900);
+}
+
+.modal-close {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background-color: var(--gray-100);
+    color: var(--gray-600);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-body {
+    padding: 1rem;
+}
+
+.modal-footer {
+    padding: 1rem;
+    border-top: 1px solid var(--gray-100);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+/* Loading Spinner */
+.spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    color: var(--gray-300);
+    margin-bottom: 1rem;
+}
+
+.empty-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 0.5rem;
+}
+
+.empty-text {
+    color: var(--gray-500);
+    margin-bottom: 1.5rem;
+}
+
+/* Bottom Navigation */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: white;
+    box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+}
+
+.bottom-nav-content {
+    display: flex;
+    justify-content: space-around;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.5rem 0;
+    color: var(--gray-500);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.nav-item.active {
+    color: var(--primary-color);
+}
+
+.nav-icon {
+    font-size: 1.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.nav-label {
+    font-size: 0.75rem;
+}
+
+/* Responsive */
+@media (min-width: 768px) {
+    .container {
+        max-width: 768px;
+    }
+    
+    .stats-container {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .modal-content {
+        width: 70%;
+    }
+}
+
+@media (min-width: 1024px) {
+    .container {
+        max-width: 1024px;
+    }
+    
+    .modal-content {
+        width: 60%;
+    }
+}
+
+/* Toast Notification */
+.toast {
+    position: fixed;
+    bottom: 5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--gray-800);
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.toast.show {
+    opacity: 1;
+}
+
+.toast.success {
+    background-color: var(--success-color);
+}
+
+.toast.error {
+    background-color: var(--danger-color);
+}
+
+.toast.warning {
+    background-color: var(--warning-color);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header">
+    <div class="container">
+        <div class="header-content">
+            <h1 class="header-title">Gestion des commandes</h1>
+            <div class="header-actions">
+                <button class="header-btn" id="refreshBtn">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <a href="{% url 'commercants:tableau_de_bord' %}" class="header-btn">
+                    <i class="fas fa-home"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Stats Cards -->
+    <div class="stats-container">
+        <div class="stat-card">
+            <div class="stat-icon" style="background-color: #fef3c7; color: #92400e;">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-value" id="enAttenteCount">0</div>
+            <div class="stat-label">En attente</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background-color: #dbeafe; color: #1e40af;">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-value" id="valideesCount">0</div>
+            <div class="stat-label">Validées</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background-color: #e0e7ff; color: #3730a3;">
+                <i class="fas fa-utensils"></i>
+            </div>
+            <div class="stat-value" id="preparationCount">0</div>
+            <div class="stat-label">En préparation</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background-color: #d1fae5; color: #065f46;">
+                <i class="fas fa-box"></i>
+            </div>
+            <div class="stat-value" id="pretesCount">0</div>
+            <div class="stat-label">Prêtes</div>
+        </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="filter-tabs">
+        <button class="filter-tab active" data-status="all">Toutes</button>
+        <button class="filter-tab" data-status="en_attente">En attente</button>
+        <button class="filter-tab" data-status="validee">Validées</button>
+        <button class="filter-tab" data-status="en_preparation">En préparation</button>
+        <button class="filter-tab" data-status="prete">Prêtes</button>
+        <button class="filter-tab" data-status="en_livraison">En livraison</button>
+        <button class="filter-tab" data-status="livree">Livrées</button>
+        <button class="filter-tab" data-status="annulee">Annulées</button>
+    </div>
+
+    <!-- Orders Container -->
+    <div class="orders-container" id="ordersContainer">
+        <!-- Orders will be loaded here via JavaScript -->
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-shopping-bag"></i>
+            </div>
+            <h2 class="empty-title">Chargement des commandes...</h2>
+            <p class="empty-text">Veuillez patienter pendant que nous récupérons vos commandes.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Order Detail Modal -->
+<div class="modal" id="orderModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Détails de la commande</h2>
+            <button class="modal-close" id="closeModal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body" id="modalBody">
+            <!-- Order details will be loaded here -->
+        </div>
+        <div class="modal-footer" id="modalFooter">
+            <!-- Action buttons will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="toast" id="toast"></div>
+
+<!-- Bottom Navigation -->
+<nav class="bottom-nav">
+    <div class="container">
+        <div class="bottom-nav-content">
+            <a href="{% url 'commercants:tableau_de_bord' %}" class="nav-item">
+                <i class="fas fa-home nav-icon"></i>
+                <span class="nav-label">Accueil</span>
+            </a>
+            <a href="{% url 'commercants:liste_produits' %}" class="nav-item">
+                <i class="fas fa-box nav-icon"></i>
+                <span class="nav-label">Produits</span>
+            </a>
+            <a href="{% url 'commercants:gestion_commandes' %}" class="nav-item active">
+                <i class="fas fa-clipboard-list nav-icon"></i>
+                <span class="nav-label">Commandes</span>
+            </a>
+            <a href="{% url 'commercants:profil' %}" class="nav-item">
+                <i class="fas fa-user nav-icon"></i>
+                <span class="nav-label">Profil</span>
+            </a>
+        </div>
+    </div>
+</nav>
+
+<div style="height: 5rem;"></div> <!-- Space for bottom nav -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // DOM Elements
+    const ordersContainer = document.getElementById('ordersContainer');
+    const filterTabs = document.querySelectorAll('.filter-tab');
+    const orderModal = document.getElementById('orderModal');
+    const modalBody = document.getElementById('modalBody');
+    const modalFooter = document.getElementById('modalFooter');
+    const closeModal = document.getElementById('closeModal');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const toast = document.getElementById('toast');
+    
+    // State
+    let currentFilter = 'all';
+    let orders = [];
+    let stats = {
+        en_attente: 0,
+        validee: 0,
+        en_preparation: 0,
+        prete: 0,
+        en_livraison: 0,
+        livree: 0,
+        annulee: 0
+    };
+    
+    // Initialize
+    fetchOrders();
+    
+    // Event Listeners
+    filterTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            filterTabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            currentFilter = this.dataset.status;
+            renderOrders();
+        });
+    });
+    
+    closeModal.addEventListener('click', function() {
+        orderModal.classList.remove('active');
+    });
+    
+    refreshBtn.addEventListener('click', function() {
+        refreshBtn.style.animation = 'spin 1s linear';
+        fetchOrders();
+        setTimeout(() => {
+            refreshBtn.style.animation = '';
+        }, 1000);
+    });
+    
+    // Functions
+    async function fetchOrders() {
+        try {
+            const response = await fetch(`/commercants/api/commandes/`);
+            const data = await response.json();
+            
+            if (data.success) {
+                orders = data.commandes;
+                updateStats();
+                renderOrders();
+            } else {
+                showToast('Erreur lors du chargement des commandes', 'error');
+            }
+        } catch (error) {
+            console.error('Error fetching orders:', error);
+            showToast('Erreur de connexion', 'error');
+        }
+    }
+    
+    function updateStats() {
+        // Reset stats
+        stats = {
+            en_attente: 0,
+            validee: 0,
+            en_preparation: 0,
+            prete: 0,
+            en_livraison: 0,
+            livree: 0,
+            annulee: 0
+        };
+        
+        // Count orders by status
+        orders.forEach(order => {
+            if (stats.hasOwnProperty(order.statut)) {
+                stats[order.statut]++;
+            }
+        });
+        
+        // Update UI
+        document.getElementById('enAttenteCount').textContent = stats.en_attente;
+        document.getElementById('valideesCount').textContent = stats.validee;
+        document.getElementById('preparationCount').textContent = stats.en_preparation;
+        document.getElementById('pretesCount').textContent = stats.prete;
+    }
+    
+    function renderOrders() {
+        let filteredOrders = orders;
+        
+        if (currentFilter !== 'all') {
+            filteredOrders = orders.filter(order => order.statut === currentFilter);
+        }
+        
+        if (filteredOrders.length === 0) {
+            ordersContainer.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-shopping-bag"></i>
+                    </div>
+                    <h2 class="empty-title">Aucune commande</h2>
+                    <p class="empty-text">Il n'y a aucune commande avec ce statut pour le moment.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        ordersContainer.innerHTML = '';
+        
+        filteredOrders.forEach(order => {
+            const orderCard = createOrderCard(order);
+            ordersContainer.appendChild(orderCard);
+        });
+    }
+    
+    function createOrderCard(order) {
+        const card = document.createElement('div');
+        card.className = 'order-card';
+        card.dataset.orderId = order.id;
+        
+        const statusClass = `status-${order.statut}`;
+        
+        card.innerHTML = `
+            <div class="order-header">
+                <div class="order-info">
+                    <div class="order-number">Commande #${order.reference}</div>
+                    <div class="order-date">${order.date_commande}</div>
+                </div>
+                <div class="order-status ${statusClass}">${order.statut_display}</div>
+            </div>
+            <div class="order-body">
+                <div class="order-customer">
+                    <div class="customer-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="customer-info">
+                        <div class="customer-name">${order.client_nom}</div>
+                        <div class="customer-address">${order.adresse_livraison}</div>
+                    </div>
+                </div>
+                <div class="order-items">
+                    <div class="order-item">
+                        <div class="item-details">
+                            <div class="item-name">${order.nb_articles} article${order.nb_articles > 1 ? 's' : ''}</div>
+                            <div class="item-price">Total: ${order.total} FCFA</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="order-footer">
+                <div class="order-total">${order.total} FCFA</div>
+                <div class="order-actions">
+                    <button class="btn btn-primary btn-sm view-order" data-order-id="${order.id}">
+                        <i class="fas fa-eye"></i> Voir
+                    </button>
+                    ${getActionButtons(order)}
+                </div>
+            </div>
+        `;
+        
+        // Add event listeners
+        const viewBtn = card.querySelector('.view-order');
+        viewBtn.addEventListener('click', () => viewOrderDetails(order.id));
+        
+        // Add event listeners to action buttons
+        const actionBtns = card.querySelectorAll('.action-btn');
+        actionBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const action = btn.dataset.action;
+                handleOrderAction(order.id, action);
+            });
+        });
+        
+        return card;
+    }
+    
+    function getActionButtons(order) {
+        let buttons = '';
+        
+        switch (order.statut) {
+            case 'en_attente':
+                buttons = `
+                    <button class="btn btn-success btn-sm action-btn" data-action="valider" data-order-id="${order.id}">
+                        <i class="fas fa-check"></i> Valider
+                    </button>
+                    <button class="btn btn-danger btn-sm action-btn" data-action="refuser" data-order-id="${order.id}">
+                        <i class="fas fa-times"></i> Refuser
+                    </button>
+                `;
+                break;
+            case 'validee':
+                buttons = `
+                    <button class="btn btn-primary btn-sm action-btn" data-action="preparer" data-order-id="${order.id}">
+                        <i class="fas fa-utensils"></i> Préparer
+                    </button>
+                    <button class="btn btn-danger btn-sm action-btn" data-action="refuser" data-order-id="${order.id}">
+                        <i class="fas fa-times"></i> Refuser
+                    </button>
+                `;
+                break;
+            case 'en_preparation':
+                buttons = `
+                    <button class="btn btn-success btn-sm action-btn" data-action="prete" data-order-id="${order.id}">
+                        <i class="fas fa-box"></i> Prête
+                    </button>
+                `;
+                break;
+            case 'prete':
+                buttons = `
+                    <button class="btn btn-secondary btn-sm" disabled>
+                        <i class="fas fa-truck"></i> En attente de livreur
+                    </button>
+                `;
+                break;
+            case 'en_livraison':
+                buttons = `
+                    <button class="btn btn-secondary btn-sm" disabled>
+                        <i class="fas fa-truck"></i> En livraison
+                    </button>
+                `;
+                break;
+            case 'livree':
+                buttons = `
+                    <button class="btn btn-secondary btn-sm" disabled>
+                        <i class="fas fa-check-circle"></i> Livrée
+                    </button>
+                `;
+                break;
+            case 'annulee':
+                buttons = `
+                    <button class="btn btn-secondary btn-sm" disabled>
+                        <i class="fas fa-times-circle"></i> Annulée
+                    </button>
+                `;
+                break;
+        }
+        
+        return buttons;
+    }
+    
+    async function viewOrderDetails(orderId) {
+        try {
+            const response = await fetch(`/commercants/api/commande/${orderId}/`);
+            const data = await response.json();
+            
+            if (data.success) {
+                const order = data.commande;
+                
+                modalBody.innerHTML = `
+                    <div class="order-details">
+                        <div class="detail-section">
+                            <h3>Informations client</h3>
+                            <p><strong>Nom:</strong> ${order.client.nom_complet}</p>
+                            <p><strong>Email:</strong> ${order.client.email}</p>
+                            <p><strong>Téléphone:</strong> ${order.client.telephone}</p>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <h3>Adresse de livraison</h3>
+                            <p>${order.adresse_livraison}</p>
+                            ${order.instructions_livraison ? `<p><strong>Instructions:</strong> ${order.instructions_livraison}</p>` : ''}
+                        </div>
+                        
+                        <div class="detail-section">
+                            <h3>Détails de la commande</h3>
+                            <p><strong>Référence:</strong> ${order.reference}</p>
+                            <p><strong>Date:</strong> ${order.date_commande}</p>
+                            <p><strong>Statut:</strong> ${order.statut_display}</p>
+                            <p><strong>Méthode de paiement:</strong> ${order.methode_paiement}</p>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <h3>Articles</h3>
+                            <div class="articles-list">
+                                ${order.articles.map(article => `
+                                    <div class="article-item">
+                                        <div class="article-name">${article.produit_nom}</div>
+                                        <div class="article-details">
+                                            <span>Quantité: ${article.quantite}</span>
+                                            <span>Prix: ${article.prix_unitaire} FCFA</span>
+                                            <span>Sous-total: ${article.sous_total} FCFA</span>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <h3>Total</h3>
+                            <p class="total-amount">${order.total} FCFA</p>
+                        </div>
+                    </div>
+                `;
+                
+                modalFooter.innerHTML = getModalActionButtons(order);
+                
+                // Add event listeners to modal action buttons
+                const modalActionBtns = modalFooter.querySelectorAll('.action-btn');
+                modalActionBtns.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const action = btn.dataset.action;
+                        handleOrderAction(order.id, action);
+                        orderModal.classList.remove('active');
+                    });
+                });
+                
+                orderModal.classList.add('active');
+            } else {
+                showToast('Erreur lors du chargement des détails de la commande', 'error');
+            }
+        } catch (error) {
+            console.error('Error fetching order details:', error);
+            showToast('Erreur de connexion', 'error');
+        }
+    }
+    
+    function getModalActionButtons(order) {
+        let buttons = '';
+        
+        switch (order.statut) {
+            case 'en_attente':
+                buttons = `
+                    <button class="btn btn-danger action-btn" data-action="refuser" data-order-id="${order.id}">
+                        Refuser
+                    </button>
+                    <button class="btn btn-success action-btn" data-action="valider" data-order-id="${order.id}">
+                        Valider
+                    </button>
+                `;
+                break;
+            case 'validee':
+                buttons = `
+                    <button class="btn btn-danger action-btn" data-action="refuser" data-order-id="${order.id}">
+                        Refuser
+                    </button>
+                    <button class="btn btn-primary action-btn" data-action="preparer" data-order-id="${order.id}">
+                        Commencer la préparation
+                    </button>
+                `;
+                break;
+            case 'en_preparation':
+                buttons = `
+                    <button class="btn btn-success action-btn" data-action="prete" data-order-id="${order.id}">
+                        Marquer comme prête
+                    </button>
+                `;
+                break;
+            default:
+                buttons = `
+                    <button class="btn btn-secondary" onclick="orderModal.classList.remove('active')">
+                        Fermer
+                    </button>
+                `;
+        }
+        
+        return buttons;
+    }
+    
+    async function handleOrderAction(orderId, action) {
+        let url = '';
+        let successMessage = '';
+        
+        switch (action) {
+            case 'valider':
+                url = `/commercants/api/commandes/${orderId}/valider/`;
+                successMessage = 'Commande validée avec succès';
+                break;
+            case 'refuser':
+                url = `/commercants/api/commandes/${orderId}/refuser/`;
+                successMessage = 'Commande refusée';
+                break;
+            case 'preparer':
+                url = `/commercants/api/commandes/${orderId}/preparer/`;
+                successMessage = 'Commande marquée comme en préparation';
+                break;
+            case 'prete':
+                url = `/commercants/api/commandes/${orderId}/prete/`;
+                successMessage = 'Commande marquée comme prête pour livraison';
+                break;
+            default:
+                return;
+        }
+        
+        try {
+            showToast('Traitement en cours...', 'warning');
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showToast(data.message || successMessage, 'success');
+                fetchOrders(); // Refresh orders
+            } else {
+                showToast(data.message || 'Une erreur est survenue', 'error');
+            }
+        } catch (error) {
+            console.error('Error handling order action:', error);
+            showToast('Erreur de connexion', 'error');
+        }
+    }
+    
+    function showToast(message, type = 'info') {
+        toast.textContent = message;
+        toast.className = `toast ${type}`;
+        toast.classList.add('show');
+        
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Add some CSS for the modal content
+    const style = document.createElement('style');
+    style.textContent = `
+        .detail-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .detail-section h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--gray-700);
+        }
+        
+        .detail-section p {
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .articles-list {
+            margin-top: 0.5rem;
+        }
+        
+        .article-item {
+            padding: 0.75rem;
+            background-color: var(--gray-50);
+            border-radius: var(--radius);
+            margin-bottom: 0.5rem;
+        }
+        
+        .article-name {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+        
+        .article-details {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            color: var(--gray-500);
+        }
+        
+        .total-amount {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+    `;
+    document.head.appendChild(style);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 pb-24 pt-4">
+    <div class="max-w-lg mx-auto px-4">
+        <!-- En-tête -->
+        <div class="mb-6">
+            <a href="{% url 'clients:depot_portefeuille' %}" class="inline-flex items-center text-primary-600 mb-4">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Retour
+            </a>
+            <h1 class="text-2xl font-bold text-gray-900">Dépôt Mobile Money</h1>
+        </div>
+
+        <!-- Carte solde -->
+        <div class="bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl shadow-lg p-6 mb-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-primary-100 text-sm">Solde actuel</p>
+                    <p class="text-3xl font-bold mt-1">{{ portefeuille.solde }} FCFA</p>
+                </div>
+                <div class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                    <i class="fas fa-wallet text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulaire -->
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <form method="post">
+                {% csrf_token %}
+                
+                <!-- Montant -->
+                <div class="mb-6">
+                    <label for="{{ form.montant.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-3">
+                        Montant à déposer (FCFA)
+                    </label>
+                    <div class="relative">
+                        <input type="number" 
+                               name="montant" 
+                               id="{{ form.montant.id_for_label }}"
+                               class="w-full border border-gray-300 rounded-xl px-4 py-4 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-lg font-semibold"
+                               placeholder="0"
+                               min="100"
+                               required>
+                        <div class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
+                            FCFA
+                        </div>
+                    </div>
+                    {% if form.montant.errors %}
+                        <div class="text-red-600 text-sm mt-2">{{ form.montant.errors }}</div>
+                    {% endif %}
+                    <p class="text-gray-500 text-sm mt-2">Minimum: 100 FCFA</p>
+                </div>
+                
+                <!-- Opérateur -->
+                <div class="mb-6">
+                    <label for="{{ form.operateur.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-3">
+                        Opérateur
+                    </label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="relative">
+                            <input type="radio" name="operateur" value="FLOOZ" class="sr-only peer" required>
+                            <div class="border-2 border-gray-200 rounded-xl p-4 text-center peer-checked:border-primary-500 peer-checked:bg-primary-50 transition-colors cursor-pointer">
+                                <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-2">
+                                    <span class="text-white font-bold">F</span>
+                                </div>
+                                <span class="font-medium text-gray-900">FLOOZ</span>
+                            </div>
+                        </label>
+                        <label class="relative">
+                            <input type="radio" name="operateur" value="TMONEY" class="sr-only peer" required>
+                            <div class="border-2 border-gray-200 rounded-xl p-4 text-center peer-checked:border-primary-500 peer-checked:bg-primary-50 transition-colors cursor-pointer">
+                                <div class="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-2">
+                                    <span class="text-white font-bold">T</span>
+                                </div>
+                                <span class="font-medium text-gray-900">T-Money</span>
+                            </div>
+                        </label>
+                    </div>
+                    {% if form.operateur.errors %}
+                        <div class="text-red-600 text-sm mt-2">{{ form.operateur.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <!-- Numéro de téléphone -->
+                <div class="mb-6">
+                    <label for="{{ form.numero_telephone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-3">
+                        Numéro de téléphone
+                    </label>
+                    <input type="tel" 
+                           name="numero_telephone" 
+                           id="{{ form.numero_telephone.id_for_label }}"
+                           class="w-full border border-gray-300 rounded-xl px-4 py-4 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                           placeholder="90 12 34 56"
+                           required>
+                    {% if form.numero_telephone.errors %}
+                        <div class="text-red-600 text-sm mt-2">{{ form.numero_telephone.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <button type="submit" class="w-full bg-primary-600 text-white py-4 rounded-xl font-semibold hover:bg-primary-700 transition-colors shadow-lg shadow-primary-200 flex items-center justify-center space-x-2">
+                    <i class="fas fa-paper-plane"></i>
+                    <span>Procéder au paiement</span>
+                </button>
+            </form>
+            
+            <!-- Information -->
+            <div class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div class="flex items-start space-x-3">
+                    <i class="fas fa-info-circle text-blue-600 mt-0.5"></i>
+                    <div>
+                        <p class="text-sm text-blue-800">
+                            Vous recevrez un message de confirmation sur votre téléphone. 
+                            Votre portefeuille sera crédité après validation du paiement.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

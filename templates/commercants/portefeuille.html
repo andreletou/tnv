@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mon Portefeuille - {{ commercant.nom_boutique }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 pb-20">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-primary to-primary/80 text-gray">
+        <div class="px-4 py-6">
+            <div class="flex items-center justify-between mb-4">
+                <button onclick="history.back()" class="p-2 hover:bg-white/20 rounded-lg transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                </button>
+                <h1 class="text-xl font-bold">Mon Portefeuille</h1>
+                <div class="w-10"></div> <!-- Spacer pour l'alignement -->
+            </div>
+            
+            <!-- Solde -->
+            <div class="text-center">
+                <p class="text-sm opacity-80">Solde disponible</p>
+                <p class="text-3xl font-bold my-2">{{ portefeuille.solde|floatformat:0 }} FCFA</p>
+                <p class="text-sm opacity-80">Total ventes: {{ total_ventes|floatformat:0 }} FCFA</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Actions rapides -->
+    <div class="px-4 py-4 -mt-4">
+        <div class="bg-white rounded-xl shadow-sm p-4">
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="demanderRetrait()" class="flex flex-col items-center space-y-2 p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                        </svg>
+                    </div>
+                    <span class="text-sm font-medium text-gray-700">Retrait</span>
+                </button>
+                
+                <button onclick="afficherStatistiques()" class="flex flex-col items-center space-y-2 p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                    <span class="text-sm font-medium text-gray-700">Statistiques</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques rapides -->
+    <div class="px-4 py-2">
+        <div class="grid grid-cols-2 gap-3">
+            <div class="bg-white rounded-lg p-4 shadow-sm">
+                <div class="text-center">
+                    <p class="text-2xl font-bold text-green-600">{{ ventes_mois|floatformat:0 }}</p>
+                    <p class="text-xs text-gray-600">Ventes ce mois</p>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg p-4 shadow-sm">
+                <div class="text-center">
+                    <p class="text-2xl font-bold text-blue-600">{{ total_commissions|floatformat:0 }}</p>
+                    <p class="text-xs text-gray-600">Commissions plateforme</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dernières transactions -->
+    <div class="px-4 py-4">
+        <h3 class="font-semibold mb-3 text-gray-900">Dernières transactions</h3>
+        
+        <div class="space-y-3">
+            {% for transaction in transactions %}
+            <div class="bg-white rounded-lg p-4 shadow-sm">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="font-medium text-gray-900">
+                            {% if transaction.type_transaction == 'credit' %}
+                            Vente
+                            {% else %}
+                            Retrait
+                            {% endif %}
+                        </p>
+                        <p class="text-sm text-gray-500">{{ transaction.description }}</p>
+                        <p class="text-xs text-gray-400">{{ transaction.date_transaction|date:"d/m/Y H:i" }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold {% if transaction.type_transaction == 'credit' %}text-green-600{% else %}text-red-600{% endif %}">
+                            {% if transaction.type_transaction == 'credit' %}+{% else %}-{% endif %}
+                            {{ transaction.montant|floatformat:0 }} FCFA
+                        </p>
+                        <p class="text-xs text-gray-500">Solde: {{ transaction.solde_apres|floatformat:0 }} FCFA</p>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="bg-white rounded-lg p-8 text-center">
+                <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                </svg>
+                <p class="text-gray-500">Aucune transaction pour le moment</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Retraits récents -->
+    {% if retraits %}
+    <div class="px-4 py-4">
+        <h3 class="font-semibold mb-3 text-gray-900">Derniers retraits</h3>
+        
+        <div class="space-y-3">
+            {% for retrait in retraits %}
+            <div class="bg-white rounded-lg p-4 shadow-sm">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="font-medium text-gray-900">{{ retrait.montant|floatformat:0 }} FCFA</p>
+                        <p class="text-sm text-gray-500">{{ retrait.get_methode_display }}</p>
+                        <p class="text-xs text-gray-400">{{ retrait.date_demande|date:"d/m/Y H:i" }}</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="px-2 py-1 text-xs rounded-full 
+                            {% if retrait.statut == 'traite' %}bg-green-100 text-green-800
+                            {% elif retrait.statut == 'en_attente' %}bg-yellow-100 text-yellow-800
+                            {% else %}bg-red-100 text-red-800{% endif %}">
+                            {{ retrait.get_statut_display }}
+                        </span>
+                        <p class="text-xs text-gray-500 mt-1">Net: {{ retrait.montant_net|floatformat:0 }} FCFA</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function demanderRetrait() {
+    window.location.href = "{% url 'commercants:demande_retrait_commercant' %}";
+}
+
+function afficherStatistiques() {
+    // Charger les statistiques via API
+    fetch("{% url 'commercants:api_statistiques_commercant' %}")
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const stats = data.statistiques;
+                alert(`Statistiques:\n\nSolde actuel: ${stats.solde_actuel.toLocaleString()} FCFA\nVentes 30j: ${stats.ventes_30j.toLocaleString()} FCFA\nCommandes 30j: ${stats.commandes_30j}\nTotal ventes: ${stats.total_ventes.toLocaleString()} FCFA`);
+            }
+        });
+}
+
+// Actualiser automatiquement le solde toutes les 30 secondes
+setInterval(() => {
+    fetch("{% url 'commercants:api_statistiques_commercant' %}")
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Mettre à jour l'affichage du solde
+                document.querySelector('.text-3xl.font-bold').textContent = 
+                    data.statistiques.solde_actuel.toLocaleString() + ' FCFA';
+            }
+        });
+}, 30000);
+</script>
+{% endblock %}

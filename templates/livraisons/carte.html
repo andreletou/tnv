@@ -1,0 +1,1116 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Carte Livraisons - Local-Links{% endblock %}
+
+{% block extra_css %}
+<style>
+    .map-container {
+        height: 60vh;
+        width: 100%;
+        position: relative;
+        background-color: #f5f5f5;
+    }
+    .info-panel {
+        height: 40vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .step-indicator {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: bold;
+    }
+    .step-line {
+        width: 2px;
+        height: 20px;
+        margin-left: 11px;
+    }
+    .gm-style-iw {
+        padding: 10px;
+    }
+    .gm-style-iw h3 {
+        margin: 0 0 5px 0;
+        font-size: 14px;
+    }
+    .gm-style-iw p {
+        margin: 0;
+        font-size: 12px;
+    }
+    .map-error {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        text-align: center;
+        padding: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<header class="bg-white dark:bg-gray-800 shadow-sm z-30 relative">
+    <div class="px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <button onclick="history.back()" class="p-2 rounded-full bg-gray-100 dark:bg-gray-700">
+                <i class="fas fa-arrow-left text-gray-600 dark:text-gray-300"></i>
+            </button>
+            <div>
+                <h1 class="font-bold text-lg">
+                    {% if livraison.id > 0 %}Livraison en cours{% else %}Carte des livraisons{% endif %}
+                </h1>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    {% if livraison.id > 0 %}
+                        Commande #{{ livraison.commande.reference }}
+                    {% else %}
+                        Aucune livraison en cours
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2">
+            <button id="refresh-btn" class="p-2 rounded-full bg-gray-100 dark:bg-gray-700">
+                <i class="fas fa-sync-alt text-gray-600 dark:text-gray-300"></i>
+            </button>
+            <div class="relative">
+                <button id="menu-btn" class="p-2 rounded-full bg-gray-100 dark:bg-gray-700">
+                    <i class="fas fa-ellipsis-v text-gray-600 dark:text-gray-300"></i>
+                </button>
+                <div id="menu-dropdown" class="absolute right-0 top-12 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-2 hidden z-50 border border-gray-200 dark:border-gray-700">
+                    <button class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center">
+                        <i class="fas fa-route mr-2 text-blue-500"></i>
+                        <span>Optimiser l'itinéraire</span>
+                    </button>
+                    <button class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center">
+                        <i class="fas fa-traffic-light mr-2 text-orange-500"></i>
+                        <span>Trafic en temps réel</span>
+                    </button>
+                    <button class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center">
+                        <i class="fas fa-exclamation-triangle mr-2 text-red-500"></i>
+                        <span>Signaler un problème</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Main Content -->
+<div class="min-h-screen pb-16">
+    <!-- Carte Google Maps -->
+    <div class="map-container" 
+         id="map"
+         data-api-key="{{ google_maps_api_key }}"
+         data-livraison-id="{{ livraison.id }}">
+        <!-- État de chargement -->
+        <div id="map-loading" class="map-error">
+            <i class="fas fa-spinner fa-spin text-4xl text-gray-400 mb-2"></i>
+            <p class="text-gray-600 dark:text-gray-400">Chargement de la carte...</p>
+        </div>
+    </div>
+
+    <!-- Panneau d'informations -->
+    <div class="info-panel bg-white dark:bg-gray-800 shadow-lg">
+        <!-- Onglets -->
+        <div class="flex border-b border-gray-200 dark:border-gray-700">
+            <button id="tab-itinerary" class="flex-1 py-3 text-center font-medium border-b-2 border-primary-500 text-primary-600 dark:text-primary-400">
+                <i class="fas fa-route mr-1"></i> Itinéraire
+            </button>
+            <button id="tab-client" class="flex-1 py-3 text-center font-medium text-gray-500 dark:text-gray-400">
+                <i class="fas fa-user mr-1"></i> Client
+            </button>
+            <button id="tab-details" class="flex-1 py-3 text-center font-medium text-gray-500 dark:text-gray-400">
+                <i class="fas fa-info-circle mr-1"></i> Détails
+            </button>
+        </div>
+
+        <!-- Contenu des onglets -->
+        <div class="p-4">
+            <!-- Onglet Itinéraire -->
+            <div id="content-itinerary" class="tab-content">
+                <div class="mb-4">
+                    <h3 class="font-bold text-lg mb-2">Votre itinéraire</h3>
+                    <div class="flex items-center justify-between bg-primary-50 dark:bg-primary-900/20 p-3 rounded-lg">
+                        <div>
+                            <p class="font-medium" id="distance-text">Calcul en cours...</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400" id="duration-text"></p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-lg" id="delivery-cost">{{ livraison.cout_livraison }} FCFA</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Coût de livraison</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="flex items-start">
+                        <div class="step-indicator bg-primary-500 text-white">1</div>
+                        <div class="ml-3 flex-1">
+                            <p class="font-medium">Récupérer la commande</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400" id="pickup-address">
+                                {{ livraison.commande.boutique.adresse }}
+                            </p>
+                            <div class="mt-2 flex space-x-2">
+                                <button class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-1 rounded call-btn" data-type="boutique">
+                                    <i class="fas fa-phone mr-1"></i> Appeler
+                                </button>
+                                <button class="text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-2 py-1 rounded navigate-btn" 
+                                        data-lat="{% if livraison.boutique_point %}{{ livraison.boutique_point.y }}{% else %}0{% endif %}" 
+                                        data-lng="{% if livraison.boutique_point %}{{ livraison.boutique_point.x }}{% else %}0{% endif %}">
+                                    <i class="fas fa-map-marker-alt mr-1"></i> Y aller
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-line bg-gray-300 dark:bg-gray-600"></div>
+
+                    <div class="flex items-start">
+                        <div class="step-indicator bg-primary-500 text-white">2</div>
+                        <div class="ml-3 flex-1">
+                            <p class="font-medium">Livrer au client</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400" id="delivery-address">
+                                {{ livraison.commande.adresse_livraison }}
+                            </p>
+                            <div class="mt-2 flex space-x-2">
+                                <button class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-1 rounded call-btn" data-type="client">
+                                    <i class="fas fa-phone mr-1"></i> Appeler
+                                </button>
+                                <button class="text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-2 py-1 rounded navigate-btn" 
+                                        data-lat="{% if livraison.adresse_livraison_point %}{{ livraison.adresse_livraison_point.y }}{% else %}0{% endif %}" 
+                                        data-lng="{% if livraison.adresse_livraison_point %}{{ livraison.adresse_livraison_point.x }}{% else %}0{% endif %}">
+                                    <i class="fas fa-map-marker-alt mr-1"></i> Y aller
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Onglet Client -->
+            <div id="content-client" class="tab-content hidden">
+                <div class="flex items-center space-x-4 mb-4">
+                    <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user text-primary-600 dark:text-primary-400 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold" id="client-name">
+                            {{ livraison.commande.client.first_name }} {{ livraison.commande.client.last_name }}
+                        </h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400" id="client-phone">
+                            {{ livraison.commande.client.telephone|default:"Téléphone non disponible" }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg mb-4">
+                    <h4 class="font-medium mb-2">Adresse de livraison</h4>
+                    <p class="text-sm" id="client-address">{{ livraison.commande.adresse_livraison }}</p>
+                </div>
+
+                <div class="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
+                    <h4 class="font-medium mb-2">Instructions spéciales</h4>
+                    <p class="text-sm" id="delivery-instructions">
+                        {% if livraison.instructions_speciales %}
+                            {{ livraison.instructions_speciales }}
+                        {% else %}
+                            Aucune instruction spéciale.
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Onglet Détails -->
+            <div id="content-details" class="tab-content hidden">
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-medium mb-2">Informations commande</h4>
+                        <div class="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
+                            <div class="flex justify-between mb-2">
+                                <span>Référence:</span>
+                                <span class="font-medium" id="order-reference">{{ livraison.commande.reference }}</span>
+                            </div>
+                            <div class="flex justify-between mb-2">
+                                <span>Date:</span>
+                                <span class="font-medium">
+                                    {% if livraison.date_attribution %}
+                                        {{ livraison.date_attribution|date:"d/m/Y H:i" }}
+                                    {% else %}
+                                        Non attribuée
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Statut:</span>
+                                <span class="font-medium px-2 py-1 
+                                    {% if livraison.statut == 'terminee' %}bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200
+                                    {% elif livraison.statut == 'en_cours' %}bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200
+                                    {% elif livraison.statut == 'annulee' %}bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200
+                                    {% elif livraison.statut == 'acceptee' %}bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200
+                                    {% else %}bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200{% endif %} 
+                                    rounded text-xs">
+                                    {{ livraison.statut_display }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="font-medium mb-2">Détails de paiement</h4>
+                        <div class="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
+                            <div class="flex justify-between mb-2">
+                                <span>Montant commande:</span>
+                                <span class="font-medium">{{ livraison.commande.total }} FCFA</span>
+                            </div>
+                            <div class="flex justify-between mb-2">
+                                <span>Frais de livraison:</span>
+                                <span class="font-medium">{{ livraison.cout_livraison }} FCFA</span>
+                            </div>
+                            <div class="flex justify-between border-t border-gray-300 dark:border-gray-600 pt-2">
+                                <span class="font-medium">Total:</span>
+                                <span class="font-medium">{{ livraison.commande.total|add:livraison.cout_livraison }} FCFA</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if livraison.statut == 'en_cours' %}
+                    <div class="pt-4">
+                        <button id="finish-delivery-btn" class="w-full py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-colors">
+                            <i class="fas fa-check-circle mr-2"></i>Terminer la livraison
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Terminer Livraison -->
+<div id="finish-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-xl w-full max-w-md p-6 animate-slide-up">
+        <h3 class="text-xl font-bold mb-4">Terminer la livraison</h3>
+        
+        <form id="finish-delivery-form" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Preuve de livraison (optionnel)</label>
+                    <input type="file" id="proof-file" name="preuve_livraison" accept="image/*" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
+                    <p class="text-xs text-gray-500 mt-1">Photo du colis livré</p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Signature client (optionnel)</label>
+                    <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center cursor-pointer bg-gray-50 dark:bg-gray-700/50" id="signature-area">
+                        <i class="fas fa-signature text-3xl text-gray-400 mb-2"></i>
+                        <p class="text-sm text-gray-500">Cliquez pour ajouter une signature</p>
+                        <canvas id="signature-canvas" class="hidden mt-2 border border-gray-300"></canvas>
+                    </div>
+                    <input type="hidden" id="signature-data" name="signature_data">
+                </div>
+                
+                <div class="flex space-x-3 pt-4">
+                    <button type="button" id="cancel-finish" class="flex-1 py-3 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                        Annuler
+                    </button>
+                    <button type="submit" id="confirm-finish" class="flex-1 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-colors">
+                        <i class="fas fa-check mr-2"></i>Terminer
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Signalement -->
+<div id="report-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-xl w-full max-w-md p-6 animate-slide-up">
+        <h3 class="text-xl font-bold mb-4">Signaler un problème</h3>
+        
+        <form id="report-form">
+            {% csrf_token %}
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Type de problème</label>
+                    <select name="type_probleme" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
+                        <option value="route_barree">Route barrée</option>
+                        <option value="adresse_incorrecte">Adresse incorrecte</option>
+                        <option value="trafic_extreme">Trafic extrême</option>
+                        <option value="danger">Danger / Accident</option>
+                        <option value="client_absent">Client absent</option>
+                        <option value="colis_endommage">Colis endommagé</option>
+                        <option value="autre">Autre problème</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Description</label>
+                    <textarea name="description" rows="3" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700" placeholder="Décrivez le problème..."></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Photo (optionnel)</label>
+                    <input type="file" name="photo" accept="image/*" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
+                </div>
+                
+                <div class="flex space-x-3 pt-4">
+                    <button type="button" id="cancel-report" class="flex-1 py-3 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg font-medium">
+                        Annuler
+                    </button>
+                    <button type="submit" class="flex-1 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>Signaler
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Fonction pour observer la visibilité de la carte
+    function observeMapVisibility() {
+        const mapElement = document.getElementById('map');
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    loadGoogleMapsAPI();
+                    observer.unobserve(mapElement);
+                }
+            });
+        }, {
+            rootMargin: '50px', // Charger 50px avant d'entrer dans la vue
+            threshold: 0.1
+        });
+        
+        observer.observe(mapElement);
+    }
+    
+    // Fonction optimisée pour charger Google Maps
+    function loadGoogleMapsAPI() {
+        // Éviter le double chargement
+        if (window.googleMapsLoading) return;
+        window.googleMapsLoading = true;
+        
+        const mapElement = document.getElementById('map');
+        const apiKey = mapElement.getAttribute('data-api-key');
+        
+        if (!apiKey) {
+            console.error('Clé API Google Maps manquante');
+            showMapError('Clé API manquante');
+            return;
+        }
+        
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry,places`;
+        script.async = true;
+        script.defer = true;
+        
+        // Créer une promesse pour gérer le chargement
+        window.googleMapsPromise = new Promise((resolve, reject) => {
+            window.initGoogleMaps = resolve;
+            script.onerror = reject;
+        });
+        
+        document.head.appendChild(script);
+        
+        // Une fois l'API chargée, initialiser la carte
+        window.googleMapsPromise
+            .then(() => {
+                console.log('Google Maps API chargée avec succès');
+                initMap();
+            })
+            .catch(error => {
+                console.error('Erreur de chargement Google Maps:', error);
+                showMapError('Erreur de chargement');
+            })
+            .finally(() => {
+                window.googleMapsLoading = false;
+            });
+    }
+    
+    // Gestion d'erreur pour la carte
+    function showMapError(message = 'Erreur de chargement') {
+        const mapElement = document.getElementById('map');
+        const loadingElement = document.getElementById('map-loading');
+        
+        if (loadingElement) {
+            loadingElement.innerHTML = `
+                <div class="map-error">
+                    <i class="fas fa-exclamation-triangle text-4xl text-orange-500 mb-2"></i>
+                    <p class="text-gray-600 dark:text-gray-400">${message}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-500 mt-1">
+                        Vérifiez votre connexion internet
+                    </p>
+                    <button onclick="retryLoadGoogleMaps()" class="mt-3 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors">
+                        <i class="fas fa-redo mr-2"></i>Réessayer
+                    </button>
+                </div>
+            `;
+        }
+    }
+    
+    // Fonction de réessai
+    function retryLoadGoogleMaps() {
+        const mapElement = document.getElementById('map');
+        const loadingElement = document.getElementById('map-loading');
+        
+        if (loadingElement) {
+            loadingElement.innerHTML = `
+                <div class="map-error">
+                    <i class="fas fa-spinner fa-spin text-4xl text-gray-400 mb-2"></i>
+                    <p class="text-gray-600 dark:text-gray-400">Chargement de la carte...</p>
+                </div>
+            `;
+        }
+        
+        setTimeout(loadGoogleMapsAPI, 500);
+    }
+    
+    // Gestion d'erreur Google Maps
+    window.gm_authFailure = function() {
+        showMapError('Erreur d\'authentification Google Maps');
+    };
+    
+    // Initialisation du DOM
+    document.addEventListener('DOMContentLoaded', function() {
+        initTabs();
+        setupEventListeners();
+        initSignatureCanvas();
+        
+        // Observer la visibilité de la carte pour lazy loading
+        if ('IntersectionObserver' in window) {
+            observeMapVisibility();
+        } else {
+            // Fallback: charger après un délai
+            setTimeout(loadGoogleMapsAPI, 500);
+        }
+    });
+    
+    // Fonction initMap qui sera appelée par Google Maps
+    window.initGoogleMaps = function() {
+        // Cette fonction sera remplacée par la vraie initMap
+        console.log('Google Maps API prête');
+    };
+</script>
+
+<script>
+    // Variables globales
+    let map;
+    let directionsService;
+    let directionsRenderer;
+    let currentLivraisonId = {{ livraison.id }};
+    let userMarker;
+    let pickupMarker;
+    let deliveryMarker;
+    let geocoder;
+    let signatureCanvas;
+    let isDrawing = false;
+
+    // Définir la vraie fonction initMap
+    function initMap() {
+        console.log('Initialisation de la carte...');
+        
+        // Masquer l'indicateur de chargement
+        const loadingElement = document.getElementById('map-loading');
+        if (loadingElement) {
+            loadingElement.style.display = 'none';
+        }
+        
+        // Créer la carte
+        map = new google.maps.Map(document.getElementById('map'), {
+            zoom: 13,
+            center: { lat: 6.130419, lng: 1.215829 },
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: true,
+            fullscreenControlOptions: {
+                position: google.maps.ControlPosition.RIGHT_BOTTOM
+            },
+            styles: [
+                {
+                    "featureType": "poi",
+                    "stylers": [{ "visibility": "off" }]
+                }
+            ]
+        });
+
+        // Initialiser les services
+        directionsService = new google.maps.DirectionsService();
+        directionsRenderer = new google.maps.DirectionsRenderer({
+            map: map,
+            suppressMarkers: true,
+            polylineOptions: {
+                strokeColor: '#10b981',
+                strokeOpacity: 0.8,
+                strokeWeight: 5
+            }
+        });
+
+        geocoder = new google.maps.Geocoder();
+
+        // Obtenir la position actuelle de l'utilisateur
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const userLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    
+                    updateUserPosition(userLocation.lat, userLocation.lng);
+                    setupMapWithLivraisonData(userLocation);
+                },
+                function(error) {
+                    console.error('Erreur de géolocalisation:', error);
+                    showToast('Impossible d\'obtenir votre position', 'error');
+                    setupMapWithLivraisonData();
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 60000
+                }
+            );
+        } else {
+            setupMapWithLivraisonData();
+        }
+    }
+
+    // Configuration de la carte avec les données de livraison
+    function setupMapWithLivraisonData(userLocation = null) {
+        const mapElement = document.getElementById('map');
+        const livraisonId = mapElement.getAttribute('data-livraison-id');
+        
+        // Si pas de livraison en cours, afficher un message
+        if (livraisonId === '0') {
+            showToast('Aucune livraison en cours', 'info');
+            return;
+        }
+        
+        const livraisonData = {
+            pickup: {
+                lat: {{ livraison.boutique_point.y|default:"6.130419" }},
+                lng: {{ livraison.boutique_point.x|default:"1.215829" }},
+                title: 'Point de pickup'
+            },
+            delivery: {
+                lat: {{ livraison.adresse_livraison_point.y|default:"6.140419" }},
+                lng: {{ livraison.adresse_livraison_point.x|default:"1.225829" }},
+                title: 'Point de livraison'
+            }
+        };
+
+        // Créer les marqueurs
+        createMarkers(livraisonData, userLocation);
+        
+        // Calculer l'itinéraire
+        calculateRoute(livraisonData, userLocation);
+    }
+
+    // Création des marqueurs
+    function createMarkers(livraisonData, userLocation) {
+        const bounds = new google.maps.LatLngBounds();
+
+        // Marqueur utilisateur
+        if (userLocation) {
+            userMarker = new google.maps.Marker({
+                position: userLocation,
+                map: map,
+                icon: {
+                    url: 'data:image/svg+xml;base64,' + btoa(`
+                        <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="16" cy="16" r="8" fill="#10b981" stroke="white" stroke-width="2"/>
+                            <circle cx="16" cy="16" r="12" fill="#10b981" opacity="0.3"/>
+                        </svg>
+                    `),
+                    scaledSize: new google.maps.Size(32, 32),
+                    anchor: new google.maps.Point(16, 16)
+                },
+                title: 'Votre position'
+            });
+            bounds.extend(userLocation);
+        }
+
+        // Marqueur pickup
+        const pickupLocation = new google.maps.LatLng(livraisonData.pickup.lat, livraisonData.pickup.lng);
+        pickupMarker = new google.maps.Marker({
+            position: pickupLocation,
+            map: map,
+            icon: {
+                url: 'data:image/svg+xml;base64,' + btoa(`
+                    <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="16" cy="16" r="14" fill="#3b82f6" stroke="white" stroke-width="2"/>
+                        <text x="16" y="20" text-anchor="middle" fill="white" font-size="14" font-weight="bold">P</text>
+                    </svg>
+                `),
+                scaledSize: new google.maps.Size(32, 32),
+                anchor: new google.maps.Point(16, 16)
+            },
+            title: livraisonData.pickup.title
+        });
+        bounds.extend(pickupLocation);
+
+        // Marqueur delivery
+        const deliveryLocation = new google.maps.LatLng(livraisonData.delivery.lat, livraisonData.delivery.lng);
+        deliveryMarker = new google.maps.Marker({
+            position: deliveryLocation,
+            map: map,
+            icon: {
+                url: 'data:image/svg+xml;base64,' + btoa(`
+                    <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="16" cy="16" r="14" fill="#ef4444" stroke="white" stroke-width="2"/>
+                        <text x="16" y="20" text-anchor="middle" fill="white" font-size="14" font-weight="bold">D</text>
+                    </svg>
+                `),
+                scaledSize: new google.maps.Size(32, 32),
+                anchor: new google.maps.Point(16, 16)
+            },
+            title: livraisonData.delivery.title
+        });
+        bounds.extend(deliveryLocation);
+
+        // Ajuster la vue de la carte
+        if (bounds.getNorthEast().equals(bounds.getSouthWest())) {
+            const extendPoint = new google.maps.LatLng(
+                bounds.getCenter().lat() + 0.01,
+                bounds.getCenter().lng() + 0.01
+            );
+            bounds.extend(extendPoint);
+        }
+        
+        map.fitBounds(bounds, { padding: 50 });
+    }
+
+    // Calcul de l'itinéraire
+    function calculateRoute(livraisonData, userLocation) {
+        const pickupLocation = new google.maps.LatLng(livraisonData.pickup.lat, livraisonData.pickup.lng);
+        const deliveryLocation = new google.maps.LatLng(livraisonData.delivery.lat, livraisonData.delivery.lng);
+
+        let request;
+
+        if (userLocation) {
+            request = {
+                origin: userLocation,
+                destination: deliveryLocation,
+                waypoints: [{ location: pickupLocation, stopover: true }],
+                travelMode: google.maps.TravelMode.DRIVING,
+                optimizeWaypoints: false,
+                provideRouteAlternatives: false
+            };
+        } else {
+            request = {
+                origin: pickupLocation,
+                destination: deliveryLocation,
+                travelMode: google.maps.TravelMode.DRIVING,
+                provideRouteAlternatives: false
+            };
+        }
+
+        directionsService.route(request, function(result, status) {
+            if (status === 'OK') {
+                directionsRenderer.setDirections(result);
+                
+                // Mettre à jour les informations d'itinéraire
+                const route = result.routes[0];
+                let totalDistance = 0;
+                let totalDuration = 0;
+
+                route.legs.forEach(leg => {
+                    totalDistance += leg.distance.value;
+                    totalDuration += leg.duration.value;
+                });
+
+                document.getElementById('distance-text').textContent = 
+                    `Distance: ${(totalDistance / 1000).toFixed(1)} km`;
+                document.getElementById('duration-text').textContent = 
+                    `Durée estimée: ${Math.round(totalDuration / 60)} min`;
+
+            } else {
+                console.error('Erreur calcul itinéraire:', status);
+                showToast('Impossible de calculer l\'itinéraire', 'error');
+                
+                // Afficher quand même les marqueurs
+                document.getElementById('distance-text').textContent = 
+                    'Itinéraire non disponible';
+                document.getElementById('duration-text').textContent = 
+                    'Utilisez la navigation externe';
+            }
+        });
+    }
+
+    // Initialisation des onglets
+    function initTabs() {
+        const tabs = document.querySelectorAll('[id^="tab-"]');
+        const contents = document.querySelectorAll('.tab-content');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                const targetId = this.id.replace('tab-', 'content-');
+                
+                // Mettre à jour l'onglet actif
+                tabs.forEach(t => {
+                    t.classList.remove('border-primary-500', 'text-primary-600', 'dark:text-primary-400');
+                    t.classList.add('text-gray-500', 'dark:text-gray-400');
+                });
+                this.classList.add('border-primary-500', 'text-primary-600', 'dark:text-primary-400');
+                this.classList.remove('text-gray-500', 'dark:text-gray-400');
+                
+                // Afficher le contenu correspondant
+                contents.forEach(content => {
+                    content.classList.add('hidden');
+                });
+                document.getElementById(targetId).classList.remove('hidden');
+            });
+        });
+    }
+
+    // Initialisation du canvas de signature
+    function initSignatureCanvas() {
+        signatureCanvas = document.getElementById('signature-canvas');
+        if (signatureCanvas) {
+            const ctx = signatureCanvas.getContext('2d');
+            signatureCanvas.width = signatureCanvas.offsetWidth;
+            signatureCanvas.height = 150;
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+
+            // Événements de dessin
+            signatureCanvas.addEventListener('mousedown', startDrawing);
+            signatureCanvas.addEventListener('mousemove', draw);
+            signatureCanvas.addEventListener('mouseup', stopDrawing);
+            signatureCanvas.addEventListener('mouseout', stopDrawing);
+
+            // Événements tactiles
+            signatureCanvas.addEventListener('touchstart', startDrawingTouch);
+            signatureCanvas.addEventListener('touchmove', drawTouch);
+            signatureCanvas.addEventListener('touchend', stopDrawing);
+        }
+    }
+
+    // Fonctions de dessin pour la signature
+    function startDrawing(e) {
+        isDrawing = true;
+        draw(e);
+    }
+
+    function draw(e) {
+        if (!isDrawing) return;
+        const rect = signatureCanvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        const ctx = signatureCanvas.getContext('2d');
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+    }
+
+    function stopDrawing() {
+        isDrawing = false;
+        const ctx = signatureCanvas.getContext('2d');
+        ctx.beginPath();
+        
+        // Sauvegarder la signature
+        if (signatureCanvas.toDataURL() !== signatureCanvas.blankDataURL) {
+            document.getElementById('signature-data').value = signatureCanvas.toDataURL();
+        }
+    }
+
+    function startDrawingTouch(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent('mousedown', {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        });
+        signatureCanvas.dispatchEvent(mouseEvent);
+    }
+
+    function drawTouch(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent('mousemove', {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        });
+        signatureCanvas.dispatchEvent(mouseEvent);
+    }
+
+    // Configuration des écouteurs d'événements
+    function setupEventListeners() {
+        // Bouton d'actualisation
+        document.getElementById('refresh-btn').addEventListener('click', function() {
+            showToast('Actualisation de la position...', 'info');
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const userLocation = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        updateUserPosition(userLocation.lat, userLocation.lng);
+                        
+                        if (userMarker) {
+                            userMarker.setPosition(userLocation);
+                        }
+                        
+                        showToast('Position actualisée', 'success');
+                    },
+                    function(error) {
+                        showToast('Erreur de géolocalisation', 'error');
+                    }
+                );
+            }
+        });
+        
+        // Menu déroulant
+        document.getElementById('menu-btn').addEventListener('click', function() {
+            const dropdown = document.getElementById('menu-dropdown');
+            dropdown.classList.toggle('hidden');
+        });
+
+        // Fermer le menu déroulant en cliquant ailleurs
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('#menu-btn') && !e.target.closest('#menu-dropdown')) {
+                document.getElementById('menu-dropdown').classList.add('hidden');
+            }
+        });
+
+        // Options du menu
+        document.querySelectorAll('#menu-dropdown button').forEach(button => {
+            button.addEventListener('click', function() {
+                document.getElementById('menu-dropdown').classList.add('hidden');
+                
+                if (this.textContent.includes('Signaler')) {
+                    document.getElementById('report-modal').classList.remove('hidden');
+                } else {
+                    showToast('Fonctionnalité à venir', 'info');
+                }
+            });
+        });
+
+        // Boutons d'appel
+        document.querySelectorAll('.call-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const type = this.getAttribute('data-type');
+                let phoneNumber = '';
+                
+                if (type === 'client') {
+                    phoneNumber = '{{ livraison.commande.client.telephone|default:"" }}';
+                } else if (type === 'boutique') {
+                    phoneNumber = '{{ livraison.commande.boutique.telephone|default:"" }}';
+                }
+                
+                if (phoneNumber) {
+                    window.open(`tel:${phoneNumber}`, '_self');
+                } else {
+                    showToast('Numéro de téléphone non disponible', 'error');
+                }
+            });
+        });
+        
+        // Boutons de navigation
+        document.querySelectorAll('.navigate-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const lat = this.getAttribute('data-lat');
+                const lng = this.getAttribute('data-lng');
+                
+                if (lat && lng && lat !== '0' && lng !== '0') {
+                    // Ouvrir dans Google Maps
+                    const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
+                    window.open(url, '_blank');
+                } else {
+                    showToast('Coordonnées non disponibles', 'error');
+                }
+            });
+        });
+        
+        // Bouton terminer la livraison
+        const finishBtn = document.getElementById('finish-delivery-btn');
+        if (finishBtn) {
+            finishBtn.addEventListener('click', function() {
+                document.getElementById('finish-modal').classList.remove('hidden');
+            });
+        }
+        
+        // Modal terminer livraison
+        document.getElementById('cancel-finish').addEventListener('click', function() {
+            document.getElementById('finish-modal').classList.add('hidden');
+            resetSignatureCanvas();
+        });
+        
+        document.getElementById('finish-delivery-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            finishDelivery();
+        });
+        
+        // Zone de signature
+        document.getElementById('signature-area').addEventListener('click', function() {
+            const canvas = document.getElementById('signature-canvas');
+            canvas.classList.remove('hidden');
+            this.querySelector('i').classList.add('hidden');
+            this.querySelector('p').classList.add('hidden');
+        });
+        
+        // Modal signalement
+        document.getElementById('cancel-report').addEventListener('click', function() {
+            document.getElementById('report-modal').classList.add('hidden');
+        });
+        
+        document.getElementById('report-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitReport();
+        });
+    }
+
+    // Réinitialiser le canvas de signature
+    function resetSignatureCanvas() {
+        if (signatureCanvas) {
+            const ctx = signatureCanvas.getContext('2d');
+            ctx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+            signatureCanvas.classList.add('hidden');
+            document.getElementById('signature-data').value = '';
+            
+            const signatureArea = document.getElementById('signature-area');
+            signatureArea.querySelector('i').classList.remove('hidden');
+            signatureArea.querySelector('p').classList.remove('hidden');
+        }
+    }
+
+    // Mise à jour de la position de l'utilisateur sur le serveur
+    function updateUserPosition(lat, lng) {
+        fetch('/livraisons/api/position/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify({
+                latitude: lat,
+                longitude: lng
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                console.error('Erreur mise à jour position:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Erreur mise à jour position:', error);
+        });
+    }
+
+    // Terminer la livraison
+    function finishDelivery() {
+        showLoading(true);
+        
+        const formData = new FormData(document.getElementById('finish-delivery-form'));
+        formData.append('action', 'terminer');
+        
+        fetch(`/livraisons/livraison/${currentLivraisonId}/action/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Livraison terminée avec succès!', 'success');
+                document.getElementById('finish-modal').classList.add('hidden');
+                
+                // Rediriger vers le tableau de bord après 2 secondes
+                setTimeout(() => {
+                    window.location.href = "{% url 'livraisons:tableau_de_bord' %}";
+                }, 2000);
+            } else {
+                showToast(data.message || 'Erreur lors de la finalisation', 'error');
+                showLoading(false);
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showToast('Erreur de connexion', 'error');
+            showLoading(false);
+        });
+    }
+
+    // Soumettre un signalement
+    function submitReport() {
+        showLoading(true);
+        
+        const formData = new FormData(document.getElementById('report-form'));
+        formData.append('livraison_id', currentLivraisonId);
+        
+        fetch('/livraisons/api/signalements/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Problème signalé avec succès', 'success');
+                document.getElementById('report-modal').classList.add('hidden');
+                document.getElementById('report-form').reset();
+            } else {
+                showToast(data.message || 'Erreur lors du signalement', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showToast('Erreur de connexion', 'error');
+        })
+        .finally(() => {
+            showLoading(false);
+        });
+    }
+
+    // Fonctions utilitaires
+    function showToast(message, type = 'info') {
+        // Implémentez votre fonction toast ici
+        console.log(`${type}: ${message}`);
+    }
+
+    function showLoading(show) {
+        // Implémentez votre fonction de chargement ici
+        if (show) {
+            console.log('Chargement...');
+        } else {
+            console.log('Chargement terminé');
+        }
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %}

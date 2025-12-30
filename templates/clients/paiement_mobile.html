@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 pb-24 pt-4">
+    <div class="max-w-lg mx-auto px-4">
+        <!-- En-tête -->
+        <div class="mb-6">
+            <a href="{% url 'clients:choix_paiement' commande.id %}" class="inline-flex items-center text-primary-600 mb-4">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Retour
+            </a>
+            <h1 class="text-2xl font-bold text-gray-900">Paiement {{ network_name }}</h1>
+        </div>
+
+        <!-- Carte de commande -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6 border border-gray-100">
+            <div class="flex items-center space-x-4">
+                <div class="w-14 h-14 bg-primary-100 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-shopping-bag text-primary-600 text-xl"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-semibold text-gray-900">Commande #{{ commande.reference }}</h3>
+                    <p class="text-2xl font-bold text-primary-600 mt-1">{{ commande.total }} FCFA</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulaire -->
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <form method="POST">
+                {% csrf_token %}
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-3">
+                        Numéro {{ network_name }}
+                    </label>
+                    <input type="tel" 
+                           name="phone_number" 
+                           placeholder="Ex: 90 12 34 56" 
+                           class="w-full border border-gray-300 rounded-xl px-4 py-4 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-lg"
+                           required
+                           pattern="[0-9\s]+"
+                           title="Entrez votre numéro de téléphone">
+                    <p class="text-sm text-gray-500 mt-2">
+                        Entrez le numéro associé à votre compte {{ network_name }}
+                    </p>
+                </div>
+
+                <!-- Instructions -->
+                <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
+                    <div class="flex items-start space-x-3">
+                        <i class="fas fa-info-circle text-yellow-600 mt-0.5"></i>
+                        <div class="space-y-2">
+                            <h4 class="font-semibold text-yellow-800 text-sm">Instructions importantes</h4>
+                            <ul class="text-sm text-yellow-700 space-y-1">
+                                <li>• Vous recevrez une demande de paiement sur votre téléphone</li>
+                                <li>• Confirmez le paiement avec votre code secret</li>
+                                <li>• Ne quittez pas cette page pendant le processus</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-green-600 text-white py-4 rounded-xl font-semibold hover:bg-green-700 transition-colors shadow-lg shadow-green-200 flex items-center justify-center space-x-2">
+                    <i class="fas fa-lock"></i>
+                    <span>Payer {{ commande.total }} FCFA</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Sécurité -->
+        <div class="mt-6 text-center">
+            <div class="flex items-center justify-center space-x-2 text-gray-500">
+                <i class="fas fa-shield-alt"></i>
+                <span class="text-sm">Transaction sécurisée par {{ network_name }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Format automatique du numéro de téléphone
+    const phoneInput = document.querySelector('input[name="phone_number"]');
+    
+    phoneInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 0) {
+            value = value.match(/.{1,2}/g).join(' ');
+        }
+        e.target.value = value;
+    });
+
+    // Animation
+    const elements = document.querySelectorAll('.bg-white');
+    elements.forEach((el, index) => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            el.style.transition = 'all 0.5s ease';
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}

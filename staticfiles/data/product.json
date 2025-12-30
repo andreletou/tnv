@@ -1,0 +1,176 @@
+{
+  "categories": [
+    {
+      "name": "Électronique",
+      "subcategories": [
+        {
+          "name": "Smartphones",
+          "products": [
+            {"name": "Samsung Galaxy S23", "price": 650000, "stock": 50, "image": "../static/images/produits/samsung-galaxy-s23.jpg"},
+            {"name": "iPhone 15", "price": 950000, "stock": 30, "image": "../static/images/produits/iphone-15.jpg"},
+            {"name": "Tecno Camon 20", "price": 350000, "stock": 80, "image": "../static/images/produits/tecno-camon-20.jpg"},
+            {"name": "Infinix Zero 30", "price": 400000, "stock": 60, "image": "../static/images/produits/infinix-zero-30.jpg"},
+            {"name": "Samsung A14", "price": 180000, "stock": 90, "image": "../static/images/produits/samsung-a14.jpg"},
+            {"name": "iPhone 13", "price": 620000, "stock": 40, "image": "../static/images/produits/iphone-13.jpg"}
+          ]
+        },
+        {
+          "name": "Ordinateurs portables",
+          "products": [
+            {"name": "MacBook Air M2", "price": 1200000, "stock": 20, "image": "../static/images/produits/macbook-air-m2.jpg"},
+            {"name": "Dell Inspiron 15", "price": 550000, "stock": 25, "image": "../static/images/produits/dell-inspiron-15.jpg"},
+            {"name": "HP Pavilion 14", "price": 600000, "stock": 30, "image": "../static/images/produits/hp-pavilion-14.jpg"},
+            {"name": "Lenovo ThinkPad X1", "price": 850000, "stock": 18, "image": "../static/images/produits/lenovo-thinkpad-x1.jpg"},
+            {"name": "Asus VivoBook 15", "price": 520000, "stock": 22, "image": "../static/images/produits/asus-vivobook-15.jpg"}
+          ]
+        },
+        {
+          "name": "Accessoires",
+          "products": [
+            {"name": "Écouteurs Bluetooth", "price": 50000, "stock": 100, "image": "../static/images/produits/ecouteurs-bluetooth.jpg"},
+            {"name": "Chargeur rapide 20W", "price": 25000, "stock": 150, "image": "../static/images/produits/chargeur-20w.jpg"},
+            {"name": "Powerbank 10000mAh", "price": 60000, "stock": 80, "image": "../static/images/produits/powerbank-10000.jpg"},
+            {"name": "Câble USB-C", "price": 8000, "stock": 200, "image": "../static/images/produits/cable-usb-c.jpg"},
+            {"name": "Casque gaming RGB", "price": 45000, "stock": 50, "image": "../static/images/produits/casque-gaming.jpg"}
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Supermarché",
+      "subcategories": [
+        {
+          "name": "Épicerie",
+          "products": [
+            {"name": "Riz 5kg", "price": 3500, "stock": 200, "image": "../static/images/produits/riz-5kg.jpg"},
+            {"name": "Huile végétale 1L", "price": 2000, "stock": 150, "image": "../static/images/produits/huile-1l.jpg"},
+            {"name": "Farine 2kg", "price": 1500, "stock": 180, "image": "../static/images/produits/farine-2kg.jpg"},
+            {"name": "Spaghetti 500g", "price": 600, "stock": 220, "image": "../static/images/produits/spaghetti-500g.jpg"},
+            {"name": "Sel iodé 1kg", "price": 300, "stock": 300, "image": "../static/images/produits/sel-iode.jpg"}
+          ]
+        },
+        {
+          "name": "Boissons",
+          "products": [
+            {"name": "Jus Tropicana 1L", "price": 1200, "stock": 100, "image": "../static/images/produits/jus-tropicana.jpg"},
+            {"name": "Eau minérale 1,5L", "price": 500, "stock": 300, "image": "../static/images/produits/eau-1-5l.jpg"},
+            {"name": "Soda Coca-Cola 330ml", "price": 800, "stock": 200, "image": "../static/images/produits/coca-330ml.jpg"},
+            {"name": "Fanta 330ml", "price": 750, "stock": 180, "image": "../static/images/produits/fanta-330ml.jpg"},
+            {"name": "Red Bull", "price": 1500, "stock": 120, "image": "../static/images/produits/redbull.jpg"}
+          ]
+        },
+        {
+          "name": "Produits laitiers",
+          "products": [
+            {"name": "Lait UHT 1L", "price": 900, "stock": 120, "image": "../static/images/produits/lait-uht.jpg"},
+            {"name": "Fromage fondu 200g", "price": 1500, "stock": 80, "image": "../static/images/produits/fromage-200g.jpg"},
+            {"name": "Yaourt nature 500g", "price": 1000, "stock": 90, "image": "../static/images/produits/yaourt-500g.jpg"},
+            {"name": "Beurre 250g", "price": 1200, "stock": 60, "image": "../static/images/produits/beurre-250g.jpg"},
+            {"name": "Crème fraîche 20cl", "price": 700, "stock": 70, "image": "../static/images/produits/creme-fraiche.jpg"}
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Marché local",
+      "subcategories": [
+        {
+          "name": "Fruits et légumes",
+          "products": [
+            {"name": "Banane locale 1kg", "price": 800, "stock": 150, "image": "../static/images/produits/banane-locale.jpg"},
+            {"name": "Mangue 1kg", "price": 1200, "stock": 100, "image": "../static/images/produits/mangue.jpg"},
+            {"name": "Tomate 1kg", "price": 500, "stock": 200, "image": "../static/images/produits/tomate.jpg"},
+            {"name": "Piment 0.5kg", "price": 400, "stock": 250, "image": "../static/images/produits/piment.jpg"},
+            {"name": "Oignon 1kg", "price": 700, "stock": 180, "image": "../static/images/produits/oignon.jpg"}
+          ]
+        },
+        {
+          "name": "Viandes & poissons",
+          "products": [
+            {"name": "Poulet frais 1kg", "price": 2500, "stock": 60, "image": "../static/images/produits/poulet-frais.jpg"},
+            {"name": "Poisson tilapia 1kg", "price": 2000, "stock": 70, "image": "../static/images/produits/tilapia.jpg"},
+            {"name": "Boeuf 1kg", "price": 3000, "stock": 50, "image": "../static/images/produits/boeuf.jpg"},
+            {"name": "Poisson maquereau 1kg", "price": 2800, "stock": 40, "image": "../static/images/produits/maquereau.jpg"}
+          ]
+        },
+        {
+          "name": "Produits artisanaux",
+          "products": [
+            {"name": "Tissu pagne africain 1m", "price": 2000, "stock": 100, "image": "../static/images/produits/pagne-africain.jpg"},
+            {"name": "Panier en osier", "price": 1500, "stock": 50, "image": "../static/images/produits/panier-osier.jpg"},
+            {"name": "Bijoux locaux", "price": 3000, "stock": 40, "image": "../static/images/produits/bijoux-locaux.jpg"},
+            {"name": "Masque africain sculpté", "price": 5000, "stock": 25, "image": "../static/images/produits/masque-africain.jpg"}
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Mode",
+      "subcategories": [
+        {
+          "name": "Hommes",
+          "products": [
+            {"name": "T-shirt coton", "price": 8000, "stock": 100, "image": "../static/images/produits/tshirt-homme.jpg"},
+            {"name": "Jean slim", "price": 15000, "stock": 60, "image": "../static/images/produits/jean-slim.jpg"},
+            {"name": "Chaussures sport", "price": 25000, "stock": 40, "image": "../static/images/produits/chaussures-sport.jpg"},
+            {"name": "Chemise manche longue", "price": 12000, "stock": 70, "image": "../static/images/produits/chemise-homme.jpg"}
+          ]
+        },
+        {
+          "name": "Femmes",
+          "products": [
+            {"name": "Robe d'été", "price": 12000, "stock": 70, "image": "../static/images/produits/robe-ete.jpg"},
+            {"name": "Sac à main", "price": 20000, "stock": 40, "image": "../static/images/produits/sac-main.jpg"},
+            {"name": "Sandales", "price": 10000, "stock": 60, "image": "../static/images/produits/sandales.jpg"},
+            {"name": "Pagne cousu", "price": 18000, "stock": 50, "image": "../static/images/produits/pagne-cousu.jpg"}
+          ]
+        },
+        {
+          "name": "Accessoires",
+          "products": [
+            {"name": "Ceinture en cuir", "price": 7000, "stock": 80, "image": "../static/images/produits/ceinture-cuir.jpg"},
+            {"name": "Montre analogique", "price": 35000, "stock": 25, "image": "../static/images/produits/montre-analogique.jpg"},
+            {"name": "Chapeau africain", "price": 5000, "stock": 50, "image": "../static/images/produits/chapeau-africain.jpg"},
+            {"name": "Lunettes de soleil", "price": 15000, "stock": 45, "image": "../static/images/produits/lunettes-soleil.jpg"}
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Maison & Jardin",
+      "subcategories": [
+        {
+          "name": "Meubles",
+          "products": [
+            {"name": "Canapé 3 places", "price": 150000, "stock": 10, "image": "../static/images/produits/canape-3-places.jpg"},
+            {"name": "Chaise de bureau", "price": 30000, "stock": 50, "image": "../static/images/produits/chaise-bureau.jpg"},
+            {"name": "Table à manger", "price": 80000, "stock": 15, "image": "../static/images/produits/table-manger.jpg"},
+            {"name": "Armoire 2 portes", "price": 90000, "stock": 12, "image": "../static/images/produits/armoire-2-portes.jpg"}
+          ]
+        },
+        {
+          "name": "Décoration",
+          "products": [
+            {"name": "Lampe sur pied", "price": 25000, "stock": 35, "image": "../static/images/produits/lampe-pied.jpg"},
+            {"name": "Tableau moderne", "price": 45000, "stock": 20, "image": "../static/images/produits/tableau-moderne.jpg"},
+            {"name": "Vase décoratif", "price": 15000, "stock": 40, "image": "../static/images/produits/vase-decoratif.jpg"},
+            {"name": "Rideau de salon", "price": 10000, "stock": 80, "image": "../static/images/produits/rideau.jpg"}
+          ]
+        },
+        {
+          "name": "Jardin",
+          "products": [
+            {"name": "Barbecue au charbon", "price": 60000, "stock": 15, "image": "../static/images/produits/barbecue-charbon.jpg"},
+            {"name": "Tondeuse électrique", "price": 120000, "stock": 12, "image": "../static/images/produits/tondeuse-electrique.jpg"},
+            {"name": "Plantes en pot", "price": 5000, "stock": 100, "image": "../static/images/produits/plantes-pot.jpg"},
+            {"name": "Arrosoir 10L", "price": 3000, "stock": 90, "image": "../static/images/produits/arrosoir.jpg"}
+          ]
+        }
+      ]
+    }
+  ]
+}

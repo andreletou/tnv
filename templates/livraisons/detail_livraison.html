@@ -1,0 +1,804 @@
+{% extends "livraisons/base.html" %}
+
+{% block title %}Détails de la livraison #{{ livraison.id }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .delivery-header {
+        background: linear-gradient(135deg, #000000, #333);
+        color: white;
+        padding: 20px;
+        border-radius: 15px 15px 0 0;
+    }
+    
+    .delivery-status {
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+    
+    .delivery-timeline {
+        position: relative;
+        padding: 20px 0;
+    }
+    
+    .delivery-timeline::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 30px;
+        height: 100%;
+        width: 3px;
+        background-color: #e9ecef;
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-left: 60px;
+        margin-bottom: 20px;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        top: 5px;
+        left: 21px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background-color: #e9ecef;
+        border: 3px solid white;
+        z-index: 1;
+    }
+    
+    .timeline-item.active::before {
+        background-color: var(--secondary-color);
+    }
+    
+    .timeline-item.completed::before {
+        background-color: var(--success-color);
+    }
+    
+    .action-buttons {
+        position: sticky;
+        bottom: 70px;
+        background-color: white;
+        padding: 15px;
+        border-radius: 15px 15px 0 0;
+        box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
+        z-index: 100;
+    }
+    
+    .customer-info {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .route-preview {
+        height: 250px;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 15px;
+    }
+    
+    .instruction-box {
+        background-color: #fff3cd;
+        border-left: 4px solid var(--warning-color);
+        padding: 10px 15px;
+        margin-bottom: 15px;
+        border-radius: 0 5px 5px 0;
+    }
+    
+    .price-tag {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--success-color);
+    }
+    
+    .distance-tag {
+        background-color: #e9ecef;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+    }
+    
+    .contact-button {
+        position: fixed;
+        bottom: 150px;
+        right: 20px;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background-color: var(--info-color);
+        color: white;
+        border: none;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 99;
+    }
+    
+    .modal-content {
+        border-radius: 15px;
+    }
+    
+    .proof-upload {
+        border: 2px dashed #ccc;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        margin-bottom: 15px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .proof-upload:hover {
+        border-color: var(--primary-color);
+        background-color: rgba(0,0,0,0.05);
+    }
+    
+    .proof-upload.has-file {
+        border-color: var(--success-color);
+        background-color: rgba(40, 167, 69, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- En-tête de la livraison -->
+    <div class="delivery-header mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h4 class="mb-0">Livraison #{{ livraison.id }}</h4>
+            <span class="delivery-status status-badge status-{{ livraison.statut }}">{{ livraison.get_statut_display }}</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <small>Commande: {{ livraison.commande.reference }}</small>
+            </div>
+            <div class="price-tag">{{ livraison.cout_livraison }} FCFA</div>
+        </div>
+    </div>
+    
+    <!-- Timeline de la livraison -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title mb-3">Suivi de la livraison</h5>
+            <div class="delivery-timeline">
+                <div class="timeline-item {% if livraison.date_attribution %}completed{% endif %}">
+                    <h6>Attribution</h6>
+                    <small class="text-muted">
+                        {% if livraison.date_attribution %}{{ livraison.date_attribution|date:"d/m/Y H:i" }}{% else %}En attente{% endif %}
+                    </small>
+                </div>
+                <div class="timeline-item {% if livraison.date_acceptation %}completed{% else %}{% if livraison.statut == 'attribuee' %}active{% endif %}{% endif %}">
+                    <h6>Acceptation</h6>
+                    <small class="text-muted">
+                        {% if livraison.date_acceptation %}{{ livraison.date_acceptation|date:"d/m/Y H:i" }}{% else %}En attente d'acceptation{% endif %}
+                    </small>
+                </div>
+                <div class="timeline-item {% if livraison.date_debut_livraison %}completed{% else %}{% if livraison.statut == 'acceptee' %}active{% endif %}{% endif %}">
+                    <h6>Début de livraison</h6>
+                    <small class="text-muted">
+                        {% if livraison.date_debut_livraison %}{{ livraison.date_debut_livraison|date:"d/m/Y H:i" }}{% else %}En attente de début{% endif %}
+                    </small>
+                </div>
+                <div class="timeline-item {% if livraison.date_fin_livraison %}completed{% else %}{% if livraison.statut == 'en_cours' %}active{% endif %}{% endif %}">
+                    <h6>Livraison terminée</h6>
+                    <small class="text-muted">
+                        {% if livraison.date_fin_livraison %}{{ livraison.date_fin_livraison|date:"d/m/Y H:i" }}{% else %}En cours{% endif %}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Informations du client -->
+    <div class="customer-info">
+        <h5 class="mb-3">Informations du client</h5>
+        <div class="d-flex align-items-center mb-3">
+            <i class="fas fa-user-circle me-3 fa-2x"></i>
+            <div>
+                <h6 class="mb-0">{{ livraison.commande.client.first_name }} {{ livraison.commande.client.last_name }}</h6>
+                <small class="text-muted">{{ livraison.commande.client.telephone }}</small>
+            </div>
+        </div>
+        <div class="d-flex align-items-start">
+            <i class="fas fa-map-marker-alt me-3 mt-1"></i>
+            <div>
+                <h6 class="mb-1">Adresse de livraison</h6>
+                <p class="mb-0">{{ livraison.commande.adresse_livraison }}</p>
+                {% if livraison.distance_actuelle %}
+                    <span class="distance-tag mt-2 d-inline-block">{{ livraison.distance_actuelle|floatformat:1 }} km</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Informations de la boutique -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title mb-3">Point de retrait</h5>
+            <div class="d-flex align-items-start">
+                <i class="fas fa-store me-3 mt-1"></i>
+                <div>
+                    <h6 class="mb-1">{{ livraison.commande.commercant.nom_boutique }}</h6>
+                    <p class="mb-0">{{ livraison.commande.commercant.adresse }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Instructions spéciales -->
+    {% if livraison.commande.instructions_livraison or livraison.instructions_speciales %}
+    <div class="instruction-box">
+        <h6 class="mb-2"><i class="fas fa-info-circle me-2"></i>Instructions spéciales</h6>
+        <p class="mb-0">{{ livraison.instructions_speciales|default:livraison.commande.instructions_livraison }}</p>
+    </div>
+    {% endif %}
+    
+    <!-- Aperçu de l'itinéraire -->
+    <div class="route-preview" id="routePreview"></div>
+    
+    <!-- Actions -->
+    <div class="action-buttons">
+        {% if livraison.statut == 'attribuee' %}
+            <button type="button" class="btn btn-success w-100 mb-2" id="accepterLivraisonBtn">
+                <i class="fas fa-check me-2"></i>Accepter cette livraison
+            </button>
+        {% elif livraison.statut == 'acceptee' %}
+            <button type="button" class="btn btn-primary w-100 mb-2" id="commencerLivraisonBtn">
+                <i class="fas fa-play me-2"></i>Commencer la livraison
+            </button>
+            <button type="button" class="btn btn-outline-secondary w-100" id="voirItineraireBtn">
+                <i class="fas fa-route me-2"></i>Voir l'itinéraire
+            </button>
+        {% elif livraison.statut == 'en_cours' %}
+            <button type="button" class="btn btn-warning w-100 mb-2" id="terminerLivraisonBtn" data-bs-toggle="modal" data-bs-target="#terminerLivraisonModal">
+                <i class="fas fa-flag-checkered me-2"></i>Terminer la livraison
+            </button>
+            <button type="button" class="btn btn-outline-secondary w-100" id="signalerProblemeBtn" data-bs-toggle="modal" data-bs-target="#signalerProblemeModal">
+                <i class="fas fa-exclamation-triangle me-2"></i>Signaler un problème
+            </button>
+        {% elif livraison.statut == 'terminee' %}
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle me-2"></i>Livraison terminée avec succès
+            </div>
+            {% if not livraison.evaluation %}
+                <button type="button" class="btn btn-outline-primary w-100" id="ajouterEvaluationBtn" data-bs-toggle="modal" data-bs-target="#evaluationModal">
+                    <i class="fas fa-star me-2"></i>Ajouter une évaluation
+                </button>
+            {% endif %}
+        {% elif livraison.statut == 'annulee' %}
+            <div class="alert alert-danger">
+                <i class="fas fa-times-circle me-2"></i>Livraison annulée
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Bouton de contact -->
+<button class="contact-button" id="contactClientBtn">
+    <i class="fas fa-phone"></i>
+</button>
+
+<!-- Modal pour terminer la livraison -->
+<div class="modal fade" id="terminerLivraisonModal" tabindex="-1" aria-labelledby="terminerLivraisonModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="terminerLivraisonModalLabel">Terminer la livraison</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="terminerLivraisonForm" method="post" enctype="multipart/form-data" action="{% url 'livraisons:terminer_livraison' livraison.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="preuve_livraison" class="form-label">Preuve de livraison (photo)</label>
+                        <div class="proof-upload" id="preuveLivraisonUpload">
+                            <i class="fas fa-camera fa-2x mb-2"></i>
+                            <p>Cliquez pour ajouter une photo</p>
+                            <input type="file" id="preuve_livraison" name="preuve_livraison" accept="image/*" style="display: none;">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="signature_client" class="form-label">Signature du client</label>
+                        <div class="proof-upload" id="signatureClientUpload">
+                            <i class="fas fa-signature fa-2x mb-2"></i>
+                            <p>Cliquez pour ajouter la signature</p>
+                            <input type="file" id="signature_client" name="signature_client" accept="image/*" style="display: none;">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="instructions_speciales" class="form-label">Notes de livraison</label>
+                        <textarea class="form-control" id="instructions_speciales" name="instructions_speciales" rows="3" placeholder="Ajoutez des notes sur la livraison..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-warning">Terminer la livraison</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour signaler un problème -->
+<div class="modal fade" id="signalerProblemeModal" tabindex="-1" aria-labelledby="signalerProblemeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="signalerProblemeModalLabel">Signaler un problème</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="signalerProblemeForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="type_probleme" class="form-label">Type de problème</label>
+                        <select class="form-select" id="type_probleme" name="type_probleme" required>
+                            <option value="">Sélectionnez un type de problème</option>
+                            <option value="route_barree">Route barrée</option>
+                            <option value="adresse_incorrecte">Adresse incorrecte</option>
+                            <option value="trafic_extreme">Trafic extrême</option>
+                            <option value="danger">Danger / Accident</option>
+                            <option value="client_absent">Client absent</option>
+                            <option value="colis_endommage">Colis endommagé</option>
+                            <option value="autre">Autre problème</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" placeholder="Décrivez le problème en détail..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="photo_probleme" class="form-label">Photo (optionnel)</label>
+                        <div class="proof-upload" id="photoProblemeUpload">
+                            <i class="fas fa-camera fa-2x mb-2"></i>
+                            <p>Cliquez pour ajouter une photo</p>
+                            <input type="file" id="photo_probleme" name="photo_probleme" accept="image/*" style="display: none;">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-warning">Signaler le problème</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour ajouter une évaluation -->
+<div class="modal fade" id="evaluationModal" tabindex="-1" aria-labelledby="evaluationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="evaluationModalLabel">Évaluer la livraison</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="evaluationForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="note" class="form-label">Note générale</label>
+                        <select class="form-select" id="note" name="note" required>
+                            <option value="">Sélectionnez une note</option>
+                            <option value="5">5 étoiles - Excellent</option>
+                            <option value="4">4 étoiles - Très bien</option>
+                            <option value="3">3 étoiles - Bien</option>
+                            <option value="2">2 étoiles - Moyen</option>
+                            <option value="1">1 étoile - Médiocre</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="ponctualite" class="form-label">Ponctualité</label>
+                        <select class="form-select" id="ponctualite" name="ponctualite" required>
+                            <option value="">Sélectionnez une note</option>
+                            <option value="5">5/5</option>
+                            <option value="4">4/5</option>
+                            <option value="3">3/5</option>
+                            <option value="2">2/5</option>
+                            <option value="1">1/5</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="professionalisme" class="form-label">Professionalisme</label>
+                        <select class="form-select" id="professionalisme" name="professionalisme" required>
+                            <option value="">Sélectionnez une note</option>
+                            <option value="5">5/5</option>
+                            <option value="4">4/5</option>
+                            <option value="3">3/5</option>
+                            <option value="2">2/5</option>
+                            <option value="1">1/5</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="securite" class="form-label">Sécurité du colis</label>
+                        <select class="form-select" id="securite" name="securite" required>
+                            <option value="">Sélectionnez une note</option>
+                            <option value="5">5/5</option>
+                            <option value="4">4/5</option>
+                            <option value="3">3/5</option>
+                            <option value="2">2/5</option>
+                            <option value="1">1/5</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="commentaire" class="form-label">Commentaire</label>
+                        <textarea class="form-control" id="commentaire" name="commentaire" rows="3" placeholder="Ajoutez votre commentaire..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Soumettre l'évaluation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialiser la carte pour l'aperçu de l'itinéraire
+        let map;
+        let routeControl;
+        
+        function initMap() {
+            // Créer la carte
+            map = L.map('routePreview').setView([6.5, -2.5], 13);
+            
+            // Ajouter la couche de tuiles OpenStreetMap
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            
+            // Ajouter les marqueurs pour la boutique et la destination
+            {% if livraison.boutique_point %}
+                const boutiquePoint = [{{ livraison.boutique_point.y }}, {{ livraison.boutique_point.x }}];
+                const boutiqueMarker = L.marker(boutiquePoint).addTo(map);
+                boutiqueMarker.bindPopup('<b>{{ livraison.commande.commercant.nom_boutique }}</b><br>Point de retrait');
+                
+                map.setView(boutiquePoint, 13);
+            {% endif %}
+            
+            {% if livraison.adresse_livraison_point %}
+                const livraisonPoint = [{{ livraison.adresse_livraison_point.y }}, {{ livraison.adresse_livraison_point.x }}];
+                const livraisonMarker = L.marker(livraisonPoint).addTo(map);
+                livraisonMarker.bindPopup('<b>Destination</b><br>{{ livraison.commande.adresse_livraison }}');
+                
+                // Ajuster la vue pour inclure les deux points
+                {% if livraison.boutique_point %}
+                    const group = new L.featureGroup([boutiqueMarker, livraisonMarker]);
+                    map.fitBounds(group.getBounds().pad(0.1));
+                {% else %}
+                    map.setView(livraisonPoint, 13);
+                {% endif %}
+                
+                // Tracer l'itinéraire
+                {% if livraison.boutique_point %}
+                    fetch(`https://router.project-osrm.org/route/v1/driving/{{ livraison.boutique_point.x }},{{ livraison.boutique_point.y }};{{ livraison.adresse_livraison_point.x }},{{ livraison.adresse_livraison_point.y }}?overview=full&geometries=geojson`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.routes && data.routes.length > 0) {
+                            const route = data.routes[0];
+                            const routeCoordinates = route.geometry.coordinates.map(coord => [coord[1], coord[0]]);
+                            
+                            L.polyline(routeCoordinates, {
+                                color: '#FFD700',
+                                weight: 5,
+                                opacity: 0.7
+                            }).addTo(map);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching route:', error);
+                    });
+                {% endif %}
+            {% endif %}
+            
+            // Ajouter la position actuelle du livreur si disponible
+            {% if livreur.position_actuelle %}
+                const livreurPoint = [{{ livreur.position_actuelle.y }}, {{ livreur.position_actuelle.x }}];
+                const livreurIcon = L.divIcon({
+                    html: '<i class="fas fa-motorcycle" style="color: #000; font-size: 24px;"></i>',
+                    iconSize: [30, 30],
+                    className: 'livreur-icon'
+                });
+                const livreurMarker = L.marker(livreurPoint, { icon: livreurIcon }).addTo(map);
+                livreurMarker.bindPopup('<b>Votre position</b>');
+            {% endif %}
+        }
+        
+        // Initialiser la carte
+        initMap();
+        
+        // Gérer le bouton d'acceptation de livraison
+        const accepterBtn = document.getElementById('accepterLivraisonBtn');
+        if (accepterBtn) {
+            accepterBtn.addEventListener('click', function() {
+                toggleLoadingSpinner(true);
+                
+                fetch('{% url "livraisons:accepter_livraison" livraison.id %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    toggleLoadingSpinner(false);
+                    
+                    if (data.success) {
+                        showNotification(data.message, 'success');
+                        setTimeout(() => {
+                            window.location.href = data.redirect_url;
+                        }, 1500);
+                    } else {
+                        showNotification(data.message || 'Erreur lors de l\'acceptation', 'danger');
+                    }
+                })
+                .catch(error => {
+                    toggleLoadingSpinner(false);
+                    console.error('Error:', error);
+                    showNotification('Erreur de connexion', 'danger');
+                });
+            });
+        }
+        
+        // Gérer le bouton de début de livraison
+        const commencerBtn = document.getElementById('commencerLivraisonBtn');
+        if (commencerBtn) {
+            commencerBtn.addEventListener('click', function() {
+                toggleLoadingSpinner(true);
+                
+                fetch('{% url "livraisons:commencer_livraison" livraison.id %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    toggleLoadingSpinner(false);
+                    
+                    if (data.success) {
+                        showNotification(data.message, 'success');
+                        setTimeout(() => {
+                            window.location.href = data.redirect_url;
+                        }, 1500);
+                    } else {
+                        showNotification(data.message || 'Erreur lors du début de livraison', 'danger');
+                    }
+                })
+                .catch(error => {
+                    toggleLoadingSpinner(false);
+                    console.error('Error:', error);
+                    showNotification('Erreur de connexion', 'danger');
+                });
+            });
+        }
+        
+        // Gérer le bouton pour voir l'itinéraire
+        const voirItineraireBtn = document.getElementById('voirItineraireBtn');
+        if (voirItineraireBtn) {
+            voirItineraireBtn.addEventListener('click', function() {
+                window.location.href = '{% url "livraisons:itineraire_livraison" livraison.id %}';
+            });
+        }
+        
+        // Gérer le bouton de contact client
+        const contactBtn = document.getElementById('contactClientBtn');
+        if (contactBtn) {
+            contactBtn.addEventListener('click', function() {
+                window.location.href = 'tel:{{ livraison.commande.client.telephone }}';
+            });
+        }
+        
+        // Gérer l'upload de fichiers dans les modals
+        document.getElementById('preuveLivraisonUpload').addEventListener('click', function() {
+            document.getElementById('preuve_livraison').click();
+        });
+        
+        document.getElementById('preuve_livraison').addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                document.getElementById('preuveLivraisonUpload').classList.add('has-file');
+                document.getElementById('preuveLivraisonUpload').innerHTML = `
+                    <i class="fas fa-check-circle fa-2x mb-2 text-success"></i>
+                    <p>${this.files[0].name}</p>
+                `;
+            }
+        });
+        
+        document.getElementById('signatureClientUpload').addEventListener('click', function() {
+            document.getElementById('signature_client').click();
+        });
+        
+        document.getElementById('signature_client').addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                document.getElementById('signatureClientUpload').classList.add('has-file');
+                document.getElementById('signatureClientUpload').innerHTML = `
+                    <i class="fas fa-check-circle fa-2x mb-2 text-success"></i>
+                    <p>${this.files[0].name}</p>
+                `;
+            }
+        });
+        
+        document.getElementById('photoProblemeUpload').addEventListener('click', function() {
+            document.getElementById('photo_probleme').click();
+        });
+        
+        document.getElementById('photo_probleme').addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                document.getElementById('photoProblemeUpload').classList.add('has-file');
+                document.getElementById('photoProblemeUpload').innerHTML = `
+                    <i class="fas fa-check-circle fa-2x mb-2 text-success"></i>
+                    <p>${this.files[0].name}</p>
+                `;
+            }
+        });
+        
+        // Gérer le formulaire de terminer livraison
+        const terminerForm = document.getElementById('terminerLivraisonForm');
+        if (terminerForm) {
+            terminerForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                toggleLoadingSpinner(true);
+                
+                const formData = new FormData(this);
+                
+                fetch(this.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    toggleLoadingSpinner(false);
+                    
+                    if (data.success) {
+                        // Fermer le modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('terminerLivraisonModal'));
+                        modal.hide();
+                        
+                        showNotification(data.message, 'success');
+                        setTimeout(() => {
+                            window.location.href = data.redirect_url;
+                        }, 1500);
+                    } else {
+                        showNotification(data.message || 'Erreur lors de la fin de livraison', 'danger');
+                    }
+                })
+                .catch(error => {
+                    toggleLoadingSpinner(false);
+                    console.error('Error:', error);
+                    showNotification('Erreur de connexion', 'danger');
+                });
+            });
+        }
+        
+        // Gérer le formulaire de signalement de problème
+        const signalerForm = document.getElementById('signalerProblemeForm');
+        if (signalerForm) {
+            signalerForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                toggleLoadingSpinner(true);
+                
+                const formData = new FormData(this);
+                const data = {
+                    livraison_id: {{ livraison.id }},
+                    type_probleme: formData.get('type_probleme'),
+                    description: formData.get('description'),
+                    position: {
+                        lat: {{ livreur.position_actuelle.y|default:0 }},
+                        lng: {{ livreur.position_actuelle.x|default:0 }}
+                    }
+                };
+                
+                // Ajouter la photo si elle existe
+                if (document.getElementById('photo_probleme').files[0]) {
+                    // En production, vous devriez utiliser FormData pour envoyer des fichiers
+                    // Pour cet exemple, nous simulons l'envoi
+                    data.photo_probleme = document.getElementById('photo_probleme').files[0].name;
+                }
+                
+                fetch('{% url "livraisons:api_signalement_probleme" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(responseData => {
+                    toggleLoadingSpinner(false);
+                    
+                    if (responseData.success) {
+                        // Fermer le modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('signalerProblemeModal'));
+                        modal.hide();
+                        
+                        showNotification('Problème signalé avec succès', 'success');
+                        
+                        // Réinitialiser le formulaire
+                        this.reset();
+                        document.getElementById('photoProblemeUpload').classList.remove('has-file');
+                        document.getElementById('photoProblemeUpload').innerHTML = `
+                            <i class="fas fa-camera fa-2x mb-2"></i>
+                            <p>Cliquez pour ajouter une photo</p>
+                        `;
+                    } else {
+                        showNotification(responseData.message || 'Erreur lors du signalement', 'danger');
+                    }
+                })
+                .catch(error => {
+                    toggleLoadingSpinner(false);
+                    console.error('Error:', error);
+                    showNotification('Erreur de connexion', 'danger');
+                });
+            });
+        }
+        
+        // Gérer le formulaire d'évaluation
+        const evaluationForm = document.getElementById('evaluationForm');
+        if (evaluationForm) {
+            evaluationForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                toggleLoadingSpinner(true);
+                
+                const formData = new FormData(this);
+                const data = {
+                    livraison_id: {{ livraison.id }},
+                    note: formData.get('note'),
+                    ponctualite: formData.get('ponctualite'),
+                    professionalisme: formData.get('professionalisme'),
+                    securite: formData.get('securite'),
+                    commentaire: formData.get('commentaire')
+                };
+                
+                fetch('{% url "livraisons:api_ajouter_evaluation" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(responseData => {
+                    toggleLoadingSpinner(false);
+                    
+                    if (responseData.success) {
+                        // Fermer le modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('evaluationModal'));
+                        modal.hide();
+                        
+                        showNotification('Évaluation ajoutée avec succès', 'success');
+                        
+                        // Recharger la page pour afficher l'évaluation
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        showNotification(responseData.message || 'Erreur lors de l\'ajout de l\'évaluation', 'danger');
+                    }
+                })
+                .catch(error => {
+                    toggleLoadingSpinner(false);
+                    console.error('Error:', error);
+                    showNotification('Erreur de connexion', 'danger');
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

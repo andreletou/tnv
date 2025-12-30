@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="fr" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Local-Links - Plateforme de livraison connectée">
+    <meta name="theme-color" content="#ff6b00">
+    <title>{% block title %}Local-Links{% endblock %}</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Local-Links">
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192x192.png">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#fff8f1',
+                            100: '#ffedd5',
+                            200: '#fed7aa',
+                            300: '#fdba74',
+                            400: '#fb923c',
+                            500: '#ff6b00', // Orange Alibaba
+                            600: '#ea580c',
+                            700: '#c2410c',
+                            800: '#9a3412',
+                            900: '#7c2d12',
+                        },
+                        accent: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6', // Bleu Alibaba
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        },
+                        success: {
+                            500: '#22c55e', // Vert Alibaba
+                        },
+                        warning: {
+                            500: '#f59e0b',
+                        },
+                        danger: {
+                            500: '#ef4444',
+                        }
+                    },
+                    fontFamily: {
+                        'poppins': ['Poppins', 'sans-serif'],
+                        'inter': ['Inter', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-in-out',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                        'slide-down': 'slideDown 0.3s ease-out',
+                        'pulse-soft': 'pulseSoft 2s ease-in-out infinite',
+                        'bounce-subtle': 'bounceSubtle 0.5s ease-in-out',
+                        'ripple': 'ripple 0.6s linear',
+                        'shimmer': 'shimmer 2s infinite linear',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        },
+                        slideDown: {
+                            '0%': { transform: 'translateY(-20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        },
+                        pulseSoft: {
+                            '0%, 100%': { opacity: '1' },
+                            '50%': { opacity: '0.8' },
+                        },
+                        bounceSubtle: {
+                            '0%, 100%': { transform: 'scale(1)' },
+                            '50%': { transform: 'scale(1.05)' },
+                        },
+                        ripple: {
+                            '0%': { transform: 'scale(0)', opacity: '1' },
+                            '100%': { transform: 'scale(4)', opacity: '0' },
+                        },
+                        shimmer: {
+                            '0%': { backgroundPosition: '-1000px 0' },
+                            '100%': { backgroundPosition: '1000px 0' },
+                        }
+                    },
+                    boxShadow: {
+                        'material': '0 2px 4px -1px rgba(0,0,0,0.1), 0 4px 5px 0 rgba(0,0,0,0.07), 0 1px 10px 0 rgba(0,0,0,0.06)',
+                        'material-md': '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06), 0 1px 8px 0 rgba(0,0,0,0.05)',
+                        'material-lg': '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05), 0 1px 12px 0 rgba(0,0,0,0.04)',
+                        'material-xl': '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04), 0 1px 16px 0 rgba(0,0,0,0.03)',
+                        'float': '0 20px 60px rgba(0,0,0,0.1)',
+                        'card': '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)',
+                    },
+                    borderRadius: {
+                        'material': '12px',
+                        'material-lg': '16px',
+                        'material-xl': '24px',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="h-full bg-gray-50 text-gray-900 font-inter dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300 antialiased">
+    <!-- Floating Action Button (FAB) -->
+    {% if user.is_authenticated and request.resolver_match.app_name == 'clients' %}
+    <div class="fab-container fixed bottom-20 right-4 z-40 flex flex-col items-end space-y-3">
+        <!-- FAB Main -->
+        <button id="fab-main" 
+                class="w-14 h-14 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full shadow-float flex items-center justify-center text-white hover:from-primary-600 hover:to-primary-700 active:scale-95 transition-all duration-200 group"
+                onclick="toggleFABMenu()">
+            <i class="fas fa-shopping-cart text-lg group-active:rotate-12 transition-transform"></i>
+            <span id="cart-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-md hidden"></span>
+        </button>
+        
+        <!-- FAB Sub Buttons -->
+        <div id="fab-menu" class="hidden space-y-3">
+            <a href="{% url 'clients:panier' %}" class="fab-sub-btn animate-slide-up" data-delay="0">
+                <div class="w-12 h-12 bg-white dark:bg-gray-800 rounded-full shadow-material-md flex items-center justify-center">
+                    <i class="fas fa-shopping-basket text-primary-500"></i>
+                </div>
+                <span class="fab-label">Panier</span>
+            </a>
+            
+            <a href="{% url 'clients:mes_favoris' %}" class="fab-sub-btn animate-slide-up" data-delay="100">
+                <div class="w-12 h-12 bg-white dark:bg-gray-800 rounded-full shadow-material-md flex items-center justify-center">
+                    <i class="fas fa-heart text-red-500"></i>
+                </div>
+                <span class="fab-label">Favoris</span>
+            </a>
+            
+            <a href="{% url 'clients:liste_boutiques' %}" class="fab-sub-btn animate-slide-up" data-delay="200">
+                <div class="w-12 h-12 bg-white dark:bg-gray-800 rounded-full shadow-material-md flex items-center justify-center">
+                    <i class="fas fa-store text-accent-500"></i>
+                </div>
+                <span class="fab-label">Boutiques</span>
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Floating Wallet Button for Commercants -->
+    {% if user.is_authenticated and request.resolver_match.app_name == 'commercants' %}
+    <a href="{% url 'commercants:portefeuille_commercant' %}" 
+       class="fixed bottom-20 right-4 z-40 w-14 h-14 bg-gradient-to-r from-accent-500 to-accent-600 rounded-full shadow-float flex items-center justify-center text-white hover:from-accent-600 hover:to-accent-700 active:scale-95 transition-all duration-200 group">
+        <i class="fas fa-wallet text-lg"></i>
+        <span class="fab-badge bg-yellow-500 animate-pulse-soft"></span>
+    </a>
+    {% endif %}
+
+    <!-- Flash Messages (Material Design Snackbar) -->
+    {% if messages %}
+        <div class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md px-4">
+            {% for message in messages %}
+                <div class="snackbar animate-slide-down mb-2 {% if message.tags == 'success' %}bg-success-500{% elif message.tags == 'error' %}bg-danger-500{% elif message.tags == 'warning' %}bg-warning-500{% else %}bg-accent-500{% endif %} text-white rounded-xl shadow-material-lg overflow-hidden">
+                    <div class="flex items-center p-4">
+                        <div class="flex-shrink-0 mr-3">
+                            {% if message.tags == 'success' %}
+                                <i class="fas fa-check-circle text-xl"></i>
+                            {% elif message.tags == 'error' %}
+                                <i class="fas fa-exclamation-circle text-xl"></i>
+                            {% elif message.tags == 'warning' %}
+                                <i class="fas fa-exclamation-triangle text-xl"></i>
+                            {% else %}
+                                <i class="fas fa-info-circle text-xl"></i>
+                            {% endif %}
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium">{{ message }}</p>
+                        </div>
+                        <button onclick="this.parentElement.parentElement.remove()" 
+                                class="ml-3 p-1 rounded-full hover:bg-white/20 transition-colors">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="min-h-screen pb-24">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Bottom Navigation Bar (Material Design) -->
+    {% if user.is_authenticated %}
+        <nav class="bottom-nav fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-gray-200/60 shadow-material-xl z-30 dark:bg-gray-900/95 dark:border-gray-700/60">
+            <div class="flex items-center justify-around h-16 px-2">
+                {% if request.resolver_match.app_name == 'clients' %}
+                    <!-- Navigation Client -->
+                    <a href="{% url 'clients:accueil' %}" 
+                       class="nav-item flex flex-col items-center justify-center relative transition-all duration-200 {% if request.resolver_match.url_name == 'accueil' %}nav-item-active{% endif %}">
+                        <div class="nav-icon-wrapper">
+                            <i class="fas fa-home text-lg"></i>
+                        </div>
+                        <span class="nav-label text-xs mt-1 font-medium">Accueil</span>
+                        {% if request.resolver_match.url_name == 'accueil' %}
+                            <div class="nav-indicator"></div>
+                        {% endif %}
+                    </a>
+                    
+                    <a href="{% url 'clients:liste_boutiques' %}" 
+                       class="nav-item flex flex-col items-center justify-center relative transition-all duration-200 {% if request.resolver_match.url_name == 'liste_boutiques' %}nav-item-active{% endif %}">
+                        <div class="nav-icon-wrapper">
+                            <i class="fas fa-store text-lg"></i>
+                        </div>
+                        <span class="nav-label text-xs mt-1 font-medium">Boutiques</span>
+                        {% if request.resolver_match.url_name == 'liste_boutiques' %}
+                            <div class="nav-indicator"></div>
+                        {% endif %}
+                    </a>
+                    
+                    <!-- Center button for commands -->
+                    <a href="{% url 'clients:mes_commandes' %}" 
+                       class="nav-item-center transform -translate-y-3">
+                        <div class="w-14 h-14 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full shadow-material-lg flex items-center justify-center text-white active:scale-95 transition-transform">
+                            <i class="fas fa-receipt text-xl"></i>
+                            <span id="orders-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-md hidden">0</span>
+                        </div>
+                        <span class="text-xs text-center mt-1 font-medium text-primary-500">Commandes</span>
+                    </a>
+                    
+                    <a href="{% url 'clients:panier' %}" 
+                       class="nav-item flex flex-col items-center justify-center relative transition-all duration-200 {% if request.resolver_match.url_name == 'panier' %}nav-item-active{% endif %}">
+                        <div class="nav-icon-wrapper">
+                            <i class="fas fa-shopping-cart text-lg"></i>
+                        </div>
+                        <span class="nav-label text-xs mt-1 font-medium">Panier</span>
+                        {% if request.resolver_match.url_name == 'panier' %}
+                            <div class="nav-indicator"></div>
+                        {% endif %}
+                        <span id="nav-cart-count" class="nav-badge bg-primary-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-md absolute -top-1 -right-1 hidden">0</span>
+                    </a>
+                    
+                    <a href="{% url 'clients:profil' %}" 
+                       class="nav-item flex flex-col items-center justify-center relative transition-all duration-200 {% if request.resolver_match.url_name == 'profil' %}nav-item-active{% endif %}">
+                        <div class="nav-icon-wrapper">
+                            {% if user.photo %}
+                                <img src="{{ user.photo.url }}" alt="Profil" class="w-6 h-6 rounded-full object-cover">
+                            {% else %}
+                                <i class="fas fa-user text-lg"></i>
+                            {% endif %}
+                        </div>
+                        <span class="nav-label text-xs mt-1 font-medium">Profil</span>
+                        {% if request.resolver_match.url_name == 'profil' %}
+                            <div class="nav-indicator"></div>
+                        {% endif %}
+                    </a>
+
+                {% elif request.resolver_match.app_name == 'commercants' %}
+                    <!-- Navigation Commerçant -->
+                    <a href="{% url 'commercants:tableau_de_bord' %}" 
+                       class="nav-item flex flex-col items-center justify-center relative transition-all duration-200 {% if request.resolver_match.url_name == 'tableau_de_bord' %}nav-item-active{% endif %}">
+                        <div class="nav-icon-wrapper">
+                            <i class="fas fa-tachometer-alt text-lg"></i>
+                        </div>
+                        <span class="nav-label text-xs mt-1 font-medium">Tableau</span>
+                        {% if request.resolver_match.url_name == 'tableau_de_bord' %}
+                            <div class="nav-indicator"></div>
+                        {% endif %}
+                    </a>
+                    
+                    <a href="{% url 'commercants:liste_produits' %}" 
+                       class="nav-item flex flex-col items-center justify-center relative transition-all duration-200 {% if request.resolver_match.url_name == 'liste_produits' %}nav-item-active{% endif %}">
+                        <div class="nav-icon-wrapper">
+                            <i class="fas fa-box text-lg"></i>
+                        </div>
+                        <span class="nav-label text-xs mt-1 font-medium">Produits</span>
+                        {% if request.resolver_match.url_name == 'liste_produits' %}
+                            <div class="nav-indicator"></div>
+                        {% endif %}
+                    </a>
+                    
+                    <!-- Center button for orders -->
+                    <a href="{% url 'commercants:gestion_commandes' %}" 
+                       class="nav-item-center transform -translate-y-3">
+                        <div class="w-14 h-14 bg-gradient-to-r from-accent-500 to-accent-600 rounded-full shadow-material-lg flex items-center justify-center text-white active:scale-95 transition-transform">
+                            <i class="fas fa-shopping-bag text-xl"></i>
+                            <span id="merchant-orders-badge" class="absolute -top-1 -right-1 bg-orange-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-md hidden">0</span>
+                        </div>
+                        <span class="text-xs text-center mt-1 font-medium text-accent-500">Commandes</span>
+                    </a>
+                    
+                    <a href="{% url 'commercants:liste_promotions' %}" 
+                       class="nav-item flex flex-col items-center justify-center relative transition-all duration-200 {% if request.resolver_match.url_name == 'liste_promotions' %}nav-item-active{% endif %}">
+                        <div class="nav-icon-wrapper">
+                            <i class="fas fa-tag text-lg"></i>
+                        </div>
+                        <span class="nav-label text-xs mt-1 font-medium">Promos</span>
+                        {% if request.resolver_match.url_name == 'liste_promotions' %}
+                            <div class="nav-indicator"></div>
+                        {% endif %}
+                    </a>
+                    
+                    <a href="{% url 'commercants:profil' %}" 
+                       class="nav-item flex flex-col items-center justify-center relative transition-all duration-200 {% if request.resolver_match.url_name == 'profil' %}nav-item-active{% endif %}">
+                        <div class="nav-icon-wrapper">
+                            {% if user.commercant_profile.photo_boutique %}
+                                <img src="{{ user.commercant_profile.photo_boutique.url }}" alt="Boutique" class="w-6 h-6 rounded-full object-cover">
+                            {% else %}
+                                <i class="fas fa-store-alt text-lg"></i>
+                            {% endif %}
+                        </div>
+                        <span class="nav-label text-xs mt-1 font-medium">Boutique</span>
+                        {% if request.resolver_match.url_name == 'profil' %}
+                            <div class="nav-indicator"></div>
+                        {% endif %}
+                    </a>
+
+                {% elif request.resolver_match.app_name == 'livraisons' %}
+                    <!-- Navigation Livreur -->
+                    <a href="{% url 'livraisons:tableau_de_bord' %}" 
+                       class="nav-item flex flex-col items-center justify-center relative transition-all duration-200 {% if request.resolver_match.url_name == 'tableau_de_bord' %}nav-item-active{% endif %}">
+                        <div class="nav-icon-wrapper">
+                            <i class="fas fa-tachometer-alt text-lg"></i>
+                        </div>
+                        <span class="nav-label text-xs mt-1 font-medium">Tableau</span>
+                        {% if request.resolver_match.url_name == 'tableau_de_bord' %}
+                            <div class="nav-indicator"></div>
+                        {% endif %}
+                    </a>
+                    
+                    <a href="{% url 'livraisons:carte_livraisons' %}" 
+                       class="nav-item flex flex-col items-center justify-center relative transition-all duration-200 {% if request.resolver_match.url_name == 'carte_livraisons' %}nav-item-active{% endif %}">
+                        <div class="nav-icon-wrapper">
+                            <i class="fas fa-map-marked-alt text-lg"></i>
+                        </div>
+                        <span class="nav-label text-xs mt-1 font-medium">Carte</span>
+                        {% if request.resolver_match.url_name == 'carte_livraisons' %}
+                            <div class="nav-indicator"></div>
+                        {% endif %}
+                    </a>
+                    
+                    <!-- Center button for deliveries -->
+                    <button onclick="toggleLivreurStatus()" 
+                           class="nav-item-center transform -translate-y-3">
+                        <div id="livreur-status-btn" class="w-14 h-14 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full shadow-material-lg flex items-center justify-center text-white active:scale-95 transition-transform">
+                            <i class="fas fa-power-off text-xl"></i>
+                        </div>
+                        <span id="livreur-status-text" class="text-xs text-center mt-1 font-medium text-primary-500">Activer</span>
+                    </button>
+                    
+                    <a href="{% url 'livraisons:gestion_livraisons' %}" 
+                       class="nav-item flex flex-col items-center justify-center relative transition-all duration-200 {% if request.resolver_match.url_name == 'gestion_livraisons' %}nav-item-active{% endif %}">
+                        <div class="nav-icon-wrapper">
+                            <i class="fas fa-shipping-fast text-lg"></i>
+                        </div>
+                        <span class="nav-label text-xs mt-1 font-medium">Livraisons</span>
+                        {% if request.resolver_match.url_name == 'gestion_livraisons' %}
+                            <div class="nav-indicator"></div>
+                        {% endif %}
+                        <span id="nav-livraisons-count" class="nav-badge bg-orange-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-md absolute -top-1 -right-1 hidden">0</span>
+                    </a>
+                    
+                    <a href="{% url 'livraisons:profil' %}" 
+                       class="nav-item flex flex-col items-center justify-center relative transition-all duration-200 {% if request.resolver_match.url_name == 'profil' %}nav-item-active{% endif %}">
+                        <div class="nav-icon-wrapper">
+                            {% if user.livreur.photo %}
+                                <img src="{{ user.livreur.photo.url }}" alt="Profil" class="w-6 h-6 rounded-full object-cover">
+                            {% else %}
+                                <i class="fas fa-user text-lg"></i>
+                            {% endif %}
+                        </div>
+                        <span class="nav-label text-xs mt-1 font-medium">Profil</span>
+                        {% if request.resolver_match.url_name == 'profil' %}
+                            <div class="nav-indicator"></div>
+                        {% endif %}
+                    </a>
+                {% endif %}
+            </div>
+            
+            <!-- Safe Area Bottom (for iPhone X+) -->
+            <div class="h-4 bg-transparent"></div>
+        </nav>
+    {% endif %}
+
+    <!-- Loading Overlay (Material Design) -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 flex flex-col items-center shadow-material-xl">
+            <div class="relative mb-6">
+                <div class="w-16 h-16 border-4 border-primary-200 dark:border-primary-800 rounded-full"></div>
+                <div class="w-16 h-16 border-4 border-primary-500 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
+            </div>
+            <p class="text-gray-700 dark:text-gray-300 font-medium text-lg mb-2">Chargement...</p>
+            <p class="text-gray-500 dark:text-gray-400 text-sm">Veuillez patienter</p>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="{% static 'js/main.js' %}"></script>
+    <script src="{% static 'js/api.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+    
+    <!-- Global Styles -->
+    <style>
+        :root {
+            --primary-500: #ff6b00;
+            --accent-500: #3b82f6;
+            --success-500: #22c55e;
+            --warning-500: #f59e0b;
+            --danger-500: #ef4444;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overscroll-behavior-y: none;
+        }
+
+        /* Material Design Components */
+        .nav-item {
+            color: #6b7280;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            padding: 8px 12px;
+            border-radius: 16px;
+        }
+
+        .nav-item:hover, .nav-item:active {
+            color: var(--primary-500);
+            background: rgba(255, 107, 0, 0.08);
+        }
+
+        .nav-item-active {
+            color: var(--primary-500);
+        }
+
+        .nav-icon-wrapper {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+
+        .nav-item:active .nav-icon-wrapper {
+            transform: scale(0.9);
+        }
+
+        .nav-indicator {
+            position: absolute;
+            top: -2px;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--primary-500);
+        }
+
+        .nav-badge {
+            font-size: 10px;
+            animation: bounceSubtle 0.5s ease-in-out;
+        }
+
+        .nav-item-center:active .nav-center-btn {
+            transform: scale(0.95);
+        }
+
+        /* FAB Styles */
+        .fab-container {
+            filter: drop-shadow(0 20px 60px rgba(0,0,0,0.15));
+        }
+
+        .fab-sub-btn {
+            display: flex;
+            align-items: center;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .fab-sub-btn.show {
+            animation: slideUp 0.3s ease-out forwards;
+        }
+
+        .fab-label {
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-right: 10px;
+            opacity: 0;
+            transform: translateX(-10px);
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .fab-sub-btn:hover .fab-label {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .fab-badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        /* Material Cards */
+        .material-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(0,0,0,0.04);
+        }
+
+        .material-card:hover {
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12), 0 3px 10px rgba(0,0,0,0.08);
+            transform: translateY(-2px);
+        }
+
+        /* Snackbar */
+        .snackbar {
+            animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Ripple Effect */
+        .ripple {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ripple:after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%);
+            transform-origin: 50% 50%;
+        }
+
+        .ripple:focus:not(:active)::after {
+            animation: ripple 0.6s linear;
+        }
+
+        /* Skeleton Loading */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite linear;
+            border-radius: 8px;
+        }
+
+        /* Dark Mode Adjustments */
+        .dark .material-card {
+            background: #1f2937;
+            border-color: rgba(255,255,255,0.05);
+        }
+
+        .dark .snackbar {
+            background: rgba(0,0,0,0.9);
+        }
+
+        .dark .fab-label {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.05);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.2);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0,0,0,0.3);
+        }
+
+        /* Selection */
+        ::selection {
+            background: rgba(255, 107, 0, 0.2);
+            color: inherit;
+        }
+
+        /* Safe Area */
+        .pb-safe {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* Smooth Scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
+    
+    <script>
+        // ===== CONFIGURATION =====
+        const CONFIG = {
+            primaryColor: '#ff6b00',
+            accentColor: '#3b82f6',
+            successColor: '#22c55e',
+            warningColor: '#f59e0b',
+            dangerColor: '#ef4444'
+        };
+
+        // ===== DARK MODE =====
+        function initDarkMode() {
+            const savedTheme = localStorage.getItem('theme');
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+                document.documentElement.classList.add('dark');
+                updateMetaThemeColor('#111827');
+            } else {
+                document.documentElement.classList.remove('dark');
+                updateMetaThemeColor('#ff6b00');
+            }
+        }
+
+        function toggleDarkMode() {
+            const isDark = document.documentElement.classList.contains('dark');
+            if (isDark) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                updateMetaThemeColor('#ff6b00');
+                showToast('Mode clair activé', 'success');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                updateMetaThemeColor('#111827');
+                showToast('Mode sombre activé', 'success');
+            }
+        }
+
+        function updateMetaThemeColor(color) {
+            const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+            if (metaThemeColor) {
+                metaThemeColor.setAttribute('content', color);
+            }
+        }
+
+        // ===== FAB FUNCTIONALITY =====
+        let fabMenuOpen = false;
+
+        function toggleFABMenu() {
+            const fabMenu = document.getElementById('fab-menu');
+            const fabMain = document.getElementById('fab-main');
+            
+            fabMenuOpen = !fabMenuOpen;
+            
+            if (fabMenuOpen) {
+                fabMenu.classList.remove('hidden');
+                fabMain.querySelector('i').classList.remove('fa-shopping-cart');
+                fabMain.querySelector('i').classList.add('fa-times');
+                fabMain.classList.add('rotate-45');
+                
+                // Animate sub buttons
+                const subButtons = fabMenu.querySelectorAll('.fab-sub-btn');
+                subButtons.forEach((btn, index) => {
+                    const delay = btn.getAttribute('data-delay') || 0;
+                    setTimeout(() => {
+                        btn.classList.add('show');
+                    }, parseInt(delay));
+                });
+            } else {
+                fabMenu.querySelectorAll('.fab-sub-btn').forEach(btn => {
+                    btn.classList.remove('show');
+                });
+                setTimeout(() => {
+                    fabMenu.classList.add('hidden');
+                }, 300);
+                fabMain.querySelector('i').classList.remove('fa-times');
+                fabMain.querySelector('i').classList.add('fa-shopping-cart');
+                fabMain.classList.remove('rotate-45');
+            }
+        }
+
+        // ===== UTILITY FUNCTIONS =====
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        function showToast(message, type = 'info', duration = 4000) {
+            // Remove existing toasts
+            const existingToasts = document.querySelectorAll('.snackbar');
+            existingToasts.forEach(toast => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            });
+
+            const toast = document.createElement('div');
+            toast.className = `snackbar animate-slide-down ${
+                type === 'success' ? 'bg-success-500' :
+                type === 'error' ? 'bg-danger-500' :
+                type === 'warning' ? 'bg-warning-500' :
+                'bg-accent-500'
+            } text-white rounded-xl shadow-material-lg overflow-hidden`;
+
+            toast.innerHTML = `
+                <div class="flex items-center p-4">
+                    <div class="flex-shrink-0 mr-3">
+                        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'} text-xl"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium">${message}</p>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" 
+                            class="ml-3 p-1 rounded-full hover:bg-white/20 transition-colors">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+
+            const container = document.querySelector('.fixed.top-4.left-1\\/2') || document.body;
+            container.appendChild(toast);
+
+            // Auto-remove after duration
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            }, duration);
+        }
+
+        function showLoading() {
+            document.getElementById('loading-overlay').classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading-overlay').classList.add('hidden');
+        }
+
+        // ===== API INTEGRATION =====
+        const API = {
+            Cart: {
+                async getInfo() {
+                    try {
+                        const response = await fetch('/clients/api/panier/infos/');
+                        const data = await response.json();
+                        this.updateCartUI(data);
+                        return data;
+                    } catch (error) {
+                        console.error('Error fetching cart:', error);
+                        return { success: false };
+                    }
+                },
+
+                updateCartUI(data) {
+                    const elements = [
+                        { id: 'cart-badge', selector: '#cart-badge' },
+                        { id: 'nav-cart-count', selector: '#nav-cart-count' },
+                        { id: 'cart-count', selector: '#cart-count' }
+                    ];
+
+                    elements.forEach(element => {
+                        const el = document.querySelector(element.selector);
+                        if (el && data.nombre_articles !== undefined) {
+                            el.textContent = data.nombre_articles;
+                            if (data.nombre_articles > 0) {
+                                el.classList.remove('hidden');
+                                el.classList.add('animate-bounce-subtle');
+                            } else {
+                                el.classList.add('hidden');
+                            }
+                        }
+                    });
+
+                    const totalElements = [
+                        { id: 'cart-total', selector: '#cart-total' },
+                        { id: 'cart-total-nav', selector: '#cart-total-nav' }
+                    ];
+
+                    totalElements.forEach(element => {
+                        const el = document.querySelector(element.selector);
+                        if (el && data.total_panier !== undefined) {
+                            el.textContent = `${parseFloat(data.total_panier).toFixed(0)} FCFA`;
+                        }
+                    });
+                }
+            },
+
+            Orders: {
+                async updateBadge() {
+                    try {
+                        // Implement order badge update logic
+                        const merchantBadge = document.getElementById('merchant-orders-badge');
+                        const ordersBadge = document.getElementById('orders-badge');
+                        
+                        // Example: Update based on API call
+                        // const response = await fetch('/api/orders/count/');
+                        // const data = await response.json();
+                        // if (data.count > 0) {
+                        //     merchantBadge.textContent = data.count;
+                        //     merchantBadge.classList.remove('hidden');
+                        // }
+                    } catch (error) {
+                        console.error('Error updating order badge:', error);
+                    }
+                }
+            }
+        };
+
+        // ===== DELIVERY DRIVER FUNCTIONALITY =====
+        function toggleLivreurStatus() {
+            const btn = document.getElementById('livreur-status-btn');
+            const text = document.getElementById('livreur-status-text');
+            const isActive = btn.classList.contains('bg-green-500');
+
+            if (isActive) {
+                // Go offline
+                btn.className = 'w-14 h-14 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full shadow-material-lg flex items-center justify-center text-white active:scale-95 transition-transform';
+                btn.innerHTML = '<i class="fas fa-power-off text-xl"></i>';
+                text.textContent = 'Activer';
+                text.className = 'text-xs text-center mt-1 font-medium text-primary-500';
+                showToast('Mode hors ligne activé', 'info');
+            } else {
+                // Go online
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            btn.className = 'w-14 h-14 bg-gradient-to-r from-green-500 to-green-600 rounded-full shadow-material-lg flex items-center justify-center text-white active:scale-95 transition-transform';
+                            btn.innerHTML = '<i class="fas fa-bolt text-xl"></i>';
+                            text.textContent = 'En ligne';
+                            text.className = 'text-xs text-center mt-1 font-medium text-green-500';
+                            showToast('Mode en ligne activé', 'success');
+                        },
+                        (error) => {
+                            showToast('Activation sans géolocalisation', 'warning');
+                            btn.className = 'w-14 h-14 bg-gradient-to-r from-green-500 to-green-600 rounded-full shadow-material-lg flex items-center justify-center text-white active:scale-95 transition-transform';
+                            btn.innerHTML = '<i class="fas fa-bolt text-xl"></i>';
+                            text.textContent = 'En ligne';
+                            text.className = 'text-xs text-center mt-1 font-medium text-green-500';
+                        }
+                    );
+                } else {
+                    showToast('Activation réussie', 'success');
+                    btn.className = 'w-14 h-14 bg-gradient-to-r from-green-500 to-green-600 rounded-full shadow-material-lg flex items-center justify-center text-white active:scale-95 transition-transform';
+                    btn.innerHTML = '<i class="fas fa-bolt text-xl"></i>';
+                    text.textContent = 'En ligne';
+                    text.className = 'text-xs text-center mt-1 font-medium text-green-500';
+                }
+            }
+        }
+
+        // ===== PWA INSTALLATION =====
+        let deferredPrompt;
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            showInstallPrompt();
+        });
+
+        function showInstallPrompt() {
+            const installBtn = document.createElement('button');
+            installBtn.innerHTML = `
+                <div class="flex items-center justify-center space-x-2">
+                    <i class="fas fa-download"></i>
+                    <span>Installer l'app</span>
+                </div>
+            `;
+            installBtn.className = 'fixed top-20 right-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white px-4 py-3 rounded-xl shadow-material-lg font-medium z-40 ripple';
+            installBtn.onclick = async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log(`User response: ${outcome}`);
+                    deferredPrompt = null;
+                    installBtn.remove();
+                }
+            };
+            
+            document.body.appendChild(installBtn);
+            
+            // Auto-hide after 10 seconds
+            setTimeout(() => {
+                if (installBtn.parentElement) {
+                    installBtn.remove();
+                }
+            }, 10000);
+        }
+
+        // ===== INITIALIZATION =====
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize dark mode
+            initDarkMode();
+
+            // Add ripple effect to buttons
+            document.querySelectorAll('button, .ripple').forEach(button => {
+                button.classList.add('ripple');
+            });
+
+            // Update cart on load
+            if (document.querySelector('[id*="cart"]')) {
+                API.Cart.getInfo();
+            }
+
+            // Update orders badge
+            API.Orders.updateBadge();
+
+            // Auto-hide flash messages
+            setTimeout(() => {
+                document.querySelectorAll('.snackbar').forEach(snackbar => {
+                    setTimeout(() => {
+                        if (snackbar.parentElement) {
+                            snackbar.remove();
+                        }
+                    }, 5000);
+                });
+            }, 3000);
+
+            // Prevent pull-to-refresh on mobile
+            document.addEventListener('touchmove', function(e) {
+                if (e.scale !== 1) { e.preventDefault(); }
+            }, { passive: false });
+
+            // Add loading indicator to form submissions
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', function() {
+                    showLoading();
+                });
+            });
+
+            // Add vibration feedback on mobile
+            if ('vibrate' in navigator) {
+                document.querySelectorAll('button, .nav-item, a').forEach(element => {
+                    element.addEventListener('touchstart', function() {
+                        navigator.vibrate(10);
+                    }, { passive: true });
+                });
+            }
+        });
+
+        // ===== NETWORK STATUS =====
+        window.addEventListener('online', () => {
+            showToast('Connexion rétablie', 'success');
+        });
+
+        window.addEventListener('offline', () => {
+            showToast('Connexion perdue', 'error');
+        });
+    </script>
+</body>
+</html>

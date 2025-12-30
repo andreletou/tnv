@@ -1,0 +1,412 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Commande #{{ commande.reference }} - Local-links{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-consistent-gray pb-20">
+    <!-- Header -->
+    <header class="bg-consistent-white shadow-sm sticky top-0 z-30">
+        <div class="px-4 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'clients:mes_commandes' %}" class="p-2 rounded-lg hover:bg-consistent-light">
+                        <i class="fas fa-arrow-left text-consistent-primary"></i>
+                    </a>
+                    <div>
+                        <h1 class="text-lg font-semibold text-consistent-primary">Commande #{{ commande.reference }}</h1>
+                        <p class="text-xs text-consistent-muted">{{ commande.date_commande|date:"d/m/Y à H:i" }}</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                    <span class="px-3 py-1 bg-primary-100 text-primary-700 text-xs font-medium rounded-full">
+                        {{ commande.get_statut_display }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Timeline de suivi -->
+    <div class="px-4 py-4">
+        <div class="card-consistent rounded-xl p-4 mb-4">
+            <h2 class="text-sm font-semibold text-consistent-primary mb-4">Suivi de votre commande</h2>
+            
+            <div class="relative">
+                <!-- Ligne de progression -->
+                <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-consistent-light">
+                    <div class="absolute top-0 left-0 w-0.5 bg-primary-600 transition-all duration-500" 
+                         id="progress-line"
+                         style="height: {% widthratio commande.progression 100 100 %}%"></div>
+                </div>
+                
+                <!-- Étapes -->
+                <div class="space-y-6">
+                    {% for etape in commande.timeline_etapes %}
+                    <div class="flex items-start space-x-4">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center 
+                                    {% if etape.est_termine %}bg-primary-600 text-white
+                                    {% elif etape.est_actif %}bg-primary-100 text-primary-600 border-2 border-primary-600
+                                    {% else %}bg-consistent-light text-consistent-muted{% endif %}">
+                            <i class="{{ etape.icone }} text-xs"></i>
+                        </div>
+                        <div class="flex-1 pb-6">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-sm font-medium {% if etape.est_actif %}text-consistent-primary{% else %}text-consistent-secondary{% endif %}">
+                                    {{ etape.nom }}
+                                </h3>
+                                {% if etape.est_termine %}
+                                <i class="fas fa-check text-green-500 text-sm"></i>
+                                {% endif %}
+                            </div>
+                            {% if etape.est_actif %}
+                            <p class="text-xs text-consistent-muted mt-1">{{ etape.description }}</p>
+                            {% endif %}
+                            {% if etape.date %}
+                            <p class="text-xs text-consistent-muted mt-1">{{ etape.date|date:"d/m/Y H:i" }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Livreur (si en livraison) -->
+        {% if commande.statut == 'en_livraison' and commande.livraison.livreur %}
+        <div class="card-consistent rounded-xl p-4 mb-4">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-sm font-semibold text-consistent-primary">Votre livreur</h2>
+                <button onclick="appelerLivreur('{{ commande.livraison.livreur.user.telephone }}')" 
+                        class="btn-consistent-primary px-3 py-1.5 text-xs rounded-lg">
+                    <i class="fas fa-phone mr-1"></i>Appeler
+                </button>
+            </div>
+            
+            <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 bg-consistent-light rounded-full flex items-center justify-center">
+                    {% if commande.livraison.livreur.user.photo_profil %}
+                        <img src="{{ commande.livraison.livreur.user.photo_profil.url }}" 
+                             alt="{{ commande.livraison.livreur.user.get_full_name }}"
+                             class="w-12 h-12 rounded-full object-cover">
+                    {% else %}
+                        <i class="fas fa-user text-consistent-muted"></i>
+                    {% endif %}
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-sm font-semibold text-consistent-primary">
+                        {{ commande.livraison.livreur.user.get_full_name }}
+                    </h3>
+                    <div class="flex items-center space-x-2 mt-1">
+                        <div class="flex text-yellow-400 text-xs">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= commande.livraison.livreur.note_moyenne|default:0 %}
+                                    <i class="fas fa-star"></i>
+                                {% else %}
+                                    <i class="far fa-star"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <span class="text-xs text-consistent-muted">
+                            ({{ commande.livraison.livreur.nb_avis|default:0 }} avis)
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Articles de la commande -->
+        <div class="card-consistent rounded-xl p-4 mb-4">
+            <h2 class="text-sm font-semibold text-consistent-primary mb-3">Articles commandés</h2>
+            
+            <div class="space-y-3">
+                {% for article in commande.articles.all %}
+                <div class="flex items-center space-x-3 p-3 bg-consistent-light rounded-lg">
+                    <div class="flex-shrink-0">
+                        {% if article.produit.photo %}
+                            <img src="{{ article.produit.photo.url }}" 
+                                 alt="{{ article.produit.nom }}"
+                                 class="w-12 h-12 object-cover rounded-lg">
+                        {% else %}
+                            <div class="w-12 h-12 bg-consistent-white rounded-lg flex items-center justify-center">
+                                <i class="fas fa-box text-consistent-muted"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="flex-1 min-w-0">
+                        <h3 class="text-sm font-medium text-consistent-primary truncate">
+                            {{ article.produit.nom }}
+                        </h3>
+                        <p class="text-xs text-consistent-muted">
+                            {{ article.produit.commercant.nom_boutique }}
+                        </p>
+                    </div>
+                    
+                    <div class="text-right">
+                        <div class="text-sm font-semibold text-consistent-primary">
+                            {{ article.prix_unitaire|format_currency }}
+                        </div>
+                        <div class="text-xs text-consistent-muted">
+                            x{{ article.quantite }}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="border-t border-consistent mt-4 pt-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm font-semibold text-consistent-primary">Total</span>
+                    <span class="text-lg font-bold text-primary-600">{{ commande.total|format_currency }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Adresse de livraison -->
+        <div class="card-consistent rounded-xl p-4 mb-4">
+            <h2 class="text-sm font-semibold text-consistent-primary mb-3">
+                <i class="fas fa-map-marker-alt mr-2 text-primary-600"></i>
+                Adresse de livraison
+            </h2>
+            
+            <div class="space-y-2">
+                <p class="text-sm text-consistent-primary">{{ commande.adresse_livraison }}</p>
+                {% if commande.instructions_livraison %}
+                <div class="bg-primary-50 rounded-lg p-3">
+                    <p class="text-xs text-primary-700">
+                        <strong>Instructions :</strong> {{ commande.instructions_livraison }}
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Boutique -->
+        <div class="card-consistent rounded-xl p-4 mb-4">
+            <h2 class="text-sm font-semibold text-consistent-primary mb-3">
+                <i class="fas fa-store mr-2 text-primary-600"></i>
+                Boutique
+            </h2>
+            
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-consistent-light rounded-lg flex items-center justify-center">
+                    {% if commande.commercant.photo_boutique %}
+                        <img src="{{ commande.commercant.photo_boutique.url }}" 
+                             alt="{{ commande.commercant.nom_boutique }}"
+                             class="w-10 h-10 rounded-lg object-cover">
+                    {% else %}
+                        <i class="fas fa-store text-consistent-muted"></i>
+                    {% endif %}
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-sm font-semibold text-consistent-primary">
+                        {{ commande.commercant.nom_boutique }}
+                    </h3>
+                    <p class="text-xs text-consistent-muted">{{ commande.commercant.adresse }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Paiement -->
+        <div class="card-consistent rounded-xl p-4 mb-4">
+            <h2 class="text-sm font-semibold text-consistent-primary mb-3">
+                <i class="fas fa-credit-card mr-2 text-primary-600"></i>
+                Paiement
+            </h2>
+            
+            <div class="flex justify-between items-center">
+                <span class="text-sm text-consistent-secondary">Méthode de paiement</span>
+                <span class="text-sm font-medium text-consistent-primary">
+                    {{ commande.get_methode_paiement_display }}
+                </span>
+            </div>
+            
+            <div class="flex justify-between items-center mt-2">
+                <span class="text-sm text-consistent-secondary">Statut du paiement</span>
+                <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+                    Payé
+                </span>
+            </div>
+        </div>
+
+        <!-- Évaluation (si livrée) -->
+        {% if commande.statut == 'livree' and not commande.est_evaluee %}
+        <div class="card-consistent rounded-xl p-4 mb-4">
+            <h2 class="text-sm font-semibold text-consistent-primary mb-3">
+                <i class="fas fa-star mr-2 text-primary-600"></i>
+                Évaluer la commande
+            </h2>
+            
+            <form id="evaluation-form">
+                <input type="hidden" name="commande_id" value="{{ commande.id }}">
+                
+                <!-- Note globale -->
+                <div class="text-center mb-4">
+                    <div class="flex justify-center space-x-1 mb-2" id="star-rating">
+                        {% for i in "12345" %}
+                        <i class="fas fa-star text-2xl text-consistent-light cursor-pointer hover:text-yellow-400 transition-colors"
+                           data-value="{{ forloop.counter }}"></i>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" id="note-globale" name="note" value="5">
+                    <p class="text-xs text-consistent-muted">Note globale</p>
+                </div>
+                
+                <!-- Critères -->
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <label class="text-sm text-consistent-primary">Qualité des produits</label>
+                        <select name="qualite_produits" class="bg-consistent-light rounded-lg px-3 py-2 text-sm">
+                            <option value="5">5/5</option>
+                            <option value="4">4/5</option>
+                            <option value="3">3/5</option>
+                            <option value="2">2/5</option>
+                            <option value="1">1/5</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <label class="text-sm text-consistent-primary">Service du livreur</label>
+                        <select name="service_livreur" class="bg-consistent-light rounded-lg px-3 py-2 text-sm">
+                            <option value="5">5/5</option>
+                            <option value="4">4/5</option>
+                            <option value="3">3/5</option>
+                            <option value="2">2/5</option>
+                            <option value="1">1/5</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <label class="text-sm text-consistent-primary">Respect du délai</label>
+                        <select name="respect_delai" class="bg-consistent-light rounded-lg px-3 py-2 text-sm">
+                            <option value="5">5/5</option>
+                            <option value="4">4/5</option>
+                            <option value="3">3/5</option>
+                            <option value="2">2/5</option>
+                            <option value="1">1/5</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Commentaire -->
+                <textarea name="commentaire" 
+                          placeholder="Laissez un commentaire (optionnel)..."
+                          class="w-full mt-4 bg-consistent-light rounded-lg px-4 py-3 text-sm input-consistent"
+                          rows="3"></textarea>
+                
+                <button type="submit" class="w-full mt-4 btn-consistent-primary py-3 rounded-lg text-sm font-medium">
+                    <i class="fas fa-paper-plane mr-2"></i>
+                    Envoyer l'évaluation
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Système d'évaluation par étoiles
+    const stars = document.querySelectorAll('#star-rating .fa-star');
+    stars.forEach(star => {
+        star.addEventListener('click', function() {
+            const rating = parseInt(this.dataset.value);
+            document.getElementById('note-globale').value = rating;
+            
+            // Mettre à jour l'affichage des étoiles
+            stars.forEach((s, index) => {
+                if (index < rating) {
+                    s.classList.add('text-yellow-400');
+                    s.classList.remove('text-consistent-light');
+                } else {
+                    s.classList.remove('text-yellow-400');
+                    s.classList.add('text-consistent-light');
+                }
+            });
+        });
+        
+        // Initialiser avec 5 étoiles
+        if (parseInt(star.dataset.value) <= 5) {
+            star.classList.add('text-yellow-400');
+            star.classList.remove('text-consistent-light');
+        }
+    });
+
+    // Soumission du formulaire d'évaluation
+    const evaluationForm = document.getElementById('evaluation-form');
+    if (evaluationForm) {
+        evaluationForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitEvaluation();
+        });
+    }
+});
+
+function appelerLivreur(telephone) {
+    window.location.href = `tel:${telephone}`;
+}
+
+function submitEvaluation() {
+    const form = document.getElementById('evaluation-form');
+    const formData = new FormData(form);
+    const submitButton = form.querySelector('button[type="submit"]');
+    
+    // Désactiver le bouton pendant l'envoi
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Envoi en cours...';
+    
+    fetch('{% url "clients:api_ajouter_avis" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Merci ! Votre évaluation a été envoyée.', 'success');
+            // Désactiver le formulaire après envoi réussi
+            form.querySelectorAll('input, select, textarea, button').forEach(element => {
+                element.disabled = true;
+            });
+            submitButton.innerHTML = '<i class="fas fa-check mr-2"></i>Évaluation envoyée';
+            submitButton.classList.remove('btn-consistent-primary');
+            submitButton.classList.add('bg-green-500', 'text-white');
+        } else {
+            showToast(data.message || 'Une erreur est survenue.', 'error');
+            submitButton.disabled = false;
+            submitButton.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Envoyer l\'évaluation';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Une erreur réseau est survenue.', 'error');
+        submitButton.disabled = false;
+        submitButton.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Envoyer l\'évaluation';
+    });
+}
+
+// Fonction utilitaire pour récupérer le cookie CSRF
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

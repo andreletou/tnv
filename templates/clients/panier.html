@@ -1,0 +1,388 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Mon Panier - Local-links{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-consistent-gray pb-20">
+    <!-- Header -->
+    <header class="bg-consistent-white shadow-sm sticky top-0 z-30">
+        <div class="px-4 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'clients:accueil' %}" class="p-2 rounded-lg hover:bg-consistent-light">
+                        <i class="fas fa-arrow-left text-consistent-primary"></i>
+                    </a>
+                    <div>
+                        <h1 class="text-lg font-semibold text-consistent-primary">Mon Panier</h1>
+                        <p class="text-xs text-consistent-muted" id="cart-items-count">{{ panier.items.count }} article(s)</p>
+                    </div>
+                </div>
+                
+                <button class="p-2 rounded-lg hover:bg-consistent-light" onclick="clearCart()">
+                    <i class="fas fa-trash-alt text-consistent-muted"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    {% if articles %}
+    <div class="px-4 py-4">
+        <!-- Cart Items -->
+        <div class="space-y-3 mb-4">
+            {% for article in articles %}
+            <div class="card-consistent rounded-xl shadow-sm overflow-hidden" data-item-id="{{ article.id }}">
+                <div class="p-4">
+                    <div class="flex items-start space-x-3">
+                        <!-- Product Image -->
+                        <div class="flex-shrink-0">
+                            {% if article.produit.photo %}
+                                <img src="{{ article.produit.photo.url }}" 
+                                     alt="{{ article.produit.nom }}" 
+                                     class="w-16 h-16 object-cover rounded-lg">
+                            {% else %}
+                                <div class="w-16 h-16 bg-consistent-light rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-box text-consistent-muted"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Product Details -->
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <h3 class="text-sm font-semibold text-consistent-primary line-clamp-2">
+                                        {{ article.produit.nom }}
+                                    </h3>
+                                    <p class="text-xs text-consistent-muted mt-1">
+                                        <i class="fas fa-store mr-1"></i>{{ article.produit.commercant.nom_boutique }}
+                                    </p>
+                                    
+                                    <!-- Price -->
+                                    <div class="flex items-center space-x-2 mt-2">
+                                        {% if article.produit.est_en_promotion %}
+                                            <span class="text-base font-bold text-primary-600">
+                                                {{ article.produit.prix_promotionnel|format_currency }}
+                                            </span>
+                                            <span class="text-sm text-consistent-muted line-through">
+                                                {{ article.produit.prix|format_currency }}
+                                            </span>
+                                            <span class="px-2 py-1 bg-red-100 text-red-600 text-xs rounded-full">
+                                                -{{ article.produit.prix|calculate_discount:article.produit.prix_promotionnel }}%
+                                            </span>
+                                        {% else %}
+                                            <span class="text-base font-bold text-primary-600">
+                                                {{ article.produit.prix|format_currency }}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <!-- Remove Button -->
+                                <button onclick="removeItem({{ article.id }})" 
+                                        class="p-1.5 text-consistent-muted hover:text-red-500 transition-colors">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Quantity Controls -->
+                            <div class="flex items-center justify-between mt-3">
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-sm text-consistent-secondary">Quantité:</span>
+                                    <div class="flex items-center space-x-2 bg-consistent-light rounded-lg p-1">
+                                        <button class="w-6 h-6 flex items-center justify-center rounded-md hover:bg-consistent-white transition-colors"
+                                                onclick="updateQuantity({{ article.id }}, -1)">
+                                            <i class="fas fa-minus text-xs text-consistent-muted"></i>
+                                        </button>
+                                        <span class="text-sm font-medium w-6 text-center" id="quantity-{{ article.id }}">
+                                            {{ article.quantite }}
+                                        </span>
+                                        <button class="w-6 h-6 flex items-center justify-center rounded-md hover:bg-consistent-white transition-colors"
+                                                onclick="updateQuantity({{ article.id }}, 1)">
+                                            <i class="fas fa-plus text-xs text-consistent-muted"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Subtotal -->
+                                <div class="text-right">
+                                    <span class="text-xs text-consistent-muted">Sous-total</span>
+                                    <div class="text-sm font-semibold text-consistent-primary">
+                                        {{ article.sous_total|format_currency }}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Stock Info -->
+                            <div class="mt-2">
+                                <p class="text-xs text-consistent-muted">
+                                    <i class="fas fa-cube mr-1"></i>
+                                    Stock disponible: {{ article.produit.stock }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Delivery Info -->
+        <div class="card-consistent rounded-xl p-4 mb-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-primary-50 rounded-full flex items-center justify-center">
+                    <i class="fas fa-truck text-primary-600"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-sm font-semibold text-consistent-primary">Livraison gratuite</h3>
+                    <p class="text-xs text-consistent-muted">Livraison estimée: 2-3 jours ouvrés</p>
+                </div>
+                <span class="text-green-600 text-sm font-semibold">Gratuit</span>
+            </div>
+        </div>
+
+        <!-- Promo Code -->
+        <div class="card-consistent rounded-xl p-4 mb-4">
+            <h3 class="text-sm font-semibold text-consistent-primary mb-3">Code promo</h3>
+            <div class="flex space-x-2">
+                <input type="text" 
+                       placeholder="Entrez votre code promo" 
+                       class="flex-1 input-consistent bg-consistent-light rounded-lg px-4 py-3 text-sm">
+                <button class="btn-consistent-secondary px-4 py-3 rounded-lg text-sm font-medium">
+                    Appliquer
+                </button>
+            </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="card-consistent rounded-xl p-4 mb-4">
+            <h3 class="text-sm font-semibold text-consistent-primary mb-4">Résumé de la commande</h3>
+            
+            <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-consistent-secondary">Sous-total</span>
+                    <span class="text-sm text-consistent-primary">{{ panier.total|format_currency }}</span>
+                </div>
+                
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-consistent-secondary">Livraison</span>
+                    <span class="text-sm text-green-600 font-semibold">Gratuit</span>
+                </div>
+                
+                <div class="border-t border-consistent pt-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-base font-semibold text-consistent-primary">Total</span>
+                        <span class="text-lg font-bold text-primary-600">{{ panier.total|format_currency }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fixed Checkout Button -->
+    <div class="fixed bottom-16 left-0 right-0 px-4 py-3 bg-consistent-white border-t border-consistent">
+        <a href="{% url 'clients:passer_commande' %}" class="w-full btn-consistent-primary py-4 rounded-xl text-center block transition-colors">
+            <div class="flex items-center justify-center space-x-2">
+                <i class="fas fa-credit-card"></i>
+                <span class="font-semibold">Finaliser la commande</span>
+                <span class="font-bold">• {{ panier.total|format_currency }}</span>
+            </div>
+        </a>
+    </div>
+
+    {% else %}
+    <!-- Empty Cart State -->
+    <div class="px-4 py-12 text-center">
+        <div class="w-24 h-24 bg-consistent-light rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-shopping-basket text-3xl text-consistent-muted"></i>
+        </div>
+        <h2 class="text-xl font-semibold text-consistent-primary mb-2">Votre panier est vide</h2>
+        <p class="text-consistent-secondary mb-6">Ajoutez des produits pour commencer vos achats</p>
+        <a href="{% url 'clients:accueil' %}" class="inline-block px-6 py-3 btn-consistent-primary rounded-lg transition-colors">
+            <i class="fas fa-store mr-2"></i>
+            Explorer les boutiques
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+    <div class="card-consistent rounded-lg p-6 flex flex-col items-center">
+        <div class="loader mb-4"></div>
+        <p class="text-consistent-secondary">Chargement...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Afficher/masquer l'indicateur de chargement
+function toggleLoading(show = true) {
+    document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
+}
+
+// Mettre à jour la quantité d'un article
+function updateQuantity(itemId, change) {
+    const quantityElement = document.getElementById(`quantity-${itemId}`);
+    const currentQuantity = parseInt(quantityElement.textContent);
+    const newQuantity = currentQuantity + change;
+    
+    if (newQuantity < 1) return;
+    
+    toggleLoading(true);
+    
+    fetch(`/clients/api/panier/modifier/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            item_id: itemId,
+            quantite: newQuantity
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            quantityElement.textContent = newQuantity;
+            updateCartDisplay(data);
+            showToast(data.message, 'success');
+        } else {
+            showToast(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Une erreur est survenue', 'error');
+    })
+    .finally(() => {
+        toggleLoading(false);
+    });
+}
+
+// Supprimer un article du panier
+function removeItem(itemId) {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cet article ?')) return;
+    
+    toggleLoading(true);
+    
+    fetch(`/clients/api/panier/supprimer/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            item_id: itemId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const itemElement = document.querySelector(`[data-item-id="${itemId}"]`);
+            itemElement.style.animation = 'slideUp 0.3s ease reverse';
+            setTimeout(() => {
+                itemElement.remove();
+                updateCartDisplay(data);
+                
+                // Si le panier est vide, recharger la page
+                if (data.nombre_articles === 0) {
+                    location.reload();
+                }
+            }, 300);
+            
+            showToast(data.message, 'success');
+        } else {
+            showToast(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Une erreur est survenue', 'error');
+    })
+    .finally(() => {
+        toggleLoading(false);
+    });
+}
+
+// Vider le panier
+function clearCart() {
+    if (!confirm('Êtes-vous sûr de vouloir vider tout votre panier ?')) return;
+    
+    toggleLoading(true);
+    
+    fetch(`supprimer`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            showToast(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Une erreur est survenue', 'error');
+    })
+    .finally(() => {
+        toggleLoading(false);
+    });
+}
+
+// Mettre à jour l'affichage du panier
+function updateCartDisplay(data) {
+    // Mettre à jour le nombre d'articles dans l'en-tête
+    const countElement = document.getElementById('cart-items-count');
+    if (countElement) {
+        countElement.textContent = `${data.nombre_articles} article(s)`;
+    }
+    
+    // Mettre à jour le compteur global du panier
+    API.Cart.updateCartUI(data);
+    
+    // Mettre à jour les totaux dans le résumé
+    const totalElements = document.querySelectorAll('[class*="text-lg font-bold text-primary-600"]');
+    totalElements.forEach(element => {
+        if (element.textContent.includes('FCFA')) {
+            element.textContent = `${data.total_panier} FCFA`;
+        }
+    });
+    
+    // Mettre à jour le sous-total dans le résumé
+    const subtotalElements = document.querySelectorAll('.text-sm.text-consistent-primary');
+    subtotalElements.forEach(element => {
+        if (element.textContent.includes('FCFA') && !element.classList.contains('font-bold')) {
+            element.textContent = `${data.total_panier} FCFA`;
+        }
+    });
+    
+    // Mettre à jour le bouton de commande
+    const checkoutButton = document.querySelector('.btn-consistent-primary span.font-bold');
+    if (checkoutButton) {
+        checkoutButton.textContent = `• ${data.total_panier} FCFA`;
+    }
+}
+
+// Gérer la modification directe de la quantité
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialiser le compteur du panier
+    API.Cart.getInfo().then(data => {
+        if (data.success) {
+            API.Cart.updateCartUI(data);
+        }
+    });
+});
+</script>
+{% endblock %}

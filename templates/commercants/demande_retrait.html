@@ -1,0 +1,610 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Retrait - {{ commercant.nom_boutique }}{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --primary: #10B981;
+    --primary-dark: #059669;
+    --secondary: #3B82F6;
+    --danger: #EF4444;
+    --warning: #F59E0B;
+    --gray-50: #F9FAFB;
+    --gray-100: #F3F4F6;
+    --gray-200: #E5E7EB;
+    --gray-600: #4B5563;
+    --gray-900: #111827;
+}
+
+.retrait-container {
+    max-width: 100%;
+    margin: 0 auto;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+}
+
+.retrait-card {
+    background: white;
+    border-radius: 20px;
+    margin: 20px;
+    padding: 24px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.retrait-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+}
+
+.solde-header {
+    text-align: center;
+    padding: 20px 0;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    border-radius: 16px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+}
+
+.solde-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 1%, transparent 1%);
+    background-size: 20px 20px;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+.solde-montant {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin: 10px 0;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.solde-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--gray-900);
+    font-size: 0.9rem;
+}
+
+.form-input {
+    width: 100%;
+    padding: 16px;
+    border: 2px solid var(--gray-200);
+    border-radius: 12px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: var(--gray-50);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: white;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.operateur-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.operateur-btn {
+    padding: 16px;
+    border: 2px solid var(--gray-200);
+    border-radius: 12px;
+    background: var(--gray-50);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+
+.operateur-btn.active {
+    border-color: var(--primary);
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--primary);
+}
+
+.operateur-btn.flooz.active {
+    border-color: #FF6B00;
+    background: rgba(255, 107, 0, 0.1);
+    color: #FF6B00;
+}
+
+.operateur-btn.tmoney.active {
+    border-color: #00A859;
+    background: rgba(0, 168, 89, 0.1);
+    color: #00A859;
+}
+
+.calcul-frais {
+    background: var(--gray-50);
+    border-radius: 16px;
+    padding: 20px;
+    margin: 20px 0;
+    border-left: 4px solid var(--primary);
+}
+
+.frais-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.frais-total {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 700;
+    font-size: 1.1rem;
+    padding-top: 12px;
+    border-top: 1px solid var(--gray-200);
+    color: var(--primary);
+}
+
+.btn-retrait {
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    border: none;
+    border-radius: 16px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+}
+
+.btn-retrait:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.btn-retrait:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(16, 185, 129, 0.4);
+}
+
+.historique-section {
+    margin-top: 30px;
+}
+
+.historique-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--gray-900);
+}
+
+.retrait-item {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border-left: 4px solid var(--primary);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+
+.retrait-item:hover {
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.retrait-montant {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--gray-900);
+}
+
+.retrait-date {
+    font-size: 0.8rem;
+    color: var(--gray-600);
+    margin-top: 4px;
+}
+
+.retrait-statut {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.statut-en_attente { background: #FEF3C7; color: #D97706; }
+.statut-traite { background: #D1FAE5; color: #065F46; }
+.statut-echec { background: #FEE2E2; color: #DC2626; }
+
+.loading-spinner {
+    display: none;
+    text-align: center;
+    padding: 20px;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.alert {
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+.alert-success {
+    background: #D1FAE5;
+    color: #065F46;
+    border: 1px solid #A7F3D0;
+}
+
+.alert-error {
+    background: #FEE2E2;
+    color: #DC2626;
+    border: 1px solid #FECACA;
+}
+
+.operateur-logo {
+    width: 24px;
+    height: 24px;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+@media (max-width: 480px) {
+    .retrait-card {
+        margin: 10px;
+        padding: 20px;
+    }
+    
+    .solde-montant {
+        font-size: 2rem;
+    }
+    
+    .operateur-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="retrait-container">
+    <!-- Header -->
+    <div class="bg-white shadow-sm">
+        <div class="px-4 py-4">
+            <div class="flex items-center justify-between">
+                <button onclick="history.back()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                </button>
+                <h1 class="text-xl font-bold text-gray-900">Retrait</h1>
+                <div class="w-10"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Carte Principale -->
+    <div class="retrait-card">
+        <!-- Solde -->
+        <div class="solde-header">
+            <div class="solde-label">Solde Disponible</div>
+            <div class="solde-montant">{{ portefeuille.solde|floatformat:0 }} FCFA</div>
+            <div class="solde-label">Minimum: {{ solde_minimum|floatformat:0 }} FCFA</div>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-error{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Formulaire -->
+        <form method="post" id="retraitForm" onsubmit="return validateForm()">
+            {% csrf_token %}
+            
+            <!-- Montant -->
+            <div class="form-group">
+                <label class="form-label">Montant à retirer (FCFA)</label>
+                <input type="number" 
+                       name="montant" 
+                       id="id_montant"
+                       class="form-input" 
+                       placeholder="Ex: 5000" 
+                       min="500"
+                       max="{{ portefeuille.solde }}"
+                       required
+                       oninput="calculerFrais()">
+                <div class="text-sm text-gray-600 mt-2">Frais de retrait: 2%</div>
+                {% if form.montant.errors %}
+                    <div class="text-red-600 text-sm mt-1">
+                        {{ form.montant.errors }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Méthode -->
+            <div class="form-group">
+                <label class="form-label">Méthode de retrait</label>
+                <select name="methode" id="id_methode" class="form-input" onchange="toggleOperateur()">
+                    <option value="mobile_money">Mobile Money</option>
+                    <option value="virement">Virement Bancaire</option>
+                </select>
+            </div>
+
+            <!-- Numéro de compte -->
+            <div class="form-group">
+                <label class="form-label" id="label_numero">Numéro de téléphone</label>
+                <input type="text" 
+                       name="numero_compte" 
+                       id="id_numero_compte"
+                       class="form-input" 
+                       placeholder="Ex: 90 12 34 56"
+                       value="{{ request.user.telephone }}"
+                       required>
+                {% if form.numero_compte.errors %}
+                    <div class="text-red-600 text-sm mt-1">
+                        {{ form.numero_compte.errors }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Opérateur Mobile Money -->
+            <div class="form-group" id="operateur-group">
+                <label class="form-label">Opérateur</label>
+                <div class="operateur-grid">
+                    <div class="operateur-btn flooz active" data-value="FLOOZ" onclick="selectOperateur(this)">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDIyQzE3LjUyMjggMjIgMjIgMTcuNTIyOCAyMiAxMkMyMiA2LjQ3NzE1IDE3LjUyMjggMiAxMiAyQzYuNDc3MTUgMiAyIDYuNDc3MTUgMiAxMkMyIDE3LjUyMjggNi40NzcxNSAyMiAxMiAyMloiIGZpbGw9IiNGRjZCMDAiLz4KPHBhdGggZD0iTTEyIDZWOE0xMiAxNlYxOE0xNSA5TDkgMTVNMTUgMTVMOSA5IiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K" class="operateur-logo">
+                        FLOOZ
+                    </div>
+                    <div class="operateur-btn tmoney" data-value="TMONEY" onclick="selectOperateur(this)">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDIyQzE3LjUyMjggMjIgMjIgMTcuNTIyOCAyMiAxMkMyMiA2LjQ3NzE1IDE3LjUyMjggMiAxMiAyQzYuNDc3MTUgMiAyIDYuNDc3MTUgMiAxMkMyIDE3LjUyMjggNi40NzcxNSAyMiAxMiAyMloiIGZpbGw9IiMwMEE4NTkiLz4KPHBhdGggZD0iTTggMTJIMTZNMTIgOEwxNiAxMkwxMiAxNloiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cjwvc3ZnPgo=" class="operateur-logo">
+                        T-Money
+                    </div>
+                </div>
+                <input type="hidden" name="operateur" id="id_operateur" value="FLOOZ" required>
+                {% if form.operateur.errors %}
+                    <div class="text-red-600 text-sm mt-1">
+                        {{ form.operateur.errors }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Bénéficiaire -->
+            <div class="form-group">
+                <label class="form-label">Nom du bénéficiaire</label>
+                <input type="text" 
+                       name="nom_beneficiaire" 
+                       id="id_nom_beneficiaire"
+                       class="form-input" 
+                       placeholder="Nom complet du bénéficiaire"
+                       value="{{ commercant.nom_boutique }}"
+                       required>
+                {% if form.nom_beneficiaire.errors %}
+                    <div class="text-red-600 text-sm mt-1">
+                        {{ form.nom_beneficiaire.errors }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Calcul des frais -->
+            <div class="calcul-frais">
+                <h4 class="font-semibold text-gray-900 mb-3">Détails du retrait</h4>
+                <div class="frais-item">
+                    <span>Montant demandé:</span>
+                    <span id="montant-demande">0 FCFA</span>
+                </div>
+                <div class="frais-item">
+                    <span>Frais de retrait (2%):</span>
+                    <span id="frais-retrait">0 FCFA</span>
+                </div>
+                <div class="frais-total">
+                    <span>Montant net à recevoir:</span>
+                    <span id="montant-net">0 FCFA</span>
+                </div>
+            </div>
+
+            <!-- Bouton de soumission -->
+            <button type="submit" class="btn-retrait" id="btn-submit">
+                Confirmer le retrait
+            </button>
+        </form>
+
+        <!-- Loading -->
+        <div class="loading-spinner" id="loading">
+            <div class="spinner"></div>
+            <p class="mt-3 text-gray-600">Traitement en cours...</p>
+        </div>
+    </div>
+
+    <!-- Historique des retraits -->
+    {% if retraits_recents %}
+    <div class="retrait-card">
+        <h3 class="historique-title">Dernières demandes</h3>
+        <div class="space-y-3">
+            {% for retrait in retraits_recents %}
+            <div class="retrait-item">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <div class="retrait-montant">{{ retrait.montant|floatformat:0 }} FCFA</div>
+                        <div class="text-sm text-gray-600">{{ retrait.get_methode_display }}</div>
+                        <div class="retrait-date">{{ retrait.date_demande|date:"d/m/Y H:i" }}</div>
+                    </div>
+                    <div class="text-right">
+                        <span class="retrait-statut statut-{{ retrait.statut }}">
+                            {{ retrait.get_statut_display }}
+                        </span>
+                        <div class="text-xs text-gray-500 mt-1">
+                            Net: {{ retrait.montant_net|floatformat:0 }} FCFA
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Variables globales
+let selectedOperateur = 'FLOOZ';
+
+// Initialisation
+document.addEventListener('DOMContentLoaded', function() {
+    calculerFrais();
+    toggleOperateur();
+});
+
+// Calcul des frais
+function calculerFrais() {
+    const montant = parseFloat(document.getElementById('id_montant').value) || 0;
+    const frais = montant * 0.02;
+    const montantNet = montant - frais;
+    
+    document.getElementById('montant-demande').textContent = formatMoney(montant) + ' FCFA';
+    document.getElementById('frais-retrait').textContent = formatMoney(frais) + ' FCFA';
+    document.getElementById('montant-net').textContent = formatMoney(montantNet) + ' FCFA';
+    
+    // Vérifier le solde
+    const solde = {{ portefeuille.solde }};
+    const btnSubmit = document.getElementById('btn-submit');
+    
+    if (montant > solde) {
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = 'Solde insuffisant';
+    } else if (montant < 500) {
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = 'Minimum 500 FCFA';
+    } else {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Confirmer le retrait';
+    }
+}
+
+// Formatage monétaire
+function formatMoney(amount) {
+    return Math.round(amount).toLocaleString('fr-FR');
+}
+
+// Sélection opérateur
+function selectOperateur(element) {
+    // Retirer la classe active de tous les boutons
+    document.querySelectorAll('.operateur-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Ajouter la classe active au bouton cliqué
+    element.classList.add('active');
+    
+    // Mettre à jour la valeur cachée
+    selectedOperateur = element.getAttribute('data-value');
+    document.getElementById('id_operateur').value = selectedOperateur;
+}
+
+// Toggle champ opérateur
+function toggleOperateur() {
+    const methode = document.getElementById('id_methode').value;
+    const operateurGroup = document.getElementById('operateur-group');
+    const labelNumero = document.getElementById('label_numero');
+    const inputNumero = document.getElementById('id_numero_compte');
+    
+    if (methode === 'mobile_money') {
+        operateurGroup.style.display = 'block';
+        labelNumero.textContent = 'Numéro de téléphone';
+        inputNumero.placeholder = 'Ex: 90 12 34 56';
+        inputNumero.value = '{{ request.user.telephone }}';
+    } else {
+        operateurGroup.style.display = 'none';
+        labelNumero.textContent = 'Numéro de compte';
+        inputNumero.placeholder = 'Numéro de compte bancaire';
+        inputNumero.value = '';
+    }
+}
+
+// Validation du formulaire
+function validateForm() {
+    const montant = parseFloat(document.getElementById('id_montant').value) || 0;
+    const solde = {{ portefeuille.solde }};
+    
+    if (montant < 500) {
+        alert('Le montant minimum de retrait est de 500 FCFA');
+        return false;
+    }
+    
+    if (montant > solde) {
+        alert('Solde insuffisant pour effectuer ce retrait');
+        return false;
+    }
+    
+    // Afficher le loading
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('btn-submit').style.display = 'none';
+    
+    return true;
+}
+
+// Animation de saisie
+document.querySelectorAll('.form-input').forEach(input => {
+    input.addEventListener('focus', function() {
+        this.parentElement.classList.add('focused');
+    });
+    
+    input.addEventListener('blur', function() {
+        if (!this.value) {
+            this.parentElement.classList.remove('focused');
+        }
+    });
+});
+</script>
+{% endblock %}

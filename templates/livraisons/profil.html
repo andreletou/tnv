@@ -1,0 +1,547 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Profil Livreur - Local-Links{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-header {
+        background: linear-gradient(135deg, #10b981, #059669);
+        position: relative;
+        overflow: hidden;
+    }
+    .dark .profile-header {
+        background: linear-gradient(135deg, #065f46, #047857);
+    }
+    .profile-avatar {
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    .info-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.25rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+        margin-bottom: 1rem;
+    }
+    .dark .info-card {
+        background: #1f2937;
+        border-color: #374151;
+    }
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    .dark .info-row {
+        border-bottom-color: #374151;
+    }
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    .info-label {
+        font-weight: 500;
+        color: #6b7280;
+    }
+    .dark .info-label {
+        color: #9ca3af;
+    }
+    .info-value {
+        font-weight: 600;
+        color: #1f2937;
+        text-align: right;
+    }
+    .dark .info-value {
+        color: #f9fafb;
+    }
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    .status-online {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+    .dark .status-online {
+        background-color: #14532d;
+        color: #bbf7d0;
+    }
+    .status-offline {
+        background-color: #f3f4f6;
+        color: #6b7280;
+    }
+    .dark .status-offline {
+        background-color: #374151;
+        color: #d1d5db;
+    }
+    .action-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem 1rem;
+        border-radius: 0.75rem;
+        font-weight: 500;
+        transition: all 0.2s;
+        gap: 0.5rem;
+        width: 100%;
+        margin-bottom: 0.75rem;
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+    }
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #059669, #047857);
+        transform: translateY(-1px);
+    }
+    .btn-secondary {
+        background: #f3f4f6;
+        color: #374151;
+        border: 1px solid #d1d5db;
+    }
+    .dark .btn-secondary {
+        background: #374151;
+        color: #d1d5db;
+        border-color: #4b5563;
+    }
+    .btn-danger {
+        background: #fee2e2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+    }
+    .dark .btn-danger {
+        background: #7f1d1d;
+        color: #fca5a5;
+        border-color: #991b1b;
+    }
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        padding: 1rem;
+    }
+    .modal-content {
+        background: white;
+        border-radius: 1rem;
+        width: 100%;
+        max-width: 500px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    .dark .modal-content {
+        background: #1f2937;
+    }
+    .modal-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .dark .modal-header {
+        border-bottom-color: #374151;
+    }
+    .modal-body {
+        padding: 1.5rem;
+    }
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+    .form-label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        color: #374151;
+    }
+    .dark .form-label {
+        color: #d1d5db;
+    }
+    .form-input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        background-color: white;
+        transition: border-color 0.2s;
+    }
+    .dark .form-input {
+        background-color: #374151;
+        border-color: #4b5563;
+        color: #f9fafb;
+    }
+    .form-input:focus {
+        outline: none;
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+    .dark .form-input:focus {
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+    }
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+    .stat-item {
+        background: white;
+        border-radius: 0.75rem;
+        padding: 1rem;
+        text-align: center;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        border: 1px solid #f3f4f6;
+    }
+    .dark .stat-item {
+        background: #1f2937;
+        border-color: #374151;
+    }
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #10b981;
+        margin-bottom: 0.25rem;
+    }
+    .stat-label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        font-weight: 500;
+    }
+    .dark .stat-label {
+        color: #9ca3af;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20">
+    <!-- Header avec photo de profil -->
+    <div class="profile-header pt-6 pb-16 px-4 text-white">
+        <div class="flex justify-between items-center mb-6">
+            <a href="{% url 'livraisons:tableau_de_bord' %}" class="p-2 rounded-full bg-white/20">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div class="flex items-center space-x-4">
+                <button id="toggle-dark-mode" class="p-2 rounded-full bg-white/20">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button id="edit-profile-btn" class="p-2 rounded-full bg-white/20">
+                    <i class="fas fa-edit"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="flex flex-col items-center">
+            <div class="relative">
+                {% if livreur.user.photo_profil %}
+                    <img src="{{ livreur.user.photo_profil.url }}" alt="Photo de profil" class="w-24 h-24 rounded-full profile-avatar object-cover">
+                {% else %}
+                    <div class="w-24 h-24 rounded-full profile-avatar bg-white/30 flex items-center justify-center">
+                        <i class="fas fa-user text-3xl"></i>
+                    </div>
+                {% endif %}
+                <div class="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow-md">
+                    <div id="status-dot" class="w-4 h-4 rounded-full {% if livreur.est_en_ligne %}bg-green-500 animate-pulse{% else %}bg-gray-400{% endif %}"></div>
+                </div>
+            </div>
+            
+            <h1 class="text-xl font-bold mt-4">{{ livreur.user.first_name }} {{ livreur.user.last_name }}</h1>
+            <p class="text-white/80 mt-1">Livreur {{ livreur.type_vehicule|title }}</p>
+            
+            <div class="mt-2 flex items-center space-x-2">
+                <span class="status-badge {% if livreur.est_en_ligne %}status-online{% else %}status-offline{% endif %}">
+                    <span class="w-2 h-2 rounded-full mr-1 {% if livreur.est_en_ligne %}bg-green-500{% else %}bg-gray-400{% endif %}"></span>
+                    {% if livreur.est_en_ligne %}En ligne{% else %}Hors ligne{% endif %}
+                </span>
+                <span class="text-white/80 text-sm">
+                    <i class="fas fa-star text-yellow-400 mr-1"></i>
+                    {{ livreur.note_moyenne|default:"0.0" }}/5
+                </span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Contenu principal -->
+    <div class="px-4 -mt-8 relative z-10">
+        <!-- Statistiques rapides -->
+        <div class="stats-grid mb-6">
+            <div class="stat-item">
+                <div class="stat-value">{{ livreur.nombre_livraisons }}</div>
+                <div class="stat-label">Livraisons</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ livreur.note_moyenne|default:"0.0" }}</div>
+                <div class="stat-label">Note</div>
+            </div>
+        </div>
+        
+        <!-- Informations personnelles -->
+        <div class="info-card">
+            <h2 class="text-lg font-bold mb-4 text-gray-800 dark:text-white">Informations personnelles</h2>
+            
+            <div class="info-row">
+                <span class="info-label">Nom complet</span>
+                <span class="info-value">{{ livreur.user.first_name }} {{ livreur.user.last_name }}</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="info-label">Email</span>
+                <span class="info-value">{{ livreur.user.email }}</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="info-label">Téléphone</span>
+                <span class="info-value">{{ livreur.user.telephone|default:"Non renseigné" }}</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="info-label">Date d'inscription</span>
+                <span class="info-value">{{ livreur.date_inscription|date:"d/m/Y" }}</span>
+            </div>
+        </div>
+        
+        <!-- Informations véhicule -->
+        <div class="info-card">
+            <h2 class="text-lg font-bold mb-4 text-gray-800 dark:text-white">Informations véhicule</h2>
+            
+            <div class="info-row">
+                <span class="info-label">Type de véhicule</span>
+                <span class="info-value">{{ livreur.get_type_vehicule_display }}</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="info-label">Immatriculation</span>
+                <span class="info-value">{{ livreur.immatriculation }}</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="info-label">Kilométrage</span>
+                <span class="info-value">{{ livreur.kilometrage_vehicule|default:"0" }} km</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="info-label">Niveau batterie</span>
+                <span class="info-value">
+                    {% if livreur.niveau_batterie %}
+                        {{ livreur.niveau_batterie }}%
+                    {% else %}
+                        Non applicable
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="mt-6">
+            <button id="toggle-status" class="action-btn {% if livreur.est_en_ligne %}btn-secondary{% else %}btn-primary{% endif %}">
+                <i class="fas fa-power-off"></i>
+                {% if livreur.est_en_ligne %}Se déconnecter{% else %}Se connecter{% endif %}
+            </button>
+            
+            <a href="{% url 'livraisons:deconnexion' %}" class="action-btn btn-danger">
+                <i class="fas fa-sign-out-alt"></i>
+                Se déconnecter
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Modal d'édition du profil -->
+<div id="edit-profile-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="text-lg font-bold text-gray-800 dark:text-white">Modifier le profil</h3>
+            <button id="close-modal" class="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="modal-body">
+            <form id="profile-form" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label class="form-label" for="id_first_name">Prénom</label>
+                    <input type="text" name="first_name" id="id_first_name" class="form-input" value="{{ livreur.user.first_name }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="id_last_name">Nom</label>
+                    <input type="text" name="last_name" id="id_last_name" class="form-input" value="{{ livreur.user.last_name }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="id_email">Email</label>
+                    <input type="email" name="email" id="id_email" class="form-input" value="{{ livreur.user.email }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="id_telephone">Téléphone</label>
+                    <input type="text" name="telephone" id="id_telephone" class="form-input" value="{{ livreur.user.telephone|default:'' }}">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="id_type_vehicule">Type de véhicule</label>
+                    <select name="type_vehicule" id="id_type_vehicule" class="form-input">
+                        {% for value, label in form.fields.type_vehicule.choices %}
+                            <option value="{{ value }}" {% if value == livreur.type_vehicule %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="id_immatriculation">Immatriculation</label>
+                    <input type="text" name="immatriculation" id="id_immatriculation" class="form-input" value="{{ livreur.immatriculation }}">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="id_photo_profil">Photo de profil</label>
+                    <input type="file" name="photo_profil" id="id_photo_profil" class="form-input" accept="image/*">
+                </div>
+                
+                <div class="flex space-x-3 mt-6">
+                    <button type="button" id="cancel-edit" class="action-btn btn-secondary flex-1">
+                        Annuler
+                    </button>
+                    <button type="submit" class="action-btn btn-primary flex-1">
+                        Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Gestion du dark mode
+        const toggleDarkModeBtn = document.getElementById('toggle-dark-mode');
+        if (toggleDarkModeBtn) {
+            toggleDarkModeBtn.addEventListener('click', function() {
+                if (document.documentElement.classList.contains('dark')) {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('theme', 'light');
+                    toggleDarkModeBtn.innerHTML = '<i class="fas fa-moon"></i>';
+                    showToast('Mode clair activé', 'success');
+                } else {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('theme', 'dark');
+                    toggleDarkModeBtn.innerHTML = '<i class="fas fa-sun"></i>';
+                    showToast('Mode sombre activé', 'success');
+                }
+            });
+        }
+        
+        // Gestion du modal d'édition
+        const editProfileBtn = document.getElementById('edit-profile-btn');
+        const editProfileModal = document.getElementById('edit-profile-modal');
+        const closeModalBtn = document.getElementById('close-modal');
+        const cancelEditBtn = document.getElementById('cancel-edit');
+        
+        if (editProfileBtn && editProfileModal) {
+            editProfileBtn.addEventListener('click', function() {
+                editProfileModal.classList.remove('hidden');
+            });
+            
+            closeModalBtn.addEventListener('click', function() {
+                editProfileModal.classList.add('hidden');
+            });
+            
+            cancelEditBtn.addEventListener('click', function() {
+                editProfileModal.classList.add('hidden');
+            });
+            
+            // Fermer le modal en cliquant à l'extérieur
+            editProfileModal.addEventListener('click', function(e) {
+                if (e.target === editProfileModal) {
+                    editProfileModal.classList.add('hidden');
+                }
+            });
+        }
+        
+        // Gestion du statut en ligne/hors ligne
+        const toggleStatusBtn = document.getElementById('toggle-status');
+        if (toggleStatusBtn) {
+            toggleStatusBtn.addEventListener('click', function() {
+                const statusDot = document.getElementById('status-dot');
+                const isOnline = statusDot.classList.contains('bg-green-500');
+                
+                if (isOnline) {
+                    // Se déconnecter
+                    LivreurAPI.updateStatus(false, false);
+                } else {
+                    // Demander la localisation pour se connecter
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            (position) => {
+                                const { latitude, longitude } = position.coords;
+                                LivreurAPI.updatePosition(latitude, longitude);
+                                LivreurAPI.updateStatus(true, true);
+                            },
+                            (error) => {
+                                console.error('Erreur géolocalisation:', error);
+                                showToast('Activation sans géolocalisation', 'warning');
+                                LivreurAPI.updateStatus(true, true);
+                            }
+                        );
+                    } else {
+                        showToast('Géolocalisation non supportée', 'warning');
+                        LivreurAPI.updateStatus(true, true);
+                    }
+                }
+            });
+        }
+        
+        // Soumission du formulaire de profil
+        const profileForm = document.getElementById('profile-form');
+        if (profileForm) {
+            profileForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(profileForm);
+                
+                fetch('{% url "livraisons:profil" %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('Profil mis à jour avec succès', 'success');
+                        editProfileModal.classList.add('hidden');
+                        // Recharger la page pour afficher les nouvelles données
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        showToast('Erreur lors de la mise à jour du profil', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    showToast('Erreur de connexion', 'error');
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,1067 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestion des Livraisons - Livreur{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Styles spécifiques à la gestion des livraisons */
+    .page-container {
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 1rem;
+        padding-bottom: 5rem;
+    }
+    
+    .page-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+    
+    .filters-container {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+    }
+    
+    .filter-btn {
+        padding: 0.5rem 1rem;
+        border-radius: 2rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        white-space: nowrap;
+        transition: all 0.2s ease;
+        border: 1px solid #e5e7eb;
+        background: white;
+        color: #6b7280;
+        cursor: pointer;
+    }
+    
+    .dark .filter-btn {
+        background: #1f2937;
+        border-color: #374151;
+        color: #9ca3af;
+    }
+    
+    .filter-btn.active {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        border-color: #10b981;
+    }
+    
+    .filter-btn:hover {
+        transform: translateY(-1px);
+    }
+    
+    .search-container {
+        margin-bottom: 1.5rem;
+    }
+    
+    .search-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border-radius: 0.75rem;
+        border: 1px solid #d1d5db;
+        background: white;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+    }
+    
+    .dark .search-input {
+        background: #1f2937;
+        border-color: #374151;
+        color: #f9fafb;
+    }
+    
+    .search-input:focus {
+        outline: none;
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+    
+    .livraisons-list {
+        space-y-3;
+    }
+    
+    .livraison-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e5e7eb;
+        transition: all 0.3s ease;
+    }
+    
+    .dark .livraison-card {
+        background: #1f2937;
+        border-color: #374151;
+    }
+    
+    .livraison-card:hover {
+        box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    .livraison-header {
+        display: flex;
+        justify-content: between;
+        align-items: start;
+        margin-bottom: 0.75rem;
+    }
+    
+    .livraison-info {
+        flex: 1;
+    }
+    
+    .livraison-id {
+        font-weight: 600;
+        color: #111827;
+        font-size: 1.125rem;
+    }
+    
+    .dark .livraison-id {
+        color: #f9fafb;
+    }
+    
+    .livraison-reference {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+    }
+    
+    .dark .livraison-reference {
+        color: #9ca3af;
+    }
+    
+    .livraison-status {
+        padding: 0.375rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .status-attribuee {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .status-acceptee {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .status-en_cours {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .status-terminee {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .status-annulee {
+        background: #fecaca;
+        color: #991b1b;
+    }
+    
+    .livraison-details {
+        margin-bottom: 1rem;
+    }
+    
+    .detail-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .detail-row i {
+        width: 1.25rem;
+        color: #6b7280;
+        margin-right: 0.5rem;
+        text-align: center;
+    }
+    
+    .dark .detail-row i {
+        color: #9ca3af;
+    }
+    
+    .detail-content {
+        flex: 1;
+    }
+    
+    .client-name {
+        font-weight: 500;
+    }
+    
+    .livraison-meta {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid #e5e7eb;
+    }
+    
+    .dark .livraison-meta {
+        border-top-color: #374151;
+    }
+    
+    .meta-item {
+        display: flex;
+        align-items: center;
+        font-size: 0.75rem;
+        color: #6b7280;
+    }
+    
+    .dark .meta-item {
+        color: #9ca3af;
+    }
+    
+    .meta-item i {
+        margin-right: 0.375rem;
+    }
+    
+    .livraison-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    
+    .action-btn {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem;
+        border-radius: 0.75rem;
+        font-weight: 500;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #059669, #047857);
+        transform: translateY(-1px);
+    }
+    
+    .btn-secondary {
+        background: #f3f4f6;
+        color: #374151;
+        border: 1px solid #d1d5db;
+    }
+    
+    .dark .btn-secondary {
+        background: #374151;
+        color: #d1d5db;
+        border-color: #4b5563;
+    }
+    
+    .btn-warning {
+        background: #f59e0b;
+        color: white;
+    }
+    
+    .btn-warning:hover {
+        background: #d97706;
+    }
+    
+    .btn-danger {
+        background: #ef4444;
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        background: #dc2626;
+    }
+    
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 1rem;
+        text-align: center;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        color: #d1d5db;
+        margin-bottom: 1rem;
+    }
+    
+    .dark .empty-state i {
+        color: #4b5563;
+    }
+    
+    .empty-state h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #374151;
+    }
+    
+    .dark .empty-state h3 {
+        color: #d1d5db;
+    }
+    
+    .empty-state p {
+        color: #6b7280;
+        margin-bottom: 1.5rem;
+        max-width: 20rem;
+    }
+    
+    .dark .empty-state p {
+        color: #9ca3af;
+    }
+    
+    .loading-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 1rem;
+        text-align: center;
+    }
+    
+    .loading-spinner {
+        width: 3rem;
+        height: 3rem;
+        border: 4px solid #f3f4f6;
+        border-top: 4px solid #10b981;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 1rem;
+    }
+    
+    .dark .loading-spinner {
+        border-color: #374151;
+        border-top-color: #10b981;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .stats-bar {
+        display: flex;
+        justify-content: space-around;
+        background: white;
+        border-radius: 1rem;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e5e7eb;
+    }
+    
+    .dark .stats-bar {
+        background: #1f2937;
+        border-color: #374151;
+    }
+    
+    .stat-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .stat-number {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #111827;
+    }
+    
+    .dark .stat-number {
+        color: #f9fafb;
+    }
+    
+    .stat-label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+    }
+    
+    .dark .stat-label {
+        color: #9ca3af;
+    }
+    
+    .refresh-btn {
+        position: fixed;
+        bottom: 5rem;
+        right: 1rem;
+        width: 3.5rem;
+        height: 3.5rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        border: none;
+        cursor: pointer;
+        z-index: 30;
+        transition: all 0.3s ease;
+    }
+    
+    .refresh-btn:hover {
+        transform: rotate(180deg);
+        box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+    }
+    
+    .refresh-btn.rotating {
+        animation: rotate 1s linear infinite;
+    }
+    
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    /* Animation pour les nouveaux éléments */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .animate-fade-in-up {
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    /* Styles pour la pagination */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 2rem;
+        gap: 0.5rem;
+    }
+    
+    .page-btn {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        border: 1px solid #d1d5db;
+        color: #374151;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .dark .page-btn {
+        background: #1f2937;
+        border-color: #374151;
+        color: #d1d5db;
+    }
+    
+    .page-btn.active {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        border-color: #10b981;
+    }
+    
+    .page-btn:hover:not(.active) {
+        background: #f3f4f6;
+        transform: translateY(-1px);
+    }
+    
+    .dark .page-btn:hover:not(.active) {
+        background: #374151;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <!-- En-tête de page -->
+    <div class="page-header">
+        <h1 class="page-title">Gestion des Livraisons</h1>
+        <div class="flex items-center space-x-3">
+            <button id="notifications-btn" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center relative">
+                <i class="fas fa-bell text-gray-600 dark:text-gray-300"></i>
+                <span id="notifications-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center {% if notifications_non_lues == 0 %}hidden{% endif %}">
+                    {{ notifications_non_lues }}
+                </span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Barre de statistiques -->
+    <div class="stats-bar animate-fade-in-up">
+        <div class="stat-item">
+            <span class="stat-number" id="total-count">{{ livraisons.count }}</span>
+            <span class="stat-label">Total</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number" id="available-count">
+                {% if filtre_actuel == 'disponibles' %}
+                    {{ livraisons.count }}
+                {% else %}
+                    {{ livraisons_disponibles_count }}
+                {% endif %}
+            </span>
+            <span class="stat-label">Disponibles</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number" id="in-progress-count">
+                {% if filtre_actuel == 'en_cours' %}
+                    {{ livraisons.count }}
+                {% else %}
+                    {{ livraisons_en_cours_count }}
+                {% endif %}
+            </span>
+            <span class="stat-label">En cours</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number" id="completed-count">
+                {% if filtre_actuel == 'terminees' %}
+                    {{ livraisons.count }}
+                {% else %}
+                    {{ livraisons_terminees_count }}
+                {% endif %}
+            </span>
+            <span class="stat-label">Terminées</span>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="filters-container">
+        <button class="filter-btn {% if filtre_actuel == 'toutes' %}active{% endif %}" onclick="changerFiltre('toutes')">
+            Toutes
+        </button>
+        <button class="filter-btn {% if filtre_actuel == 'disponibles' %}active{% endif %}" onclick="changerFiltre('disponibles')">
+            Disponibles
+        </button>
+        <button class="filter-btn {% if filtre_actuel == 'en_cours' %}active{% endif %}" onclick="changerFiltre('en_cours')">
+            En cours
+        </button>
+        <button class="filter-btn {% if filtre_actuel == 'terminees' %}active{% endif %}" onclick="changerFiltre('terminees')">
+            Terminées
+        </button>
+        <button class="filter-btn {% if filtre_actuel == 'annulees' %}active{% endif %}" onclick="changerFiltre('annulees')">
+            Annulées
+        </button>
+    </div>
+
+    <!-- Barre de recherche -->
+    <div class="search-container">
+        <input type="text" id="search-input" class="search-input" placeholder="Rechercher une livraison, un client, une adresse..." onkeyup="filtrerLivraisons()">
+    </div>
+
+    <!-- Liste des livraisons -->
+    <div class="livraisons-list" id="livraisons-container">
+        {% if livraisons %}
+            {% for livraison in livraisons %}
+            <div class="livraison-card animate-fade-in-up" data-livraison-id="{{ livraison.id }}" data-searchable="{{ livraison.id }} {{ livraison.commande.reference }} {{ livraison.commande.client.first_name }} {{ livraison.commande.client.last_name }} {{ livraison.commande.adresse_livraison }}">
+                <div class="livraison-header">
+                    <div class="livraison-info">
+                        <div class="livraison-id">Livraison #{{ livraison.id }}</div>
+                        <div class="livraison-reference">Commande {{ livraison.commande.reference }}</div>
+                    </div>
+                    <div class="livraison-status status-{{ livraison.statut }}">
+                        {{ livraison.get_statut_display }}
+                    </div>
+                </div>
+                
+                <div class="livraison-details">
+                    <div class="detail-row">
+                        <i class="fas fa-user"></i>
+                        <div class="detail-content">
+                            <span class="client-name">{{ livraison.commande.client.first_name }} {{ livraison.commande.client.last_name }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-row">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div class="detail-content">
+                            {{ livraison.commande.adresse_livraison }}
+                        </div>
+                    </div>
+                    
+                    <div class="detail-row">
+                        <i class="fas fa-phone"></i>
+                        <div class="detail-content">
+                            {{ livraison.commande.client.telephone|default:"Non fourni" }}
+                        </div>
+                    </div>
+                    
+                    {% if livraison.instructions_speciales %}
+                    <div class="detail-row">
+                        <i class="fas fa-sticky-note"></i>
+                        <div class="detail-content">
+                            <em>{{ livraison.instructions_speciales }}</em>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="livraison-meta">
+                    <div class="meta-item">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span>{{ livraison.cout_livraison }} FCFA</span>
+                    </div>
+                    
+                    {% if livraison.distance_estimee %}
+                    <div class="meta-item">
+                        <i class="fas fa-road"></i>
+                        <span>{{ livraison.distance_estimee|floatformat:1 }} km</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if livraison.duree_estimee %}
+                    <div class="meta-item">
+                        <i class="fas fa-clock"></i>
+                        <span>{{ livraison.duree_estimee }} min</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="livraison-actions">
+                    {% if livraison.statut == 'attribuee' and not livraison.livreur %}
+                        <button class="action-btn btn-primary" onclick="accepterLivraison({{ livraison.id }})">
+                            <i class="fas fa-check mr-1"></i> Accepter
+                        </button>
+                    {% elif livraison.statut == 'acceptee' and livraison.livreur == livreur %}
+                        <button class="action-btn btn-warning" onclick="commencerLivraison({{ livraison.id }})">
+                            <i class="fas fa-play mr-1"></i> Commencer
+                        </button>
+                    {% elif livraison.statut == 'en_cours' and livraison.livreur == livreur %}
+                        <button class="action-btn btn-primary" onclick="terminerLivraison({{ livraison.id }})">
+                            <i class="fas fa-flag-checkered mr-1"></i> Terminer
+                        </button>
+                    {% endif %}
+                    
+                    {% if livraison.livreur == livreur and livraison.statut in 'acceptee,en_cours' %}
+                        <button class="action-btn btn-danger" onclick="annulerLivraison({{ livraison.id }})">
+                            <i class="fas fa-times mr-1"></i> Annuler
+                        </button>
+                    {% endif %}
+                    
+                    <button class="action-btn btn-secondary" onclick="afficherDetailsLivraison({{ livraison.id }})">
+                        <i class="fas fa-info-circle mr-1"></i> Détails
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-{% if filtre_actuel == 'disponibles' %}search{% else %}box-open{% endif %}"></i>
+                <h3>
+                    {% if filtre_actuel == 'disponibles' %}
+                        Aucune livraison disponible
+                    {% elif filtre_actuel == 'en_cours' %}
+                        Aucune livraison en cours
+                    {% elif filtre_actuel == 'terminees' %}
+                        Aucune livraison terminée
+                    {% elif filtre_actuel == 'annulees' %}
+                        Aucune livraison annulée
+                    {% else %}
+                        Aucune livraison
+                    {% endif %}
+                </h3>
+                <p>
+                    {% if filtre_actuel == 'disponibles' %}
+                        Les nouvelles livraisons apparaîtront ici lorsqu'elles seront disponibles.
+                    {% else %}
+                        Aucune livraison ne correspond aux critères sélectionnés.
+                    {% endif %}
+                </p>
+                {% if filtre_actuel != 'toutes' %}
+                    <button class="action-btn btn-secondary mt-2" onclick="changerFiltre('toutes')">
+                        Voir toutes les livraisons
+                    </button>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Bouton de rafraîchissement -->
+    <button id="refresh-btn" class="refresh-btn" onclick="actualiserLivraisons()">
+        <i class="fas fa-sync-alt"></i>
+    </button>
+</div>
+
+<!-- Modal pour les détails de livraison -->
+<div id="livraison-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-end justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-t-2xl w-full max-w-md max-h-[80vh] overflow-y-auto animate-slide-up">
+        <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+            <h3 class="text-lg font-semibold">Détails de la livraison</h3>
+            <button onclick="fermerModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="modal-content" class="p-4">
+            <!-- Contenu chargé dynamiquement -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // ===== FONCTIONS DE GESTION DES LIVRAISONS =====
+    
+    // Changer le filtre
+    function changerFiltre(filtre) {
+        window.location.href = `?filtre=${filtre}`;
+    }
+    
+    // Filtrer les livraisons par recherche
+    function filtrerLivraisons() {
+        const searchTerm = document.getElementById('search-input').value.toLowerCase();
+        const livraisons = document.querySelectorAll('.livraison-card');
+        
+        livraisons.forEach(livraison => {
+            const searchableText = livraison.getAttribute('data-searchable').toLowerCase();
+            if (searchableText.includes(searchTerm)) {
+                livraison.style.display = 'block';
+            } else {
+                livraison.style.display = 'none';
+            }
+        });
+    }
+    
+    // Accepter une livraison
+    async function accepterLivraison(livraisonId) {
+        showLoading();
+        
+        try {
+            const response = await fetch(`/livraisons/livraison/${livraisonId}/action/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+                body: `action=accepter`
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showToast('Livraison acceptée avec succès', 'success');
+                // Recharger après un court délai
+                setTimeout(() => {
+                    actualiserLivraisons();
+                }, 1000);
+            } else {
+                showToast(data.message, 'error');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            showToast('Erreur lors de l\'acceptation', 'error');
+        } finally {
+            hideLoading();
+        }
+    }
+    
+    // Commencer une livraison
+    async function commencerLivraison(livraisonId) {
+        showLoading();
+        
+        try {
+            const response = await fetch(`/livraisons/livraison/${livraisonId}/action/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+                body: `action=commencer`
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showToast('Livraison commencée', 'success');
+                setTimeout(() => {
+                    actualiserLivraisons();
+                }, 1000);
+            } else {
+                showToast(data.message, 'error');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            showToast('Erreur lors du démarrage', 'error');
+        } finally {
+            hideLoading();
+        }
+    }
+    
+    // Terminer une livraison
+    async function terminerLivraison(livraisonId) {
+        showLoading();
+        
+        try {
+            const response = await fetch(`/livraisons/livraison/${livraisonId}/action/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+                body: `action=terminer`
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showToast('Livraison terminée avec succès', 'success');
+                setTimeout(() => {
+                    actualiserLivraisons();
+                }, 1000);
+            } else {
+                showToast(data.message, 'error');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            showToast('Erreur lors de la finalisation', 'error');
+        } finally {
+            hideLoading();
+        }
+    }
+    
+    // Annuler une livraison
+    async function annulerLivraison(livraisonId) {
+        if (!confirm('Êtes-vous sûr de vouloir annuler cette livraison ?')) {
+            return;
+        }
+        
+        showLoading();
+        
+        try {
+            const response = await fetch(`/livraisons/livraison/${livraisonId}/action/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+                body: `action=annuler`
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showToast('Livraison annulée', 'success');
+                setTimeout(() => {
+                    actualiserLivraisons();
+                }, 1000);
+            } else {
+                showToast(data.message, 'error');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            showToast('Erreur lors de l\'annulation', 'error');
+        } finally {
+            hideLoading();
+        }
+    }
+    
+    // Afficher les détails d'une livraison
+    async function afficherDetailsLivraison(livraisonId) {
+        showLoading();
+        
+        try {
+            const response = await fetch(`/livraisons/livraison/${livraisonId}/detail/`);
+            const data = await response.json();
+            
+            if (data.success) {
+                const modal = document.getElementById('livraison-modal');
+                const modalContent = document.getElementById('modal-content');
+                
+                const livraison = data.livraison;
+                
+                modalContent.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="font-medium">Statut:</span>
+                            <span class="px-2 py-1 rounded-full text-xs ${getStatusClass(livraison.statut)}">${livraison.statut_display}</span>
+                        </div>
+                        
+                        <div>
+                            <h4 class="font-medium mb-2">Informations client</h4>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span>Nom:</span>
+                                    <span>${livraison.client}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Téléphone:</span>
+                                    <span>${livraison.telephone_client || 'Non fourni'}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Adresse:</span>
+                                    <span class="text-right">${livraison.adresse_livraison}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h4 class="font-medium mb-2">Détails livraison</h4>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span>Coût:</span>
+                                    <span>${livraison.cout_livraison} FCFA</span>
+                                </div>
+                                ${livraison.distance_estimee ? `
+                                <div class="flex justify-between">
+                                    <span>Distance estimée:</span>
+                                    <span>${livraison.distance_estimee} km</span>
+                                </div>
+                                ` : ''}
+                                ${livraison.duree_estimee ? `
+                                <div class="flex justify-between">
+                                    <span>Durée estimée:</span>
+                                    <span>${livraison.duree_estimee} min</span>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                        
+                        ${livraison.instructions ? `
+                        <div>
+                            <h4 class="font-medium mb-2">Instructions spéciales</h4>
+                            <p class="text-sm bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">${livraison.instructions}</p>
+                        </div>
+                        ` : ''}
+                        
+                        <div class="flex space-x-2 pt-4">
+                            ${livraison.statut === 'attribuee' ? `
+                            <button class="action-btn btn-primary flex-1" onclick="accepterLivraison(${livraison.id}); fermerModal();">
+                                <i class="fas fa-check mr-1"></i> Accepter
+                            </button>
+                            ` : ''}
+                            
+                            ${livraison.statut === 'acceptee' ? `
+                            <button class="action-btn btn-warning flex-1" onclick="commencerLivraison(${livraison.id}); fermerModal();">
+                                <i class="fas fa-play mr-1"></i> Commencer
+                            </button>
+                            ` : ''}
+                            
+                            ${livraison.statut === 'en_cours' ? `
+                            <button class="action-btn btn-primary flex-1" onclick="terminerLivraison(${livraison.id}); fermerModal();">
+                                <i class="fas fa-flag-checkered mr-1"></i> Terminer
+                            </button>
+                            ` : ''}
+                            
+                            ${livraison.statut === 'acceptee' || livraison.statut === 'en_cours' ? `
+                            <button class="action-btn btn-danger flex-1" onclick="annulerLivraison(${livraison.id}); fermerModal();">
+                                <i class="fas fa-times mr-1"></i> Annuler
+                            </button>
+                            ` : ''}
+                            
+                            <button class="action-btn btn-secondary flex-1" onclick="fermerModal()">
+                                <i class="fas fa-times mr-1"></i> Fermer
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                modal.classList.remove('hidden');
+            } else {
+                showToast(data.message, 'error');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            showToast('Erreur lors du chargement des détails', 'error');
+        } finally {
+            hideLoading();
+        }
+    }
+    
+    // Fermer le modal
+    function fermerModal() {
+        const modal = document.getElementById('livraison-modal');
+        modal.classList.add('hidden');
+    }
+    
+    // Obtenir la classe CSS pour le statut
+    function getStatusClass(statut) {
+        const statusClasses = {
+            'attribuee': 'status-attribuee',
+            'acceptee': 'status-acceptee',
+            'en_cours': 'status-en_cours',
+            'terminee': 'status-terminee',
+            'annulee': 'status-annulee'
+        };
+        return statusClasses[statut] || 'status-attribuee';
+    }
+    
+    // Actualiser les livraisons
+    async function actualiserLivraisons() {
+        const refreshBtn = document.getElementById('refresh-btn');
+        refreshBtn.classList.add('rotating');
+        
+        try {
+            // Recharger la page
+            location.reload();
+        } catch (error) {
+            console.error('Erreur:', error);
+            showToast('Erreur lors de l\'actualisation', 'error');
+        } finally {
+            setTimeout(() => {
+                refreshBtn.classList.remove('rotating');
+            }, 1000);
+        }
+    }
+    
+    // ===== GESTION DU CHARGEMENT =====
+    function showLoading() {
+        document.getElementById('loading-overlay').classList.remove('hidden');
+    }
+    
+    function hideLoading() {
+        document.getElementById('loading-overlay').classList.add('hidden');
+    }
+    
+    // ===== INITIALISATION =====
+    document.addEventListener('DOMContentLoaded', function() {
+        // Fermer le modal en cliquant à l'extérieur
+        document.getElementById('livraison-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                fermerModal();
+            }
+        });
+        
+        // Actualisation automatique toutes les 30 secondes pour les livraisons disponibles
+        if ('{{ filtre_actuel }}' === 'disponibles') {
+            setInterval(() => {
+                actualiserLivraisons();
+            }, 30000);
+        }
+        
+        // Focus sur la barre de recherche
+        document.getElementById('search-input').focus();
+    });
+</script>
+{% endblock %}

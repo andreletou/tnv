@@ -1,0 +1,1041 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Itinéraire de livraison - Livraison{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #000000;
+        --secondary-color: #FFCC00;
+        --success-color: #28a745;
+        --danger-color: #dc3545;
+        --light-gray: #f8f9fa;
+        --dark-gray: #6c757d;
+        --white: #ffffff;
+    }
+    
+    body {
+        font-family: 'Uber Move', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background-color: #f5f5f5;
+        margin: 0;
+        padding: 0;
+        color: #333;
+    }
+    
+    .route-container {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+    }
+    
+    .header {
+        background-color: var(--primary-color);
+        color: var(--white);
+        padding: 15px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 100;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .header-title {
+        font-size: 18px;
+        font-weight: 600;
+    }
+    
+    .header-actions {
+        display: flex;
+        gap: 15px;
+    }
+    
+    .header-btn {
+        background: none;
+        border: none;
+        color: var(--white);
+        font-size: 20px;
+        cursor: pointer;
+    }
+    
+    .map-container {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    #route-map {
+        width: 100%;
+        height: 100%;
+    }
+    
+    .map-overlay {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        right: 15px;
+        z-index: 50;
+    }
+    
+    .search-box {
+        background-color: var(--white);
+        border-radius: 8px;
+        padding: 12px 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        display: flex;
+        align-items: center;
+    }
+    
+    .search-icon {
+        color: var(--dark-gray);
+        margin-right: 10px;
+    }
+    
+    .search-input {
+        border: none;
+        outline: none;
+        flex: 1;
+        font-size: 16px;
+    }
+    
+    .route-info {
+        background-color: var(--white);
+        border-radius: 12px 12px 0 0;
+        padding: 20px;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        z-index: 100;
+        max-height: 40vh;
+        overflow-y: auto;
+    }
+    
+    .route-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .route-title {
+        font-size: 18px;
+        font-weight: 600;
+    }
+    
+    .route-status {
+        font-size: 14px;
+        padding: 4px 8px;
+        border-radius: 20px;
+        font-weight: 500;
+    }
+    
+    .status-active {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .route-stops {
+        margin-bottom: 20px;
+    }
+    
+    .stop {
+        display: flex;
+        margin-bottom: 15px;
+    }
+    
+    .stop-marker {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--white);
+        font-weight: bold;
+        font-size: 12px;
+        margin-right: 15px;
+        flex-shrink: 0;
+    }
+    
+    .marker-start {
+        background-color: var(--success-color);
+    }
+    
+    .marker-end {
+        background-color: var(--primary-color);
+    }
+    
+    .stop-details {
+        flex: 1;
+    }
+    
+    .stop-name {
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    
+    .stop-address {
+        font-size: 14px;
+        color: var(--dark-gray);
+        margin-bottom: 5px;
+    }
+    
+    .stop-contact {
+        font-size: 14px;
+        color: var(--dark-gray);
+    }
+    
+    .route-stats {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        padding: 15px;
+        background-color: var(--light-gray);
+        border-radius: 8px;
+    }
+    
+    .stat {
+        text-align: center;
+    }
+    
+    .stat-value {
+        font-size: 18px;
+        font-weight: 600;
+    }
+    
+    .stat-label {
+        font-size: 12px;
+        color: var(--dark-gray);
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .action-btn {
+        flex: 1;
+        padding: 12px;
+        border-radius: 8px;
+        font-weight: 600;
+        text-align: center;
+        cursor: pointer;
+        border: none;
+        font-size: 16px;
+    }
+    
+    .btn-primary {
+        background-color: var(--primary-color);
+        color: var(--white);
+    }
+    
+    .btn-secondary {
+        background-color: var(--light-gray);
+        color: var(--primary-color);
+    }
+    
+    .btn-danger {
+        background-color: var(--danger-color);
+        color: var(--white);
+    }
+    
+    .customer-info {
+        background-color: var(--light-gray);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .customer-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    
+    .customer-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 10px;
+    }
+    
+    .customer-name {
+        font-weight: 600;
+    }
+    
+    .contact-buttons {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .contact-btn {
+        flex: 1;
+        padding: 8px;
+        border-radius: 6px;
+        font-size: 14px;
+        text-align: center;
+        cursor: pointer;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .btn-call {
+        background-color: var(--success-color);
+        color: var(--white);
+    }
+    
+    .btn-message {
+        background-color: var(--primary-color);
+        color: var(--white);
+    }
+    
+    .delivery-notes {
+        background-color: var(--light-gray);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .notes-title {
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    
+    .notes-content {
+        font-size: 14px;
+    }
+    
+    .proof-section {
+        margin-bottom: 15px;
+    }
+    
+    .proof-title {
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+    
+    .proof-input {
+        border: 2px dashed var(--dark-gray);
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+    }
+    
+    .proof-icon {
+        font-size: 24px;
+        margin-bottom: 10px;
+        color: var(--dark-gray);
+    }
+    
+    .proof-text {
+        font-size: 14px;
+        color: var(--dark-gray);
+    }
+    
+    .floating-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+        color: var(--white);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        cursor: pointer;
+        z-index: 200;
+    }
+    
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .modal-content {
+        background-color: var(--white);
+        border-radius: 12px;
+        padding: 20px;
+        width: 90%;
+        max-width: 400px;
+    }
+    
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .modal-title {
+        font-size: 18px;
+        font-weight: 600;
+    }
+    
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+    }
+    
+    .modal-body {
+        margin-bottom: 20px;
+    }
+    
+    .modal-footer {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .progress-container {
+        height: 4px;
+        background-color: #e0e0e0;
+        margin-bottom: 20px;
+    }
+    
+    .progress-bar {
+        height: 100%;
+        background-color: var(--success-color);
+        width: 66%; /* Exemple: 2/3 de la livraison complétée */
+    }
+    
+    .instructions {
+        background-color: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 10px 15px;
+        margin-bottom: 15px;
+        border-radius: 0 4px 4px 0;
+    }
+    
+    .instructions-title {
+        font-weight: 600;
+        margin-bottom: 5px;
+        color: #856404;
+    }
+    
+    .instructions-text {
+        font-size: 14px;
+        color: #856404;
+    }
+</style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+{% endblock %}
+
+{% block content %}
+<div class="route-container">
+    <div class="header">
+        <div class="header-title">Itinéraire de livraison</div>
+        <div class="header-actions">
+            <button class="header-btn" id="emergency-btn">
+                <i class="fas fa-exclamation-triangle"></i>
+            </button>
+            <button class="header-btn" id="menu-btn">
+                <i class="fas fa-ellipsis-v"></i>
+            </button>
+        </div>
+    </div>
+    
+    <div class="map-container">
+        <div id="route-map"></div>
+        <div class="map-overlay">
+            <div class="search-box">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" class="search-input" placeholder="Rechercher un lieu">
+            </div>
+        </div>
+    </div>
+    
+    <div class="route-info">
+        <div class="progress-container">
+            <div class="progress-bar"></div>
+        </div>
+        
+        <div class="route-header">
+            <div class="route-title">Livraison #{{ livraison.id }}</div>
+            <div class="route-status status-active">En cours</div>
+        </div>
+        
+        <div class="route-stops">
+            <div class="stop">
+                <div class="stop-marker marker-start">1</div>
+                <div class="stop-details">
+                    <div class="stop-name">{{ livraison.commande.commercant.nom_boutique }}</div>
+                    <div class="stop-address">{{ livraison.commande.commercant.adresse }}</div>
+                    <div class="stop-contact">{{ livraison.commande.commercant.telephone }}</div>
+                </div>
+            </div>
+            
+            <div class="stop">
+                <div class="stop-marker marker-end">2</div>
+                <div class="stop-details">
+                    <div class="stop-name">{{ livraison.commande.client.first_name }} {{ livraison.commande.client.last_name }}</div>
+                    <div class="stop-address">{{ livraison.commande.adresse_livraison }}</div>
+                    <div class="stop-contact">{{ livraison.commande.client.telephone }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="route-stats">
+            <div class="stat">
+                <div class="stat-value">{{ livraison.distance_estimee|default:"-" }}</div>
+                <div class="stat-label">km</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">{{ livraison.duree_estimee|default:"-" }}</div>
+                <div class="stat-label">min</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">{{ livraison.cout_livraison }}</div>
+                <div class="stat-label">FCFA</div>
+            </div>
+        </div>
+        
+        {% if livraison.commande.instructions_livraison %}
+        <div class="instructions">
+            <div class="instructions-title">Instructions spéciales</div>
+            <div class="instructions-text">{{ livraison.commande.instructions_livraison }}</div>
+        </div>
+        {% endif %}
+        
+        <div class="customer-info">
+            <div class="customer-header">
+                <img src="https://picsum.photos/seed/customer{{ livraison.commande.client.id }}/40/40.jpg" alt="Photo du client" class="customer-avatar">
+                <div class="customer-name">{{ livraison.commande.client.first_name }} {{ livraison.commande.client.last_name }}</div>
+            </div>
+            <div class="contact-buttons">
+                <button class="contact-btn btn-call" id="call-customer">
+                    <i class="fas fa-phone"></i> Appeler
+                </button>
+                <button class="contact-btn btn-message" id="message-customer">
+                    <i class="fas fa-comment"></i> Message
+                </button>
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <button class="action-btn btn-primary" id="navigate-btn">
+                <i class="fas fa-directions"></i> Naviguer
+            </button>
+            <button class="action-btn btn-secondary" id="arrived-btn">
+                <i class="fas fa-check-circle"></i> Arrivé
+            </button>
+        </div>
+        
+        <div class="action-buttons">
+            <button class="action-btn btn-danger" id="problem-btn">
+                <i class="fas fa-exclamation-circle"></i> Signaler un problème
+            </button>
+            <button class="action-btn btn-primary" id="complete-btn">
+                <i class="fas fa-check-double"></i> Terminer la livraison
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour signaler un problème -->
+<div class="modal" id="problem-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-title">Signaler un problème</div>
+            <button class="modal-close" id="close-problem-modal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="problem-form">
+                <div class="form-group">
+                    <label for="problem-type">Type de problème</label>
+                    <select class="form-control" id="problem-type" required>
+                        <option value="">Sélectionnez un type</option>
+                        <option value="route_barree">Route barrée</option>
+                        <option value="adresse_incorrecte">Adresse incorrecte</option>
+                        <option value="trafic_extreme">Trafic extrême</option>
+                        <option value="danger">Danger / Accident</option>
+                        <option value="client_absent">Client absent</option>
+                        <option value="colis_endommage">Colis endommagé</option>
+                        <option value="autre">Autre problème</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="problem-description">Description</label>
+                    <textarea class="form-control" id="problem-description" rows="3" placeholder="Décrivez le problème..."></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="action-btn btn-secondary" id="cancel-problem">Annuler</button>
+            <button class="action-btn btn-primary" id="submit-problem">Signaler</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour preuve de livraison -->
+<div class="modal" id="proof-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-title">Preuve de livraison</div>
+            <button class="modal-close" id="close-proof-modal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="proof-form" enctype="multipart/form-data">
+                <div class="proof-section">
+                    <div class="proof-title">Photo de preuve</div>
+                    <div class="proof-input" id="photo-input">
+                        <i class="fas fa-camera proof-icon"></i>
+                        <div class="proof-text">Prendre une photo</div>
+                        <input type="file" id="photo-file" accept="image/*" style="display: none;">
+                    </div>
+                </div>
+                <div class="proof-section">
+                    <div class="proof-title">Signature du client</div>
+                    <div class="proof-input" id="signature-input">
+                        <i class="fas fa-signature proof-icon"></i>
+                        <div class="proof-text">Ajouter une signature</div>
+                        <input type="file" id="signature-file" accept="image/*" style="display: none;">
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="action-btn btn-secondary" id="cancel-proof">Annuler</button>
+            <button class="action-btn btn-primary" id="submit-proof">Terminer la livraison</button>
+        </div>
+    </div>
+</div>
+
+<!-- Bouton flottant pour mettre à jour la position -->
+<div class="floating-button" id="update-position-btn">
+    <i class="fas fa-location-arrow"></i>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialiser la carte
+    let map;
+    let routeLine;
+    let markers = [];
+    
+    function initMap() {
+        // Position par défaut (centre de la ville)
+        const defaultCenter = [6.1319, 1.2225]; // Coordonnées de Lomé, Togo
+        
+        map = L.map('route-map').setView(defaultCenter, 13);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Récupérer les coordonnées de la livraison
+        fetch(`{% url 'livraisons:api_itineraire' livraison.id %}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const routeData = data.itineraire;
+                    
+                    // Position du livreur
+                    if (routeData.position_livreur) {
+                        const livreurPos = [routeData.position_livreur.latitude, routeData.position_livreur.longitude];
+                        const livreurMarker = L.marker(livreurPos, {
+                            icon: L.divIcon({
+                                className: 'livreur-marker',
+                                html: '<i class="fas fa-motorcycle" style="color: #000; font-size: 24px;"></i>',
+                                iconSize: [30, 30],
+                                iconAnchor: [15, 15]
+                            })
+                        }).addTo(map);
+                        markers.push(livreurMarker);
+                    }
+                    
+                    // Point de la boutique
+                    if (routeData.point_boutique) {
+                        const boutiquePos = [routeData.point_boutique.latitude, routeData.point_boutique.longitude];
+                        const boutiqueMarker = L.marker(boutiquePos, {
+                            icon: L.divIcon({
+                                className: 'boutique-marker',
+                                html: '<i class="fas fa-store" style="color: #28a745; font-size: 24px;"></i>',
+                                iconSize: [30, 30],
+                                iconAnchor: [15, 15]
+                            })
+                        }).addTo(map);
+                        boutiqueMarker.bindPopup(`<b>${routeData.point_boutique.nom}</b><br>${routeData.point_boutique.adresse}`);
+                        markers.push(boutiqueMarker);
+                    }
+                    
+                    // Point de livraison
+                    if (routeData.point_livraison) {
+                        const livraisonPos = [routeData.point_livraison.latitude, routeData.point_livraison.longitude];
+                        const livraisonMarker = L.marker(livraisonPos, {
+                            icon: L.divIcon({
+                                className: 'livraison-marker',
+                                html: '<i class="fas fa-map-marker-alt" style="color: #dc3545; font-size: 24px;"></i>',
+                                iconSize: [30, 30],
+                                iconAnchor: [15, 15]
+                            })
+                        }).addTo(map);
+                        livraisonMarker.bindPopup(`<b>Destination</b><br>${routeData.point_livraison.adresse}`);
+                        markers.push(livraisonMarker);
+                    }
+                    
+                    // Ajuster la vue pour inclure tous les marqueurs
+                    if (markers.length > 0) {
+                        const group = new L.featureGroup(markers);
+                        map.fitBounds(group.getBounds().pad(0.1));
+                    }
+                    
+                    // Dessiner l'itinéraire (simplifié - en production, utiliser une API de routage)
+                    if (routeData.position_livreur && routeData.point_livraison) {
+                        const routeCoordinates = [
+                            [routeData.position_livreur.latitude, routeData.position_livreur.longitude],
+                            [routeData.point_livraison.latitude, routeData.point_livraison.longitude]
+                        ];
+                        
+                        routeLine = L.polyline(routeCoordinates, {
+                            color: '#000000',
+                            weight: 5,
+                            opacity: 0.7
+                        }).addTo(map);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error loading route data:', error);
+            });
+    }
+    
+    // Initialiser la carte
+    initMap();
+    
+    // Gérer les clics sur les boutons
+    document.getElementById('navigate-btn').addEventListener('click', function() {
+        // Ouvrir l'application de navigation native
+        const destination = encodeURIComponent('{{ livraison.commande.adresse_livraison }}');
+        window.open(`https://www.google.com/maps/search/?api=1&query=${destination}`, '_blank');
+    });
+    
+    document.getElementById('arrived-btn').addEventListener('click', function() {
+        // Mettre à jour le statut de la livraison
+        fetch('{% url "livraisons:commencer_livraison" livraison.id %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Statut mis à jour: Vous êtes arrivé à destination.');
+                // Mettre à jour la barre de progression
+                document.querySelector('.progress-bar').style.width = '90%';
+            } else {
+                alert('Erreur: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Une erreur est survenue. Veuillez réessayer.');
+        });
+    });
+    
+    document.getElementById('call-customer').addEventListener('click', function() {
+        window.location.href = 'tel:{{ livraison.commande.client.telephone }}';
+    });
+    
+    document.getElementById('message-customer').addEventListener('click', function() {
+        window.location.href = 'sms:{{ livraison.commande.client.telephone }}';
+    });
+    
+    document.getElementById('problem-btn').addEventListener('click', function() {
+        document.getElementById('problem-modal').style.display = 'flex';
+    });
+    
+    document.getElementById('complete-btn').addEventListener('click', function() {
+        document.getElementById('proof-modal').style.display = 'flex';
+    });
+    
+    document.getElementById('close-problem-modal').addEventListener('click', function() {
+        document.getElementById('problem-modal').style.display = 'none';
+    });
+    
+    document.getElementById('cancel-problem').addEventListener('click', function() {
+        document.getElementById('problem-modal').style.display = 'none';
+    });
+    
+    document.getElementById('submit-problem').addEventListener('click', function() {
+        const problemType = document.getElementById('problem-type').value;
+        const problemDescription = document.getElementById('problem-description').value;
+        
+        if (!problemType) {
+            alert('Veuillez sélectionner un type de problème.');
+            return;
+        }
+        
+        // Envoyer le signalement
+        fetch('{% url "livraisons:api_signalement_probleme" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                livraison_id: {{ livraison.id }},
+                type_probleme: problemType,
+                description: problemDescription,
+                position: {
+                    lat: map.getCenter().lat,
+                    lng: map.getCenter().lng
+                }
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Problème signalé avec succès.');
+                document.getElementById('problem-modal').style.display = 'none';
+                document.getElementById('problem-form').reset();
+            } else {
+                alert('Erreur: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Une erreur est survenue. Veuillez réessayer.');
+        });
+    });
+    
+    document.getElementById('close-proof-modal').addEventListener('click', function() {
+        document.getElementById('proof-modal').style.display = 'none';
+    });
+    
+    document.getElementById('cancel-proof').addEventListener('click', function() {
+        document.getElementById('proof-modal').style.display = 'none';
+    });
+    
+    document.getElementById('photo-input').addEventListener('click', function() {
+        document.getElementById('photo-file').click();
+    });
+    
+    document.getElementById('signature-input').addEventListener('click', function() {
+        document.getElementById('signature-file').click();
+    });
+    
+    document.getElementById('photo-file').addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('photo-input').innerHTML = `
+                    <img src="${e.target.result}" style="max-width: 100%; max-height: 150px; border-radius: 8px;">
+                    <div class="proof-text">Photo sélectionnée</div>
+                `;
+            };
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+    
+    document.getElementById('signature-file').addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('signature-input').innerHTML = `
+                    <img src="${e.target.result}" style="max-width: 100%; max-height: 150px; border-radius: 8px;">
+                    <div class="proof-text">Signature sélectionnée</div>
+                `;
+            };
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+    
+    document.getElementById('submit-proof').addEventListener('click', function() {
+        const photoFile = document.getElementById('photo-file').files[0];
+        const signatureFile = document.getElementById('signature-file').files[0];
+        
+        if (!photoFile) {
+            alert('Veuillez ajouter une photo de preuve.');
+            return;
+        }
+        
+        // Créer FormData pour l'envoi des fichiers
+        const formData = new FormData();
+        formData.append('preuve_livraison', photoFile);
+        if (signatureFile) {
+            formData.append('signature_client', signatureFile);
+        }
+        formData.append('instructions_speciales', document.querySelector('.instructions-text')?.textContent || '');
+        
+        // Envoyer les preuves et terminer la livraison
+        fetch('{% url "livraisons:terminer_livraison" livraison.id %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Livraison terminée avec succès!');
+                window.location.href = data.redirect_url || '{% url "livraisons:tableau_de_bord" %}';
+            } else {
+                alert('Erreur: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Une erreur est survenue. Veuillez réessayer.');
+        });
+    });
+    
+    document.getElementById('update-position-btn').addEventListener('click', function() {
+        // Obtenir la position actuelle
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                position => {
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+                    
+                    // Mettre à jour la position via l'API
+                    fetch('{% url "livraisons:api_mettre_a_jour_position" %}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({
+                            latitude: latitude,
+                            longitude: longitude
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Mettre à jour le marqueur sur la carte
+                            if (markers.length > 0) {
+                                markers[0].setLatLng([latitude, longitude]);
+                            } else {
+                                const livreurMarker = L.marker([latitude, longitude], {
+                                    icon: L.divIcon({
+                                        className: 'livreur-marker',
+                                        html: '<i class="fas fa-motorcycle" style="color: #000; font-size: 24px;"></i>',
+                                        iconSize: [30, 30],
+                                        iconAnchor: [15, 15]
+                                    })
+                                }).addTo(map);
+                                markers.unshift(livreurMarker);
+                            }
+                            
+                            // Centrer la carte sur la nouvelle position
+                            map.panTo([latitude, longitude]);
+                            
+                            // Afficher une confirmation
+                            const toast = document.createElement('div');
+                            toast.className = 'toast-notification';
+                            toast.textContent = 'Position mise à jour';
+                            toast.style.position = 'fixed';
+                            toast.style.bottom = '80px';
+                            toast.style.left = '50%';
+                            toast.style.transform = 'translateX(-50%)';
+                            toast.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+                            toast.style.color = 'white';
+                            toast.style.padding = '10px 20px';
+                            toast.style.borderRadius = '20px';
+                            toast.style.zIndex = '1000';
+                            document.body.appendChild(toast);
+                            
+                            setTimeout(() => {
+                                document.body.removeChild(toast);
+                            }, 2000);
+                        } else {
+                            alert('Erreur: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Une erreur est survenue lors de la mise à jour de votre position.');
+                    });
+                },
+                error => {
+                    console.error('Error getting location:', error);
+                    alert('Impossible d\'obtenir votre position. Veuillez vérifier les paramètres de localisation.');
+                }
+            );
+        } else {
+            alert('La géolocalisation n\'est pas supportée par votre navigateur.');
+        }
+    });
+    
+    // Fonction pour obtenir le cookie CSRF
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Mettre à jour la position automatiquement toutes les 30 secondes
+    setInterval(() => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                position => {
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+                    
+                    // Mettre à jour la position via l'API
+                    fetch('{% url "livraisons:api_mettre_a_jour_position" %}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({
+                            latitude: latitude,
+                            longitude: longitude
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && markers.length > 0) {
+                            // Mettre à jour le marqueur sur la carte
+                            markers[0].setLatLng([latitude, longitude]);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error updating position:', error);
+                    });
+                },
+                error => {
+                    console.error('Error getting location:', error);
+                }
+            );
+        }
+    }, 30000);
+});
+</script>
+{% endblock %}

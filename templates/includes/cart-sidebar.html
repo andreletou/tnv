@@ -1,0 +1,193 @@
+<!-- Cart Sidebar -->
+<div id="cart-sidebar" class="fixed right-0 top-0 h-full w-full sm:w-96 bg-white shadow-2xl transform translate-x-full transition-transform duration-300 z-50">
+    <div class="flex flex-col h-full">
+        <!-- Cart Header -->
+        <div class="flex items-center justify-between p-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">
+                <i class="fas fa-shopping-cart mr-2 text-primary-600"></i>
+                Mon panier
+            </h2>
+            <button onclick="toggleCart()" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Cart Content -->
+        <div class="flex-1 overflow-y-auto p-4">
+            <div id="cart-items" class="space-y-4">
+                <!-- Cart items will be loaded here -->
+                <div class="text-center py-8 text-gray-500">
+                    <i class="fas fa-shopping-cart text-4xl mb-4 text-gray-300"></i>
+                    <p>Votre panier est vide</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cart Footer -->
+        <div class="border-t border-gray-200 p-4 space-y-4">
+            <div class="flex justify-between items-center">
+                <span class="text-lg font-semibold text-gray-900">Total:</span>
+                <span id="cart-total" class="text-xl font-bold text-primary-600">0 FCFA</span>
+            </div>
+            
+            <div class="space-y-2">
+                <a href="{% url 'clients:panier' %}" 
+                   class="w-full bg-primary-600 text-gray-50 py-3 rounded-lg hover:bg-primary-700 transition-colors duration-200 text-center block">
+                    <i class="fas fa-shopping-cart mr-2"></i>
+                    Voir le panier
+                </a>
+                <a href="{% url 'clients:passer_commande' %}" 
+                   class="w-full bg-green-600 text-gray-50 py-3 rounded-lg hover:bg-green-700 transition-colors duration-200 text-center block">
+                    <i class="fas fa-credit-card mr-2"></i>
+                    Commander
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cart Overlay -->
+<div id="cart-overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40" onclick="toggleCart()"></div>
+
+<script>
+function toggleCart() {
+    const sidebar = document.getElementById('cart-sidebar');
+    const overlay = document.getElementById('cart-overlay');
+    
+    sidebar.classList.toggle('translate-x-full');
+    overlay.classList.toggle('hidden');
+    
+    // Load cart items when opening
+    if (!sidebar.classList.contains('translate-x-full')) {
+        loadCartItems();
+    }
+}
+
+async function loadCartItems() {
+    try {
+        const response = await fetch('/clients/api/panier/infos/');
+        const data = await response.json();
+        
+        if (data.success) {
+            updateCartDisplay(data);
+        }
+    } catch (error) {
+        console.error('Error loading cart:', error);
+    }
+}
+
+function updateCartDisplay(cartData) {
+    const cartItems = document.getElementById('cart-items');
+    const cartTotal = document.getElementById('cart-total');
+    const cartCount = document.getElementById('cart-count');
+    const cartCountMobile = document.getElementById('cart-count-mobile');
+    
+    // Update cart count
+    if (cartCount) cartCount.textContent = cartData.nombre_articles;
+    if (cartCountMobile) cartCountMobile.textContent = cartData.nombre_articles;
+    
+    // Update total
+    if (cartTotal) cartTotal.textContent = `${cartData.total_panier.toFixed(2)} FCFA`;
+    
+    // Update items
+    if (cartData.articles && cartData.articles.length > 0) {
+        cartItems.innerHTML = cartData.articles.map(item => `
+            <div class="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+                <img src="${item.produit_image || '/static/images/placeholder.jpg'}" 
+                     alt="${item.produit_nom}" 
+                     class="w-16 h-16 object-cover rounded-lg">
+                <div class="flex-1">
+                    <h4 class="font-medium text-gray-900 text-sm">${item.produit_nom}</h4>
+                    <p class="text-primary-600 font-semibold">${item.prix_unitaire.toFixed(2)} FCFA</p>
+                    <div class="flex items-center space-x-2 mt-1">
+                        <button onclick="updateCartItem(${item.id}, ${item.quantite - 1})" 
+                                class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors duration-200">
+                            <i class="fas fa-minus text-xs"></i>
+                        </button>
+                        <span class="text-sm font-medium">${item.quantite}</span>
+                        <button onclick="updateCartItem(${item.id}, ${item.quantite + 1})" 
+                                class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors duration-200">
+                            <i class="fas fa-plus text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+                <button onclick="removeFromCart(${item.id})" 
+                        class="text-red-500 hover:text-red-700 transition-colors duration-200">
+                    <i class="fas fa-trash text-sm"></i>
+                </button>
+            </div>
+        `).join('');
+    } else {
+        cartItems.innerHTML = `
+            <div class="text-center py-8 text-gray-500">
+                <i class="fas fa-shopping-cart text-4xl mb-4 text-gray-300"></i>
+                <p>Votre panier est vide</p>
+            </div>
+        `;
+    }
+}
+
+async function updateCartItem(itemId, quantity) {
+    if (quantity < 1) return;
+    
+    try {
+        const response = await fetch('/clients/api/panier/modifier/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify({
+                item_id: itemId,
+                quantite: quantity
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            loadCartItems();
+        }
+    } catch (error) {
+        console.error('Error updating cart:', error);
+    }
+}
+
+async function removeFromCart(itemId) {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cet article ?')) return;
+    
+    try {
+        const response = await fetch('clients/api/panier/supprimer/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify({
+                item_id: itemId
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            loadCartItems();
+        }
+    } catch (error) {
+        console.error('Error removing from cart:', error);
+    }
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>

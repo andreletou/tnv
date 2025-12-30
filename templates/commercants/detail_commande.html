@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Détails de la commande {{ commande.reference }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Commande {{ commande.reference }}</h1>
+        <a href="{% url 'commercants:gestion_commandes' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Retour à la liste
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Informations sur la commande</h5>
+                    <span class="badge badge-{{ commande.statut }}">
+                        {{ commande.get_statut_display }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p><strong>Référence:</strong> {{ commande.reference }}</p>
+                            <p><strong>Date:</strong> {{ commande.date_commande|date:"d/m/Y H:i" }}</p>
+                            <p><strong>Montant total:</strong> {{ commande.total }} FCFA</p>
+                            <p><strong>Méthode de paiement:</strong> {{ commande.get_methode_paiement_display }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Statut du paiement:</strong> {{ commande.get_statut_paiement_display }}</p>
+                            <p><strong>Adresse de livraison:</strong> {{ commande.adresse_livraison }}</p>
+                            {% if commande.instructions_livraison %}
+                            <p><strong>Instructions:</strong> {{ commande.instructions_livraison }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <h5>Articles commandés</h5>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Produit</th>
+                                    <th>Prix unitaire</th>
+                                    <th>Quantité</th>
+                                    <th>Sous-total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for article in commande.articles.all %}
+                                <tr>
+                                    <td>{{ article.produit.nom }}</td>
+                                    <td>{{ article.prix_unitaire }} FCFA</td>
+                                    <td>{{ article.quantite }}</td>
+                                    <td>{{ article.sous_total }} FCFA</td>
+                                </tr>
+                                {% endfor %}
+                                <tr>
+                                    <td colspan="3" class="text-right"><strong>Total:</strong></td>
+                                    <td><strong>{{ commande.total }} FCFA</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Informations client</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Nom:</strong> {{ commande.client.first_name }} {{ commande.client.last_name }}</p>
+                    <p><strong>Email:</strong> {{ commande.client.email }}</p>
+                    <p><strong>Téléphone:</strong> {{ commande.client.telephone }}</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Actions</h5>
+                </div>
+                <div class="card-body">
+                    {% if commande.statut == 'en_attente' %}
+                    <button class="btn btn-success btn-block mb-2" id="btn-valider">
+                        <i class="fas fa-check"></i> Valider la commande
+                    </button>
+                    <button class="btn btn-danger btn-block" id="btn-refuser">
+                        <i class="fas fa-times"></i> Refuser la commande
+                    </button>
+                    {% elif commande.statut == 'validee' %}
+                    <button class="btn btn-primary btn-block mb-2" id="btn-preparer">
+                        <i class="fas fa-utensils"></i> Marquer comme en préparation
+                    </button>
+                    <button class="btn btn-danger btn-block" id="btn-refuser">
+                        <i class="fas fa-times"></i> Refuser la commande
+                    </button>
+                    {% elif commande.statut == 'en_preparation' %}
+                    <button class="btn btn-success btn-block" id="btn-prete">
+                        <i class="fas fa-box"></i> Marquer comme prête
+                    </button>
+                    {% elif commande.statut == 'prete' %}
+                    <div class="alert alert-info">
+                        La commande est prête et en attente de récupération par un livreur.
+                    </div>
+                    {% elif commande.statut == 'en_livraison' %}
+                    <div class="alert alert-info">
+                        La commande est en cours de livraison.
+                    </div>
+                    {% elif commande.statut == 'livree' %}
+                    <div class="alert alert-success">
+                        La commande a été livrée avec succès.
+                    </div>
+                    {% elif commande.statut == 'annulee' %}
+                    <div class="alert alert-danger">
+                        Cette commande a été annulée.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation -->
+<div class="modal fade" id="confirmationModal" tabindex="-1" role="dialog" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmationModalLabel">Confirmation</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="confirmationMessage">
+                Êtes-vous sûr de vouloir effectuer cette action ?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" id="confirmAction">Confirmer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Ajouter des classes CSS pour les badges de statut
+        $('.badge-en_attente').addClass('badge-warning');
+        $('.badge-validee').addClass('badge-info');
+        $('.badge-en_preparation').addClass('badge-primary');
+        $('.badge-prete').addClass('badge-success');
+        $('.-badge-en_livraison').addClass('badge-info');
+        $('.badge-livree').addClass('badge-success');
+        $('.badge-annulee').addClass('badge-danger');
+
+        let actionUrl = '';
+        let actionMessage = '';
+
+        // Valider la commande
+        $('#btn-valider').click(function() {
+            actionUrl = "{% url 'commercants:api_valider_commande' commande.id %}";
+            actionMessage = "Êtes-vous sûr de vouloir valider cette commande ? Elle sera visible pour les livreurs.";
+            $('#confirmationMessage').text(actionMessage);
+            $('#confirmationModal').modal('show');
+        });
+
+        // Refuser la commande
+        $('#btn-refuser').click(function() {
+            actionUrl = "{% url 'commercants:api_refuser_commande' commande.id %}";
+            actionMessage = "Êtes-vous sûr de vouloir refuser cette commande ?";
+            $('#confirmationMessage').text(actionMessage);
+            $('#confirmationModal').modal('show');
+        });
+
+        // Marquer comme en préparation
+        $('#btn-preparer').click(function() {
+            actionUrl = "{% url 'commercants:api_preparer_commande' commande.id %}";
+            actionMessage = "Êtes-vous sûr de vouloir marquer cette commande comme en préparation ?";
+            $('#confirmationMessage').text(actionMessage);
+            $('#confirmationModal').modal('show');
+        });
+
+        // Marquer comme prête
+        $('#btn-prete').click(function() {
+            actionUrl = "{% url 'commercants:api_commande_prete' commande.id %}";
+            actionMessage = "Êtes-vous sûr de vouloir marquer cette commande comme prête pour la livraison ?";
+            $('#confirmationMessage').text(actionMessage);
+            $('#confirmationModal').modal('show');
+        });
+
+        // Confirmer l'action
+        $('#confirmAction').click(function() {
+            $.ajax({
+                url: actionUrl,
+                type: 'POST',
+                data: {
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Afficher un message de succès
+                        alert(response.message);
+                        // Recharger la page pour voir les changements
+                        location.reload();
+                    } else {
+                        // Afficher un message d'erreur
+                        alert(response.message);
+                    }
+                },
+                error: function() {
+                    alert('Une erreur est survenue. Veuillez réessayer.');
+                }
+            });
+            $('#confirmationModal').modal('hide');
+        });
+    });
+</script>
+{% endblock %}

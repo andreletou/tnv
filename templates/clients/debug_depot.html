@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-2xl mx-auto px-4">
+        <h1 class="text-2xl font-bold text-red-600 mb-6">🔍 DÉBOGAGE Dépôt #{{ depot.id }}</h1>
+        
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <h2 class="text-lg font-semibold mb-4">Informations du dépôt</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div><strong>ID:</strong> {{ depot.id }}</div>
+                <div><strong>Statut:</strong> {{ depot.statut }}</div>
+                <div><strong>Montant:</strong> {{ depot.montant }} FCFA</div>
+                <div><strong>Référence:</strong> {{ depot.numero_transaction }}</div>
+                <div><strong>Méthode:</strong> {{ depot.get_methode_display }}</div>
+                <div><strong>Date:</strong> {{ depot.date_depot }}</div>
+            </div>
+        </div>
+
+        {% if debug_info.paygate_status %}
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <h2 class="text-lg font-semibold mb-4">Statut PayGate</h2>
+            <pre class="bg-gray-100 p-4 rounded-lg overflow-auto">{{ debug_info.paygate_status|pprint }}</pre>
+        </div>
+        {% endif %}
+
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-lg font-semibold mb-4">Actions</h2>
+            <div class="space-y-3">
+                <a href="{% url 'clients:verifier_statut_depot' depot.id %}" 
+                   class="block w-full bg-blue-600 text-white py-3 rounded-lg text-center">
+                   🔄 Vérifier le statut
+                </a>
+                
+                {% if debug_info.can_validate %}
+                <form method="post" action="{% url 'clients:debug_depot' depot.id %}">
+                    {% csrf_token %}
+                    <button type="submit" name="force_validate" 
+                            class="w-full bg-green-600 text-white py-3 rounded-lg">
+                       ✅ Forcer la validation
+                    </button>
+                </form>
+                {% endif %}
+                
+                <a href="{% url 'clients:depot_portefeuille' %}" 
+                   class="block w-full bg-gray-600 text-white py-3 rounded-lg text-center">
+                   📊 Retour aux dépôts
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

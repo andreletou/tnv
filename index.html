@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carte de Livraison</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0 auto;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 1000;
+        }
+        
+        .header h1 {
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+        
+        .map-container {
+            height: 60%;
+            width: 100%;
+            position: relative;
+        }
+        
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+        
+        .info-panel {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background-color: white;
+        }
+        
+        .client-info {
+            margin-bottom: 25px;
+        }
+        
+        .client-info h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+        }
+        
+        .info-item {
+            display: flex;
+            margin-bottom: 12px;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            width: 120px;
+            color: #555;
+        }
+        
+        .info-value {
+            flex: 1;
+            color: #333;
+        }
+        
+        .delivery-actions {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        
+        .delivery-status {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        
+        .status-item {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .status-label {
+            font-size: 0.85rem;
+            color: #777;
+            margin-bottom: 5px;
+        }
+        
+        .status-value {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .distance {
+            color: #4CAF50;
+        }
+        
+        .time {
+            color: #2196F3;
+        }
+        
+        .cost {
+            color: #FF9800;
+        }
+        
+        .btn-container {
+            margin-top: 20px;
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #388E3C;
+        }
+        
+        .btn-secondary {
+            background-color: #f5f5f5;
+            color: #333;
+            margin-top: 10px;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            width: 85%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal h2 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .modal p {
+            margin-bottom: 20px;
+            color: #555;
+            line-height: 1.5;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            margin: 0 5px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .modal-confirm {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .modal-cancel {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .delivery-complete {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            background-color: #E8F5E9;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .delivery-complete h3 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+        
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #C8E6C9;
+        }
+        
+        .summary-label {
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .summary-value {
+            color: #333;
+        }
+        
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.2rem;
+            }
+            
+            .info-panel {
+                padding: 15px;
+            }
+            
+            .client-info h2 {
+                font-size: 1.2rem;
+            }
+            
+            .info-item {
+                flex-direction: column;
+                margin-bottom: 15px;
+            }
+            
+            .info-label {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Livraison en cours</h1>
+        </div>
+        
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+        
+        <div class="info-panel">
+            <div class="client-info">
+                <h2>Informations client</h2>
+                <div class="info-item">
+                    <div class="info-label">Nom:</div>
+                    <div class="info-value">Martin Dubois</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Adresse:</div>
+                    <div class="info-value">15 Rue de la République, 75001 Paris</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Téléphone:</div>
+                    <div class="info-value">+33 6 12 34 56 78</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Commande:</div>
+                    <div class="info-value">#CMD-2023-4587</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Instructions:</div>
+                    <div class="info-value">Sonner à l'interphone, code: 1234B</div>
+                </div>
+            </div>
+            
+            <div class="delivery-actions">
+                <div class="delivery-status">
+                    <div class="status-item">
+                        <div class="status-label">Distance</div>
+                        <div class="status-value distance">2.3 km</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">Temps estimé</div>
+                        <div class="status-value time">12 min</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">Frais</div>
+                        <div class="status-value cost">4,50 €</div>
+                    </div>
+                </div>
+                
+                <div class="btn-container">
+                    <button class="btn btn-primary" id="completeBtn">Terminer la livraison</button>
+                    <button class="btn btn-secondary" id="problemBtn">Signaler un problème</button>
+                </div>
+                
+                <div class="delivery-complete" id="deliveryComplete">
+                    <h3>Livraison terminée avec succès!</h3>
+                    <div class="summary-item">
+                        <div class="summary-label">Distance parcourue:</div>
+                        <div class="summary-value">2.7 km</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Temps total:</div>
+                        <div class="summary-value">18 min</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Frais de livraison:</div>
+                        <div class="summary-value">4,50 €</div>
+                    </div>
+                    <button class="btn btn-secondary" id="newDeliveryBtn" style="margin-top: 15px;">Nouvelle livraison</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="confirmationModal">
+        <div class="modal-content">
+            <h2>Confirmer la livraison</h2>
+            <p>Êtes-vous sûr d'avoir terminé cette livraison? Cette action ne peut pas être annulée.</p>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-confirm" id="confirmDelivery">Confirmer</button>
+                <button class="modal-btn modal-cancel" id="cancelDelivery">Annuler</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        // Initialisation de la carte
+        const map = L.map('map').setView([48.8566, 2.3522], 13);
+        
+        // Ajout des tuiles de la carte
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        
+        // Points de départ et d'arrivée simulés
+        const startPoint = [48.8584, 2.2945]; // Eiffel Tower
+        const endPoint = [48.8606, 2.3376];   // Louvre Museum
+        
+        // Marqueurs pour les points de départ et d'arrivée
+        const startMarker = L.marker(startPoint).addTo(map)
+            .bindPopup('Point de départ')
+            .openPopup();
+            
+        const endMarker = L.marker(endPoint).addTo(map)
+            .bindPopup('Destination: 15 Rue de la République');
+        
+        // Ligne pour l'itinéraire
+        const routeLine = L.polyline([startPoint, endPoint], {
+            color: '#4CAF50',
+            weight: 5,
+            opacity: 0.7
+        }).addTo(map);
+        
+        // Ajuster la vue pour montrer tous les marqueurs
+        map.fitBounds(routeLine.getBounds());
+        
+        // Gestion des événements
+        document.getElementById('completeBtn').addEventListener('click', function() {
+            document.getElementById('confirmationModal').style.display = 'flex';
+        });
+        
+        document.getElementById('confirmDelivery').addEventListener('click', function() {
+            document.getElementById('confirmationModal').style.display = 'none';
+            document.getElementById('deliveryComplete').style.display = 'block';
+            document.querySelector('.btn-container').style.display = 'none';
+            
+            // Simulation du calcul des frais
+            const distance = (Math.random() * 2 + 1.5).toFixed(1);
+            const time = Math.floor(Math.random() * 10 + 15);
+            const cost = (distance * 1.5 + 1).toFixed(2);
+            
+            document.querySelector('.summary-item:nth-child(1) .summary-value').textContent = distance + ' km';
+            document.querySelector('.summary-item:nth-child(2) .summary-value').textContent = time + ' min';
+            document.querySelector('.summary-item:nth-child(3) .summary-value').textContent = cost + ' €';
+        });
+        
+        document.getElementById('cancelDelivery').addEventListener('click', function() {
+            document.getElementById('confirmationModal').style.display = 'none';
+        });
+        
+        document.getElementById('newDeliveryBtn').addEventListener('click', function() {
+            document.getElementById('deliveryComplete').style.display = 'none';
+            document.querySelector('.btn-container').style.display = 'block';
+            
+            // Simulation d'une nouvelle livraison
+            alert('Recherche d\'une nouvelle livraison...');
+        });
+        
+        document.getElementById('problemBtn').addEventListener('click', function() {
+            alert('Fonctionnalité de signalement de problème bientôt disponible!');
+        });
+        
+        // Fermer la modal en cliquant à l'extérieur
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('confirmationModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

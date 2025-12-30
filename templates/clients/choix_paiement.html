@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 pb-24 pt-4">
+    <div class="max-w-lg mx-auto px-4">
+        <!-- En-tête -->
+        <div class="mb-6">
+            <a href="{% url 'clients:mes_commandes' %}" class="inline-flex items-center text-primary-600 mb-4">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Retour
+            </a>
+            <h1 class="text-2xl font-bold text-gray-900">Mode de paiement</h1>
+            <p class="text-gray-600 mt-2">Commande #{{ commande.reference }}</p>
+        </div>
+
+        <!-- Carte de résumé -->
+        <div class="bg-white rounded-xl shadow-sm p-4 mb-6 border border-gray-100">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-gray-600 text-sm">Total à payer</p>
+                    <p class="text-2xl font-bold text-primary-600">{{ commande.total }} FCFA</p>
+                </div>
+                <div class="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-shopping-bag text-primary-600"></i>
+                </div>
+            </div>
+        </div>
+
+        <form method="POST" class="space-y-4">
+            {% csrf_token %}
+            
+            <!-- Paiement Mobile -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <label class="flex items-center p-4 cursor-pointer hover:bg-gray-50 transition-colors">
+                    <input type="radio" name="methode_paiement" value="mobile_money" class="text-primary-600 focus:ring-primary-500" required>
+                    <div class="ml-4 flex-1">
+                        <div class="flex items-center justify-between">
+                            <span class="font-semibold text-gray-900">Paiement Mobile</span>
+                            <div class="flex space-x-2">
+                                <div class="w-8 h-6 bg-green-500 rounded flex items-center justify-center">
+                                    <span class="text-white text-xs font-bold">F</span>
+                                </div>
+                                <div class="w-8 h-6 bg-orange-500 rounded flex items-center justify-center">
+                                    <span class="text-white text-xs font-bold">T</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-1">FLOOZ ou T-Money</p>
+                    </div>
+                </label>
+                
+                <div id="mobile-options" class="px-4 pb-4 hidden border-t border-gray-100 pt-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Choisir le réseau</label>
+                    <select name="network" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                        <option value="">Sélectionner</option>
+                        <option value="FLOOZ">FLOOZ</option>
+                        <option value="TMONEY">T-Money</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Paiement à la livraison -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <label class="flex items-center p-4 cursor-pointer hover:bg-gray-50 transition-colors">
+                    <input type="radio" name="methode_paiement" value="espece" class="text-primary-600 focus:ring-primary-500">
+                    <div class="ml-4">
+                        <span class="font-semibold text-gray-900">Payer à la livraison</span>
+                        <p class="text-sm text-gray-600 mt-1">Payer en espèces lors de la livraison</p>
+                    </div>
+                </label>
+            </div>
+
+            <!-- Bouton de soumission -->
+            <button type="submit" class="w-full bg-primary-600 text-white py-4 rounded-xl font-semibold hover:bg-primary-700 transition-colors shadow-lg shadow-primary-200 flex items-center justify-center space-x-2">
+                <i class="fas fa-lock"></i>
+                <span>Continuer vers le paiement</span>
+            </button>
+        </form>
+
+        <!-- Sécurité -->
+        <div class="mt-6 text-center">
+            <div class="flex items-center justify-center space-x-2 text-gray-500">
+                <i class="fas fa-shield-alt"></i>
+                <span class="text-sm">Paiement 100% sécurisé</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const mobileRadio = document.querySelector('input[value="mobile_money"]');
+    const mobileOptions = document.getElementById('mobile-options');
+    
+    mobileRadio.addEventListener('change', function() {
+        if (this.checked) {
+            mobileOptions.classList.remove('hidden');
+        } else {
+            mobileOptions.classList.add('hidden');
+        }
+    });
+
+    // Animation d'entrée
+    const cards = document.querySelectorAll('.bg-white');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}

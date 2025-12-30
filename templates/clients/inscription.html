@@ -1,0 +1,891 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Inscription{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Styles spécifiques à la page d'inscription */
+    .step-indicator {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 2rem;
+    }
+    
+    .step {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.875rem;
+        margin: 0 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .step.active {
+        background-color: #10b981;
+        color: white;
+    }
+    
+    .step.inactive {
+        background-color: #e5e7eb;
+        color: #6b7280;
+    }
+    
+    .step.completed {
+        background-color: #10b981;
+        color: white;
+    }
+    
+    .step-line {
+        flex: 1;
+        height: 2px;
+        background-color: #e5e7eb;
+        margin: 0 0.25rem;
+        align-self: center;
+    }
+    
+    .step-content {
+        display: none;
+    }
+    
+    .step-content.active {
+        display: block;
+        animation: fadeIn 0.5s ease-in-out;
+    }
+    
+    .password-strength {
+        margin-top: 0.5rem;
+    }
+    
+    .strength-bar {
+        height: 4px;
+        border-radius: 2px;
+        background-color: #e5e7eb;
+        margin-top: 0.25rem;
+        overflow: hidden;
+    }
+    
+    .strength-fill {
+        height: 100%;
+        width: 0%;
+        transition: all 0.3s ease;
+    }
+    
+    .strength-weak .strength-fill {
+        background-color: #ef4444;
+        width: 33%;
+    }
+    
+    .strength-medium .strength-fill {
+        background-color: #f59e0b;
+        width: 66%;
+    }
+    
+    .strength-strong .strength-fill {
+        background-color: #10b981;
+        width: 100%;
+    }
+    
+    .terms-checkbox {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .terms-checkbox input[type="checkbox"] {
+        margin-top: 0.25rem;
+    }
+    
+    .location-permission {
+        background-color: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 0.75rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .avatar-upload {
+        position: relative;
+        width: 100px;
+        height: 100px;
+        margin: 0 auto 1.5rem;
+    }
+    
+    .avatar-preview {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        border: 3px solid #e5e7eb;
+        object-fit: cover;
+        background-color: #f9fafb;
+    }
+    
+    .avatar-upload-btn {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-color: #10b981;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid white;
+        cursor: pointer;
+    }
+    
+    .field-error {
+        border-color: #ef4444 !important;
+    }
+    
+    .error-message {
+        color: #ef4444;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 py-8 px-4">
+    <div class="max-w-md mx-auto">
+        <!-- En-tête -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-primary-500 rounded-full mb-4">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-900">Créer votre compte</h1>
+            <p class="text-gray-600 mt-2">Rejoignez Local-Links en quelques étapes simples</p>
+        </div>
+
+        <!-- Formulaire d'inscription -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+            <!-- Indicateur d'étapes -->
+            <div class="step-indicator pt-6 px-6">
+                <div class="step active" data-step="1">1</div>
+                <div class="step-line"></div>
+                <div class="step inactive" data-step="2">2</div>
+                <div class="step-line"></div>
+                <div class="step inactive" data-step="3">3</div>
+            </div>
+
+            <form method="post" id="inscriptionForm" enctype="multipart/form-data" class="p-6">
+                {% csrf_token %}
+                
+                <!-- Étape 1: Informations de base -->
+                <div class="step-content active" id="step1">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Informations personnelles</h3>
+                    
+                    <div class="space-y-4">
+                        <!-- Photo de profil -->
+                        <div class="avatar-upload">
+                            <img id="avatarPreview" src="{% static 'images/default-avatar.png' %}" alt="Photo de profil" class="avatar-preview">
+                            <label for="id_photo_profil" class="avatar-upload-btn">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                            </label>
+                            <input type="file" name="photo_profil" id="id_photo_profil" accept="image/*" class="hidden">
+                        </div>
+
+                        <!-- Prénom et Nom -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="id_first_name" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Prénom *
+                                </label>
+                                <input type="text" 
+                                       name="first_name" 
+                                       id="id_first_name" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                       placeholder="Votre prénom"
+                                       required>
+                                <div class="error-message" id="first_name_error"></div>
+                            </div>
+                            <div>
+                                <label for="id_last_name" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Nom *
+                                </label>
+                                <input type="text" 
+                                       name="last_name" 
+                                       id="id_last_name" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                       placeholder="Votre nom"
+                                       required>
+                                <div class="error-message" id="last_name_error"></div>
+                            </div>
+                        </div>
+
+                        <!-- Email -->
+                        <div>
+                            <label for="id_email" class="block text-sm font-medium text-gray-700 mb-1">
+                                Email *
+                            </label>
+                            <input type="email" 
+                                   name="email" 
+                                   id="id_email" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                   placeholder="votre@email.com"
+                                   required>
+                            <div class="error-message" id="email_error"></div>
+                        </div>
+
+                        <!-- Téléphone -->
+                        <div>
+                            <label for="id_telephone" class="block text-sm font-medium text-gray-700 mb-1">
+                                Téléphone *
+                            </label>
+                            <input type="tel" 
+                                   name="telephone" 
+                                   id="id_telephone" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                   placeholder="90 12 34 56"
+                                   required>
+                            <div class="error-message" id="telephone_error"></div>
+                        </div>
+
+                        <!-- Date de naissance et Sexe -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="id_date_naissance" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Date de naissance
+                                </label>
+                                <input type="date" 
+                                       name="date_naissance" 
+                                       id="id_date_naissance" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
+                            </div>
+                            <div>
+                                <label for="id_sexe" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Sexe
+                                </label>
+                                <select name="sexe" 
+                                        id="id_sexe" 
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
+                                    <option value="">Sélectionnez</option>
+                                    <option value="M">Masculin</option>
+                                    <option value="F">Féminin</option>
+                                    <option value="A">Autre</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Boutons de navigation -->
+                    <div class="flex justify-end mt-6">
+                        <button type="button" 
+                                class="bg-primary-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-600 transition-colors flex items-center"
+                                onclick="nextStep(2)">
+                            Suivant
+                            <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Étape 2: Informations de connexion -->
+                <div class="step-content" id="step2">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Informations de connexion</h3>
+                    
+                    <div class="space-y-4">
+                        <!-- Nom d'utilisateur -->
+                        <div>
+                            <label for="id_username" class="block text-sm font-medium text-gray-700 mb-1">
+                                Nom d'utilisateur *
+                            </label>
+                            <input type="text" 
+                                   name="username" 
+                                   id="id_username" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                   placeholder="Choisissez un nom d'utilisateur"
+                                   required>
+                            <div class="error-message" id="username_error"></div>
+                        </div>
+
+                        <!-- Mot de passe -->
+                        <div>
+                            <label for="id_password1" class="block text-sm font-medium text-gray-700 mb-1">
+                                Mot de passe *
+                            </label>
+                            <div class="relative">
+                                <input type="password" 
+                                       name="password1" 
+                                       id="id_password1" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all pr-12"
+                                       placeholder="Créez un mot de passe sécurisé"
+                                       required>
+                                <button type="button" 
+                                        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                        onclick="togglePassword('id_password1', this)">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="password-strength" id="passwordStrength">
+                                <div class="text-sm text-gray-600" id="strengthText">Force du mot de passe</div>
+                                <div class="strength-bar">
+                                    <div class="strength-fill"></div>
+                                </div>
+                            </div>
+                            <div class="error-message" id="password1_error"></div>
+                        </div>
+
+                        <!-- Confirmation mot de passe -->
+                        <div>
+                            <label for="id_password2" class="block text-sm font-medium text-gray-700 mb-1">
+                                Confirmer le mot de passe *
+                            </label>
+                            <div class="relative">
+                                <input type="password" 
+                                       name="password2" 
+                                       id="id_password2" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all pr-12"
+                                       placeholder="Confirmez votre mot de passe"
+                                       required>
+                                <button type="button" 
+                                        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                        onclick="togglePassword('id_password2', this)">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="error-message" id="password2_error"></div>
+                        </div>
+                    </div>
+
+                    <!-- Boutons de navigation -->
+                    <div class="flex justify-between mt-6">
+                        <button type="button" 
+                                class="text-gray-600 px-6 py-3 rounded-lg font-medium hover:text-gray-800 transition-colors flex items-center"
+                                onclick="prevStep(1)">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                            Retour
+                        </button>
+                        <button type="button" 
+                                class="bg-primary-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-600 transition-colors flex items-center"
+                                onclick="nextStep(3)">
+                            Suivant
+                            <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Étape 3: Adresse et préférences -->
+                <div class="step-content" id="step3">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Adresse et préférences</h3>
+                    
+                    <div class="space-y-4">
+                        <!-- Adresse -->
+                        <div>
+                            <label for="id_adresse" class="block text-sm font-medium text-gray-700 mb-1">
+                                Adresse complète *
+                            </label>
+                            <textarea name="adresse" 
+                                      id="id_adresse" 
+                                      rows="3"
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                      placeholder="Votre adresse complète pour la livraison"
+                                      required></textarea>
+                            <div class="error-message" id="adresse_error"></div>
+                        </div>
+
+                        <!-- Permission de géolocalisation -->
+                        <div class="location-permission">
+                            <div class="flex items-start gap-3">
+                                <input type="checkbox" 
+                                       name="consentement_geolocalisation" 
+                                       id="id_consentement_geolocalisation"
+                                       class="mt-1 text-primary-500 focus:ring-primary-500">
+                                <div>
+                                    <label for="id_consentement_geolocalisation" class="block text-sm font-medium text-gray-900">
+                                        Autoriser la géolocalisation
+                                    </label>
+                                    <p class="text-sm text-gray-600 mt-1">
+                                        Pour une livraison plus précise et des boutiques proches de vous
+                                    </p>
+                                </div>
+                            </div>
+                            <button type="button" 
+                                    id="getLocationBtn"
+                                    class="mt-3 text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                Utiliser ma position actuelle
+                            </button>
+                        </div>
+
+                        <!-- Notifications -->
+                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                            <div>
+                                <label for="id_preferences_notifications" class="block text-sm font-medium text-gray-900">
+                                    Recevoir des notifications
+                                </label>
+                                <p class="text-sm text-gray-600">Offres spéciales et mises à jour</p>
+                            </div>
+                            <input type="checkbox" 
+                                   name="preferences_notifications" 
+                                   id="id_preferences_notifications"
+                                   checked
+                                   class="w-4 h-4 text-primary-500 focus:ring-primary-500">
+                        </div>
+
+                        <!-- Conditions d'utilisation -->
+                        <div class="terms-checkbox">
+                            <input type="checkbox" 
+                                   name="accept_terms" 
+                                   id="id_accept_terms"
+                                   class="w-4 h-4 text-primary-500 focus:ring-primary-500"
+                                   required>
+                            <label for="id_accept_terms" class="text-sm text-gray-700">
+                                J'accepte les 
+                                <a href="#" class="text-primary-600 hover:text-primary-700 font-medium">conditions d'utilisation</a>
+                                et la 
+                                <a href="#" class="text-primary-600 hover:text-primary-700 font-medium">politique de confidentialité</a>
+                                *
+                            </label>
+                        </div>
+                        <div class="error-message" id="terms_error"></div>
+                    </div>
+
+                    <!-- Boutons de navigation -->
+                    <div class="flex justify-between mt-6">
+                        <button type="button" 
+                                class="text-gray-600 px-6 py-3 rounded-lg font-medium hover:text-gray-800 transition-colors flex items-center"
+                                onclick="prevStep(2)">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                            Retour
+                        </button>
+                        <button type="submit" 
+                                id="submitBtn"
+                                class="bg-primary-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-600 transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span id="btnText">Créer mon compte</span>
+                            <svg id="btnLoader" class="animate-spin -mr-1 ml-3 h-5 w-5 text-white hidden" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Lien de connexion -->
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 text-center">
+                <p class="text-sm text-gray-600">
+                    Déjà un compte? 
+                    <a href="{% url 'clients:connexion' %}" class="text-primary-600 hover:text-primary-700 font-medium">
+                        Se connecter
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialisation
+    initForm();
+    
+    // Auto-focus sur le premier champ
+    document.getElementById('id_first_name').focus();
+});
+
+let currentStep = 1;
+
+function nextStep(step) {
+    if (validateStep(currentStep)) {
+        hideStep(currentStep);
+        showStep(step);
+        updateStepIndicator(currentStep, step);
+        currentStep = step;
+    }
+}
+
+function prevStep(step) {
+    hideStep(currentStep);
+    showStep(step);
+    updateStepIndicator(currentStep, step);
+    currentStep = step;
+}
+
+function hideStep(step) {
+    const stepElement = document.getElementById(`step${step}`);
+    stepElement.classList.remove('active');
+}
+
+function showStep(step) {
+    const stepElement = document.getElementById(`step${step}`);
+    stepElement.classList.add('active');
+}
+
+function updateStepIndicator(oldStep, newStep) {
+    // Mettre à jour l'ancienne étape
+    const oldStepIndicator = document.querySelector(`.step[data-step="${oldStep}"]`);
+    if (newStep > oldStep) {
+        oldStepIndicator.classList.remove('active');
+        oldStepIndicator.classList.add('completed');
+    }
+    
+    // Mettre à jour la nouvelle étape
+    const newStepIndicator = document.querySelector(`.step[data-step="${newStep}"]`);
+    newStepIndicator.classList.remove('inactive', 'completed');
+    newStepIndicator.classList.add('active');
+}
+
+function validateStep(step) {
+    let isValid = true;
+    clearErrors();
+
+    switch(step) {
+        case 1:
+            // Validation étape 1
+            const firstName = document.getElementById('id_first_name');
+            const lastName = document.getElementById('id_last_name');
+            const email = document.getElementById('id_email');
+            const telephone = document.getElementById('id_telephone');
+
+            if (!firstName.value.trim()) {
+                showError('first_name', 'Le prénom est obligatoire');
+                isValid = false;
+            }
+
+            if (!lastName.value.trim()) {
+                showError('last_name', 'Le nom est obligatoire');
+                isValid = false;
+            }
+
+            if (!email.value.trim()) {
+                showError('email', 'L\'email est obligatoire');
+                isValid = false;
+            } else if (!isValidEmail(email.value)) {
+                showError('email', 'Format d\'email invalide');
+                isValid = false;
+            }
+
+            if (!telephone.value.trim()) {
+                showError('telephone', 'Le téléphone est obligatoire');
+                isValid = false;
+            } else if (!isValidPhone(telephone.value)) {
+                showError('telephone', 'Format de téléphone invalide');
+                isValid = false;
+            }
+            break;
+
+        case 2:
+            // Validation étape 2
+            const username = document.getElementById('id_username');
+            const password1 = document.getElementById('id_password1');
+            const password2 = document.getElementById('id_password2');
+
+            if (!username.value.trim()) {
+                showError('username', 'Le nom d\'utilisateur est obligatoire');
+                isValid = false;
+            }
+
+            if (!password1.value) {
+                showError('password1', 'Le mot de passe est obligatoire');
+                isValid = false;
+            } else if (password1.value.length < 8) {
+                showError('password1', 'Le mot de passe doit contenir au moins 8 caractères');
+                isValid = false;
+            }
+
+            if (!password2.value) {
+                showError('password2', 'Veuillez confirmer votre mot de passe');
+                isValid = false;
+            } else if (password1.value !== password2.value) {
+                showError('password2', 'Les mots de passe ne correspondent pas');
+                isValid = false;
+            }
+            break;
+    }
+
+    return isValid;
+}
+
+function initForm() {
+    // Gestion de l'upload de photo
+    const photoInput = document.getElementById('id_photo_profil');
+    const avatarPreview = document.getElementById('avatarPreview');
+
+    photoInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                avatarPreview.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Force du mot de passe
+    const password1 = document.getElementById('id_password1');
+    password1.addEventListener('input', updatePasswordStrength);
+
+    // Géolocalisation
+    const locationBtn = document.getElementById('getLocationBtn');
+    locationBtn.addEventListener('click', getCurrentLocation);
+
+    // Soumission du formulaire
+    const form = document.getElementById('inscriptionForm');
+    form.addEventListener('submit', handleFormSubmit);
+}
+
+function updatePasswordStrength() {
+    const password = document.getElementById('id_password1').value;
+    const strengthBar = document.getElementById('passwordStrength');
+    const strengthText = document.getElementById('strengthText');
+    const strengthFill = strengthBar.querySelector('.strength-fill');
+
+    let strength = 0;
+    let text = 'Force du mot de passe';
+    let className = '';
+
+    if (password.length >= 8) strength += 25;
+    if (/[A-Z]/.test(password)) strength += 25;
+    if (/[0-9]/.test(password)) strength += 25;
+    if (/[^A-Za-z0-9]/.test(password)) strength += 25;
+
+    if (strength === 0) {
+        text = 'Très faible';
+        className = '';
+    } else if (strength <= 25) {
+        text = 'Faible';
+        className = 'strength-weak';
+    } else if (strength <= 50) {
+        text = 'Moyen';
+        className = 'strength-medium';
+    } else if (strength <= 75) {
+        text = 'Fort';
+        className = 'strength-strong';
+    } else {
+        text = 'Très fort';
+        className = 'strength-strong';
+    }
+
+    strengthBar.className = `password-strength ${className}`;
+    strengthText.textContent = text;
+}
+
+function getCurrentLocation() {
+    const locationBtn = document.getElementById('getLocationBtn');
+    const geolocationCheckbox = document.getElementById('id_consentement_geolocalisation');
+
+    if (!navigator.geolocation) {
+        alert('La géolocalisation n\'est pas supportée par votre navigateur');
+        return;
+    }
+
+    locationBtn.innerHTML = '<div class="animate-spin h-4 w-4 mr-1 border-2 border-primary-600 border-t-transparent rounded-full"></div>Localisation...';
+    locationBtn.disabled = true;
+
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            // Cocher la case de consentement
+            geolocationCheckbox.checked = true;
+            
+            // Récupérer l'adresse via géocodage inverse
+            reverseGeocode(lat, lng);
+            
+            locationBtn.innerHTML = '<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Position trouvée';
+            setTimeout(() => {
+                locationBtn.innerHTML = '<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>Utiliser ma position actuelle';
+                locationBtn.disabled = false;
+            }, 2000);
+        },
+        function(error) {
+            console.error('Erreur de géolocalisation:', error);
+            let errorMessage = 'Impossible de récupérer votre position';
+            
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMessage = 'Permission de géolocalisation refusée';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMessage = 'Position indisponible';
+                    break;
+                case error.TIMEOUT:
+                    errorMessage = 'Délai de localisation dépassé';
+                    break;
+            }
+            
+            alert(errorMessage);
+            locationBtn.innerHTML = '<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>Utiliser ma position actuelle';
+            locationBtn.disabled = false;
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 60000
+        }
+    );
+}
+
+function reverseGeocode(lat, lng) {
+    // Utiliser un service de géocodage (ex: Nominatim)
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data && data.display_name) {
+                document.getElementById('id_adresse').value = data.display_name;
+            }
+        })
+        .catch(error => {
+            console.error('Erreur de géocodage:', error);
+        });
+}
+
+function togglePassword(inputId, button) {
+    const input = document.getElementById(inputId);
+    const icon = button.querySelector('svg');
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>';
+    } else {
+        input.type = 'password';
+        icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>';
+    }
+}
+
+function handleFormSubmit(e) {
+    e.preventDefault();
+    
+    if (!validateStep(3)) {
+        return;
+    }
+
+    const termsCheckbox = document.getElementById('id_accept_terms');
+    if (!termsCheckbox.checked) {
+        showError('terms', 'Vous devez accepter les conditions d\'utilisation');
+        return;
+    }
+
+    // Afficher le loader
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
+    const btnLoader = document.getElementById('btnLoader');
+    
+    submitBtn.disabled = true;
+    btnText.textContent = 'Création du compte...';
+    btnLoader.classList.remove('hidden');
+
+    // Soumettre le formulaire
+    const form = document.getElementById('inscriptionForm');
+    const formData = new FormData(form);
+
+    fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            setTimeout(() => {
+                window.location.href = data.redirect_url;
+            }, 1500);
+        } else {
+            // Afficher les erreurs
+            if (data.errors) {
+                for (const field in data.errors) {
+                    showError(field, data.errors[field][0]);
+                }
+            }
+            resetSubmitButton();
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        showToast('Une erreur est survenue lors de la création du compte', 'error');
+        resetSubmitButton();
+    });
+}
+
+function resetSubmitButton() {
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
+    const btnLoader = document.getElementById('btnLoader');
+    
+    submitBtn.disabled = false;
+    btnText.textContent = 'Créer mon compte';
+    btnLoader.classList.add('hidden');
+}
+
+function showError(field, message) {
+    const fieldElement = document.getElementById(`id_${field}`);
+    const errorElement = document.getElementById(`${field}_error`);
+    
+    if (fieldElement) {
+        fieldElement.classList.add('field-error');
+    }
+    
+    if (errorElement) {
+        errorElement.textContent = message;
+    }
+}
+
+function clearErrors() {
+    // Supprimer les classes d'erreur
+    document.querySelectorAll('.field-error').forEach(el => {
+        el.classList.remove('field-error');
+    });
+    
+    // Vider les messages d'erreur
+    document.querySelectorAll('.error-message').forEach(el => {
+        el.textContent = '';
+    });
+}
+
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+function isValidPhone(phone) {
+    const cleanedPhone = phone.replace(/\s/g, '');
+    const phoneRegex = /^(90|91|92|93|94|95|96|97|98|99|70|71|72|73|74|75|76|77|78|79)\d{6}$/;
+    return phoneRegex.test(cleanedPhone);
+}
+
+// Fonction toast (déjà définie dans base.html)
+function showToast(message, type = 'info') {
+    // Utiliser la fonction toast existante de base.html
+    if (typeof window.showToast === 'function') {
+        window.showToast(message, type);
+    } else {
+        // Fallback si la fonction n'existe pas
+        alert(message);
+    }
+}
+</script>
+{% endblock %}

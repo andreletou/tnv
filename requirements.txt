@@ -1,0 +1,28 @@
+# Core Django
+Django==4.2.7
+djangorestframework==3.14.0
+
+# Database
+psycopg2-binary==2.9.9
+
+# Images
+Pillow==10.1.0
+
+# Production
+gunicorn==21.2.0
+whitenoise==6.6.0
+
+# Django apps
+django-leaflet==1.0.0
+django-widget-tweaks==1.5.0
+
+# Development
+django-debug-toolbar==4.2.0
+python-dotenv==1.0.0
+
+# GIS (installés via Conda, mais inclus pour référence)
+# gdal
+# geos
+# proj
+# pyproj
+# shapely
